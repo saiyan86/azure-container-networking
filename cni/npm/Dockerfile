@@ -1,20 +1,21 @@
-# Use an official Python runtime as a parent image
-FROM python:2.7-slim
+# Use an official golang runtime as a parent image
+FROM golang:1.8
 
-# Set the working directory to /app
-WORKDIR /app
+# Set the working directory to /npm
+WORKDIR /npm
 
-# Copy the current directory contents into the container at /app
-ADD . /app
+# Copy the current directory contents into the container at /npm
+ADD . /npm
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+RUN go get -d -v ./...
+RUN go build
 
 # Make port 80 available to the world outside this container
-EXPOSE 80
+#EXPOSE 80
 
 # Define environment variable
-ENV NAME World
+ENV NAME npm
 
-# Run app.py when the container launches
-CMD ["python", "app.py"]
+# Run the npm command by default when the container starts.
+ENTRYPOINT ./npm
