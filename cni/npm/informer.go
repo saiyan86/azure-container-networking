@@ -10,10 +10,10 @@ import (
 	"k8s.io/client-go/informers"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	//"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // PodLoggingController logs the name and namespace of pods that are added,
@@ -77,20 +77,23 @@ func NewPodLoggingController(informerFactory informers.SharedInformerFactory) *P
 	return c
 }
 
-func main() {
-	var kubeconfig string
-
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
+func init() {
 	flag.Parse()
+}
 
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+func main() {
+	// Creates the in-cluster config
+	config, err := rest.InClusterConfig()
 	if err != nil {
+		glog.Fatal(err)
 		panic(err.Error())
 	}
 
+	// Creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		glog.Fatal(err)
+		panic(err.Error())
 	}
 
 	factory := informers.NewSharedInformerFactory(clientset, time.Hour*24)
