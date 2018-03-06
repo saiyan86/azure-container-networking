@@ -3,6 +3,8 @@ package npm
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/client-go/informers"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	networkinginformers "k8s.io/client-go/informers/networking/v1"
@@ -53,9 +55,30 @@ func NewNetworkPolicyManager(informerFactory informers.SharedInformerFactory) *N
 	podInformer.Informer().AddEventHandler(
 		// Pod event handlers
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    npMgr.AddPod,
-			UpdateFunc: npMgr.UpdatePod,
-			DeleteFunc: npMgr.DeletePod,
+			AddFunc: func(obj interface{}) {
+				npMgr.AddPod(obj.(*corev1.Pod))
+			},
+			UpdateFunc: func(old, new interface{}) {
+				npMgr.UpdatePod(old.(*corev1.Pod), new.(*corev1.Pod))
+			},
+			DeleteFunc: func(obj interface{}) {
+				npMgr.DeletePod(obj.(*corev1.Pod))
+			},
+		},
+	)
+
+	npInformer.Informer().AddEventHandler(
+		// Network policy event handlers
+		cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				npMgr.AddNetworkPolicy(obj.(*networkingv1.NetworkPolicy))
+			},
+			UpdateFunc: func(old, new interface{}) {
+				npMgr.UpdateNetworkPolicy(old.(*networkingv1.NetworkPolicy), new.(*networkingv1.NetworkPolicy))
+			},
+			DeleteFunc: func(obj interface{}) {
+				npMgr.DeleteNetworkPolicy(obj.(*networkingv1.NetworkPolicy))
+			},
 		},
 	)
 
