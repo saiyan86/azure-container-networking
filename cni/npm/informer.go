@@ -1,4 +1,4 @@
-package main
+package npm
 
 import (
 	"flag"
@@ -81,7 +81,7 @@ func init() {
 	flag.Parse()
 }
 
-func main() {
+func im() {
 	// Creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
