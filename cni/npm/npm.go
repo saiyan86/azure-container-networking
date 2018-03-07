@@ -17,6 +17,7 @@ type NetworkPolicyManager struct {
 	podInformer     coreinformers.PodInformer
 	nsInformer      coreinformers.NamespaceInformer
 	npInformer      networkinginformers.NetworkPolicyInformer
+	nsMap           map[string]*namespace
 }
 
 // Run starts shared informers and waits for the shared informer cache to sync.
@@ -48,8 +49,9 @@ func NewNetworkPolicyManager(informerFactory informers.SharedInformerFactory) *N
 	npMgr := &NetworkPolicyManager{
 		informerFactory: informerFactory,
 		podInformer:     podInformer,
-		npInformer:      npInformer,
 		nsInformer:      nsInformer,
+		npInformer:      npInformer,
+		nsMap:           make(map[string]*namespace),
 	}
 
 	podInformer.Informer().AddEventHandler(
@@ -63,6 +65,21 @@ func NewNetworkPolicyManager(informerFactory informers.SharedInformerFactory) *N
 			},
 			DeleteFunc: func(obj interface{}) {
 				npMgr.DeletePod(obj.(*corev1.Pod))
+			},
+		},
+	)
+
+	nsInformer.Informer().AddEventHandler(
+		// Namespace event handlers
+		cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				npMgr.AddNamespace(obj.(*corev1.Namespace))
+			},
+			UpdateFunc: func(old, new interface{}) {
+				npMgr.UpdateNamespace(old.(*corev1.Namespace), new.(*corev1.Namespace))
+			},
+			DeleteFunc: func(obj interface{}) {
+				npMgr.DeleteNamespace(obj.(*corev1.Namespace))
 			},
 		},
 	)
