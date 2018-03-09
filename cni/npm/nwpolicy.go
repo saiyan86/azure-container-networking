@@ -145,22 +145,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPoli
 
 	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
-
-	ns, exists := npMgr.nsMap[npNs]
-	if !exists {
-		newns, err := newNs(npNs)
-		if err != nil {
-			return err
-		}
-		npMgr.nsMap[npNs] = newns
-		ns = newns
-		fmt.Printf("new namespace created: %s\n", npNs)
-	}
-
-	// debug
-	for k, v := range ns.podMap {
-		fmt.Printf("key[%s] value[%s]\n", k, v)
-	}
+	fmt.Printf("podSelector:%+v\n", np.Spec.PodSelector)
 
 	return nil
 }
