@@ -2,6 +2,7 @@ package npm
 
 import (
 	"fmt"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -13,6 +14,8 @@ import (
 
 // NetworkPolicyManager contains informers for pod, namespace and networkpolicy.
 type NetworkPolicyManager struct {
+	sync.Mutex
+
 	informerFactory informers.SharedInformerFactory
 	podInformer     coreinformers.PodInformer
 	nsInformer      coreinformers.NamespaceInformer
@@ -21,7 +24,7 @@ type NetworkPolicyManager struct {
 }
 
 // Run starts shared informers and waits for the shared informer cache to sync.
-func (npMgr *NetworkPolicyManager) Run(stopCh chan struct{}) error {
+func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 	// Starts all informers manufactured by npMgr's informerFactory.
 	npMgr.informerFactory.Start(stopCh)
 	// Wait for the initial sync of local cache.

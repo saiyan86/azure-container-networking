@@ -7,22 +7,49 @@ import (
 )
 
 type namespace struct {
-	name     string
-	nodeName string
-	nsObj    *corev1.Namespace
+	name   string
+	podMap map[string]*corev1.Pod
+}
+
+// newNS constructs a new namespace object.
+func newNs(name string) (*namespace, error) {
+	ns := &namespace{
+		name:   name,
+		podMap: make(map[string]*corev1.Pod),
+	}
+
+	return ns, nil
 }
 
 // AddNamespace handles add name space.
-func (npMgr *NetworkPolicyManager) AddNamespace(ns *corev1.Namespace) {
-	fmt.Printf("NAMESPACE CREATED: %s\n", ns.Name)
+func (npMgr *NetworkPolicyManager) AddNamespace(ns *corev1.Namespace) error {
+	npMgr.Lock()
+	defer npMgr.Unlock()
+
+	nsName, nsNs := ns.ObjectMeta.Name, ns.ObjectMeta.Namespace
+	fmt.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
+
+	return nil
 }
 
 // UpdateNamespace handles update name space.
-func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNs *corev1.Namespace, newNs *corev1.Namespace) {
-	fmt.Printf("NAMESPACE UPDATED. %s/%s", oldNs.Name, newNs.Name)
+func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNs *corev1.Namespace, newNs *corev1.Namespace) error {
+	npMgr.Lock()
+	defer npMgr.Unlock()
+
+	oldNsName, newNsName := oldNs.ObjectMeta.Name, newNs.ObjectMeta.Name
+	fmt.Printf("NAMESPACE UPDATED. %s/%s", oldNsName, newNsName)
+
+	return nil
 }
 
 // DeleteNamespace handles delete name space.
-func (npMgr *NetworkPolicyManager) DeleteNamespace(ns *corev1.Namespace) {
-	fmt.Printf("NAMESPACE DELETED. %s/%s", ns.Name)
+func (npMgr *NetworkPolicyManager) DeleteNamespace(ns *corev1.Namespace) error {
+	npMgr.Lock()
+	defer npMgr.Unlock()
+
+	nsName, nsNs := ns.ObjectMeta.Name, ns.ObjectMeta.Namespace
+	fmt.Printf("NAMESPACE DELETED: %s/%s\n", nsName, nsNs)
+
+	return nil
 }
