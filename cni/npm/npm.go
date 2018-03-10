@@ -16,7 +16,7 @@ import (
 // NetworkPolicyManager contains informers for pod, namespace and networkpolicy.
 type NetworkPolicyManager struct {
 	sync.Mutex
-	clientset kubernetes.Clientset
+	clientset *kubernetes.Clientset
 
 	informerFactory informers.SharedInformerFactory
 	podInformer     coreinformers.PodInformer
@@ -46,7 +46,7 @@ func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 }
 
 // NewNetworkPolicyManager creates a NetworkPolicyManager
-func NewNetworkPolicyManager(clientset kubernetes.Clientset, informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
+func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
 	podInformer := informerFactory.Core().V1().Pods()
 	nsInformer := informerFactory.Core().V1().Namespaces()
 	npInformer := informerFactory.Networking().V1().NetworkPolicies()
