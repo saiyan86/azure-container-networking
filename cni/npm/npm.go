@@ -9,12 +9,14 @@ import (
 	"k8s.io/client-go/informers"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	networkinginformers "k8s.io/client-go/informers/networking/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
 // NetworkPolicyManager contains informers for pod, namespace and networkpolicy.
 type NetworkPolicyManager struct {
 	sync.Mutex
+	clientset kubernetes.Clientset
 
 	informerFactory informers.SharedInformerFactory
 	podInformer     coreinformers.PodInformer
@@ -44,12 +46,13 @@ func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 }
 
 // NewNetworkPolicyManager creates a NetworkPolicyManager
-func NewNetworkPolicyManager(informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
+func NewNetworkPolicyManager(clientset kubernetes.Clientset, informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
 	podInformer := informerFactory.Core().V1().Pods()
 	nsInformer := informerFactory.Core().V1().Namespaces()
 	npInformer := informerFactory.Networking().V1().NetworkPolicies()
 
 	npMgr := &NetworkPolicyManager{
+		clientset:       clientset,
 		informerFactory: informerFactory,
 		podInformer:     podInformer,
 		nsInformer:      nsInformer,

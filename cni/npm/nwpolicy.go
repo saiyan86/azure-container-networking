@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
@@ -145,8 +146,21 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPoli
 
 	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
-	fmt.Printf("podSelector:%+v\n", np.Spec.PodSelector)
 
+	selector := np.Spec.PodSelector
+	fmt.Printf("podSelector:%+v\n", selector)
+
+	clientset := npMgr.clientset
+	podList, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{
+		LabelSelector: "app=nginx",
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, pod := range podList.Items {
+		fmt.Printf("%s/%s/%+v", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace, pod.ObjectMeta.Labels)
+	}
 	return nil
 }
 
