@@ -142,7 +142,7 @@ pressions:[
 */
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPolicy) error {
-	time.Sleep(5000 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	npMgr.Lock()
 	defer npMgr.Unlock()

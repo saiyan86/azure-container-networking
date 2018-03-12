@@ -24,7 +24,7 @@ func isRunning(pod *corev1.Pod) bool {
 
 // AddPod handles add pod.
 func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
-	time.Sleep(10000 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 
 	npMgr.Lock()
 	defer npMgr.Unlock()
