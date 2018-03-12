@@ -43,6 +43,7 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 			return err
 		}
 		npMgr.nsMap[podNs] = newns
+		ns = newns
 	}
 
 	ns.podMap[podName] = pod
