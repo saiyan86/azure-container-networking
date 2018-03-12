@@ -29,6 +29,7 @@ type NetworkPolicyManager struct {
 func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 	// Starts all informers manufactured by npMgr's informerFactory.
 	npMgr.informerFactory.Start(stopCh)
+
 	// Wait for the initial sync of local cache.
 	if !cache.WaitForCacheSync(stopCh, npMgr.podInformer.Informer().HasSynced) {
 		return fmt.Errorf("Pod informer failed to sync")
