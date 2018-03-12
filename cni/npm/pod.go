@@ -26,8 +26,8 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	podNs, podName, podNodeName := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName
-	fmt.Printf("POD CREATED: %s/%s/%s\n", podNs, podName, podNodeName)
+	podNs, podName, podNodeName, podLabel := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName, pod.ObjectMeta.Labels
+	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
 
 	if !isRunning(pod) {
 		return nil
@@ -35,12 +35,11 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 
 	ns, exists := npMgr.nsMap[podNs]
 	if !exists {
-		newns, err := newNs(podNs)
+		ns, err := newNs(podNs)
 		if err != nil {
 			return err
 		}
-		npMgr.nsMap[podNs] = newns
-		ns = newns
+		npMgr.nsMap[podNs] = ns
 	}
 
 	ns.podMap[podName] = pod
