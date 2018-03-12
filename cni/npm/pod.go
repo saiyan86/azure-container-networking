@@ -35,11 +35,11 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 
 	ns, exists := npMgr.nsMap[podNs]
 	if !exists {
-		ns, err := newNs(podNs)
+		newns, err := newNs(podNs)
 		if err != nil {
 			return err
 		}
-		npMgr.nsMap[podNs] = ns
+		npMgr.nsMap[podNs] = newns
 	}
 
 	ns.podMap[podName] = pod
