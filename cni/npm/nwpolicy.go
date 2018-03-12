@@ -145,7 +145,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPoli
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	time.Sleep(500)
+	time.Sleep(500 * time.Millisecond)
 
 	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
