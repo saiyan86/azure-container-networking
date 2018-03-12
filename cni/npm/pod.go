@@ -27,7 +27,7 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(10000 * time.Millisecond)
 
 	podNs, podName, podNodeName, podLabel := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName, pod.ObjectMeta.Labels
 	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
