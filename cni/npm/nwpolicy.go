@@ -142,10 +142,10 @@ pressions:[
 */
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPolicy) error {
+	time.Sleep(5000 * time.Millisecond)
+
 	npMgr.Lock()
 	defer npMgr.Unlock()
-
-	time.Sleep(5000 * time.Millisecond)
 
 	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)

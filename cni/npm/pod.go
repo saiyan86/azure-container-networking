@@ -24,10 +24,10 @@ func isRunning(pod *corev1.Pod) bool {
 
 // AddPod handles add pod.
 func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
+	time.Sleep(10000 * time.Millisecond)
+
 	npMgr.Lock()
 	defer npMgr.Unlock()
-
-	time.Sleep(10000 * time.Millisecond)
 
 	podNs, podName, podNodeName, podLabel := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName, pod.ObjectMeta.Labels
 	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
