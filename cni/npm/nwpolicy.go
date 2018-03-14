@@ -176,6 +176,8 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	}
 
 	ns.npMap[npName] = npObj
+
+	return nil
 }
 
 // UpdateNetworkPolicy updates network policy.
