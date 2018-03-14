@@ -48,6 +48,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 	exists = false
 	for podLabelType, podLabelValue := range podLabel {
+		fmt.Printf("podLabelType: %s/ podLabelValue:%s\n", podLabelType, podLabelValue)
 		for _, np := range ns.npMap {
 			if np.Spec.PodSelector.MatchLabels[podLabelType] == podLabelValue {
 				fmt.Printf("found matching policy\n")
