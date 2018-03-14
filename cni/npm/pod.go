@@ -2,7 +2,6 @@ package npm
 
 import (
 	"fmt"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -16,23 +15,22 @@ type podMgr interface {
 */
 // func (npc *controller) AddPod(obj *coreapi.Pod) error {
 
-func isRunning(pod *corev1.Pod) bool {
-	return pod.Status.Phase != "Failed" &&
-		pod.Status.Phase != "Succeeded" &&
-		pod.Status.Phase != "Unknown"
+func isRunning(podObj *corev1.Pod) bool {
+	return podObj.Status.Phase != "Failed" &&
+		podObj.Status.Phase != "Succeeded" &&
+		podObj.Status.Phase != "Unknown"
 }
 
 // AddPod handles add pod.
-func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
-	time.Sleep(20 * time.Microsecond)
+func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	podNs, podName, podNodeName, podLabel := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName, pod.ObjectMeta.Labels
+	podNs, podName, podNodeName, podLabel := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
 	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
 
-	if !isRunning(pod) {
+	if !isRunning(podObj) {
 		return nil
 	}
 
@@ -46,7 +44,16 @@ func (npMgr *NetworkPolicyManager) AddPod(pod *corev1.Pod) error {
 		ns = newns
 	}
 
-	ns.podMap[podName] = pod
+	ns.podMap[podName] = podObj
+
+	exists = false
+	for podLabelType, podLabelValue := range podLabel {
+		for _, np := range ns.npMap {
+			if np.Spec.PodSelector.MatchLabels[podLabelType] == podLabelValue {
+				fmt.Printf("found matching policy\n")
+			}
+		}
+	}
 
 	return nil
 }
@@ -67,11 +74,11 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 }
 
 // DeletePod handles delete pod.
-func (npMgr *NetworkPolicyManager) DeletePod(pod *corev1.Pod) error {
+func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	podNs, podName, podNodeName := pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, pod.Spec.NodeName
+	podNs, podName, podNodeName := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName
 	fmt.Printf("POD DELETED: %s/%s/%s\n", podNs, podName, podNodeName)
 
 	return nil

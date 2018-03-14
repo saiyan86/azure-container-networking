@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 )
 
 type namespace struct {
 	name   string
 	podMap map[string]*corev1.Pod
+	npMap  map[string]*networkingv1.NetworkPolicy
 }
 
 // newNS constructs a new namespace object.
@@ -16,18 +18,28 @@ func newNs(name string) (*namespace, error) {
 	ns := &namespace{
 		name:   name,
 		podMap: make(map[string]*corev1.Pod),
+		npMap:  make(map[string]*networkingv1.NetworkPolicy),
 	}
 
 	return ns, nil
 }
 
 // AddNamespace handles add name space.
-func (npMgr *NetworkPolicyManager) AddNamespace(ns *corev1.Namespace) error {
+func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	nsName, nsNs := ns.ObjectMeta.Name, ns.ObjectMeta.Namespace
+	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
+
+	_, exists := npMgr.nsMap[nsName]
+	if !exists {
+		newns, err := newNs(nsName)
+		if err != nil {
+			return err
+		}
+		npMgr.nsMap[nsName] = newns
+	}
 
 	return nil
 }
