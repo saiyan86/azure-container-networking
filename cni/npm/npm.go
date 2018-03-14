@@ -2,6 +2,7 @@ package npm
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +19,7 @@ type NetworkPolicyManager struct {
 	sync.Mutex
 	clientset *kubernetes.Clientset
 
+	nodeName        string
 	informerFactory informers.SharedInformerFactory
 	podInformer     coreinformers.PodInformer
 	nsInformer      coreinformers.NamespaceInformer
@@ -48,12 +50,15 @@ func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 
 // NewNetworkPolicyManager creates a NetworkPolicyManager
 func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
+	nodeName := os.Getenv("HOSTNAME")
+
 	podInformer := informerFactory.Core().V1().Pods()
 	nsInformer := informerFactory.Core().V1().Namespaces()
 	npInformer := informerFactory.Networking().V1().NetworkPolicies()
 
 	npMgr := &NetworkPolicyManager{
 		clientset:       clientset,
+		nodeName:        nodeName,
 		informerFactory: informerFactory,
 		podInformer:     podInformer,
 		nsInformer:      nsInformer,
