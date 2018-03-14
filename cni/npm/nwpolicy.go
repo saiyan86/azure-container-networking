@@ -2,10 +2,8 @@ package npm
 
 import (
 	"fmt"
-	"time"
 
 	networkingv1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
@@ -141,30 +139,43 @@ pressions:[
 })
 */
 // AddNetworkPolicy adds network policy.
-func (npMgr *NetworkPolicyManager) AddNetworkPolicy(np *networkingv1.NetworkPolicy) error {
-	time.Sleep(10 * time.Microsecond)
+func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
 
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
+	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
 
-	selector := np.Spec.PodSelector
+	selector := npObj.Spec.PodSelector
 	fmt.Printf("podSelector:%+v\n", selector)
 
-	clientset := npMgr.clientset
-	podList, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{
-		LabelSelector: "app=nginx",
-	})
-	if err != nil {
-		return err
+	/*
+			clientset := npMgr.clientset
+			podList, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{
+				LabelSelector: "app=nginx",
+			})
+			if err != nil {
+				return err
+			}
+
+			for _, pod := range podList.Items {
+				fmt.Printf("%s/%s/%+v", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace, pod.ObjectMeta.Labels)
+			}
+		      return nil
+	*/
+
+	ns, exists := npMgr.nsMap[npNs]
+	if !exists {
+		newns, err := newNs(npNs)
+		if err != nil {
+			return err
+		}
+		npMgr.nsMap[npNs] = newns
+		ns = newns
 	}
 
-	for _, pod := range podList.Items {
-		fmt.Printf("%s/%s/%+v", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace, pod.ObjectMeta.Labels)
-	}
-	return nil
+	ns.npMap[npName] = npObj
 }
 
 // UpdateNetworkPolicy updates network policy.
@@ -179,11 +190,11 @@ func (npMgr *NetworkPolicyManager) UpdateNetworkPolicy(oldNp *networkingv1.Netwo
 }
 
 // DeleteNetworkPolicy deletes network policy.
-func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(np *networkingv1.NetworkPolicy) error {
+func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	npNs, npName := np.ObjectMeta.Namespace, np.ObjectMeta.Name
+	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY DELETED: %s/%s\n", npNs, npName)
 
 	return nil
