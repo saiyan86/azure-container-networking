@@ -7,6 +7,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	networkinginformers "k8s.io/client-go/informers/networking/v1"
@@ -48,9 +49,20 @@ func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
 	return nil
 }
 
+func getHostName(clientset *kubernetes.Clientset) string {
+	podHostName = os.Getenv("HOSTNAME")
+	podList, err := clientset.CoreV1().Pods(podHostName).List(metav1.ListOptions{})
+	for _, pod := range podList.Items {
+		if pod.ObjectMeta.Name == podHostName {
+			return pod.Spec.NodeName
+		}
+	}
+
+	return ""
+}
+
 // NewNetworkPolicyManager creates a NetworkPolicyManager
 func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory informers.SharedInformerFactory) *NetworkPolicyManager {
-	nodeName := os.Getenv("HOSTNAME")
 
 	podInformer := informerFactory.Core().V1().Pods()
 	nsInformer := informerFactory.Core().V1().Namespaces()
@@ -58,7 +70,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 
 	npMgr := &NetworkPolicyManager{
 		clientset:       clientset,
-		nodeName:        nodeName,
+		nodeName:        getHostName(clientset),
 		informerFactory: informerFactory,
 		podInformer:     podInformer,
 		nsInformer:      nsInformer,

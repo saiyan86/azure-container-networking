@@ -28,7 +28,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	defer npMgr.Unlock()
 
 	// Check if the pod is local
-	if podObj.Spec.NodeName == npMgr.nodeName {
+	if podObj.Spec.NodeName != npMgr.nodeName {
 		return nil
 	}
 
