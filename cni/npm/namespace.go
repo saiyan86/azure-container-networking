@@ -31,7 +31,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	nsUID, nsName, nsNs := nsObj.ObjectMeta.UID, nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
+	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
 
 	_, exists := npMgr.nsMap[nsName]
