@@ -49,14 +49,14 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		ns = newns
 	}
 
-	ns.podMap[podName] = podObj
+	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
 	exists = false
 	for podLabelType, podLabelValue := range podLabels {
 		fmt.Printf("podLabelType: %s/ podLabelValue:%s\n", podLabelType, podLabelValue)
 		for _, np := range ns.npQueue {
 			if np.Spec.PodSelector.MatchLabels[podLabelType] == podLabelValue {
-				fmt.Printf("found matching policy\n")
+				fmt.Printf("--------------found matching policy-----------------\n")
 			}
 		}
 	}

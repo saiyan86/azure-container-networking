@@ -3,13 +3,15 @@ package npm
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
 type namespace struct {
 	name    string
-	podMap  map[string]*corev1.Pod
+	podMap  map[types.UID]*corev1.Pod
 	npQueue []*networkingv1.NetworkPolicy // TODO: Optimize to ordered map.
 }
 
@@ -17,7 +19,7 @@ type namespace struct {
 func newNs(name string) (*namespace, error) {
 	ns := &namespace{
 		name:    name,
-		podMap:  make(map[string]*corev1.Pod),
+		podMap:  make(map[types.UID]*corev1.Pod),
 		npQueue: []*networkingv1.NetworkPolicy{},
 	}
 
@@ -29,7 +31,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
+	nsUID, nsName, nsNs := nsObj.ObjectMeta.UID, nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
 
 	_, exists := npMgr.nsMap[nsName]
