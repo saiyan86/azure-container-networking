@@ -27,13 +27,13 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
+	podNs, podName, podNodeName, podLabel := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
+	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
+
 	// Check if the pod is local
 	if podObj.Spec.NodeName != npMgr.nodeName {
 		return nil
 	}
-
-	podNs, podName, podNodeName, podLabel := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
-	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
 
 	if !isRunning(podObj) {
 		return nil
