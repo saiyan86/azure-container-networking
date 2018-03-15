@@ -138,6 +138,7 @@ pressions:[
 
 })
 */
+
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
 
@@ -175,7 +176,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		ns = newns
 	}
 
-	ns.npMap[npName] = npObj
+	ns.npQueue = append(ns.npQueue, npObj) //Didn't check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	return nil
 }

@@ -8,17 +8,17 @@ import (
 )
 
 type namespace struct {
-	name   string
-	podMap map[string]*corev1.Pod
-	npMap  map[string]*networkingv1.NetworkPolicy
+	name    string
+	podMap  map[string]*corev1.Pod
+	npQueue []*networkingv1.NetworkPolicy // TODO: Optimize to ordered map.
 }
 
 // newNS constructs a new namespace object.
 func newNs(name string) (*namespace, error) {
 	ns := &namespace{
-		name:   name,
-		podMap: make(map[string]*corev1.Pod),
-		npMap:  make(map[string]*networkingv1.NetworkPolicy),
+		name:    name,
+		podMap:  make(map[string]*corev1.Pod),
+		npQueue: []*networkingv1.NetworkPolicy{},
 	}
 
 	return ns, nil

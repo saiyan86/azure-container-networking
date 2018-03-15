@@ -27,8 +27,8 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	podNs, podName, podNodeName, podLabel := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
-	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabel)
+	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
+	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabels)
 
 	// Check if the pod is local
 	if podObj.Spec.NodeName != npMgr.nodeName {
@@ -52,9 +52,9 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	ns.podMap[podName] = podObj
 
 	exists = false
-	for podLabelType, podLabelValue := range podLabel {
+	for podLabelType, podLabelValue := range podLabels {
 		fmt.Printf("podLabelType: %s/ podLabelValue:%s\n", podLabelType, podLabelValue)
-		for _, np := range ns.npMap {
+		for _, np := range ns.npQueue {
 			if np.Spec.PodSelector.MatchLabels[podLabelType] == podLabelValue {
 				fmt.Printf("found matching policy\n")
 			}
