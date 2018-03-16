@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 /*
@@ -51,13 +53,44 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
+	ipsMgr := npMgr.ipsMgr
+	//iptMgr := npMgr.iptMgr
 	exists = false
-	for podLabelType, podLabelValue := range podLabels {
-		fmt.Printf("podLabelType: %s/ podLabelValue:%s\n", podLabelType, podLabelValue)
-		for _, np := range ns.npQueue {
-			if np.Spec.PodSelector.MatchLabels[podLabelType] == podLabelValue {
-				fmt.Printf("--------------found matching policy-----------------\n")
+	podIP := podObj.Status.PodIP
+
+	var labelKeys []string
+	for podLabelKey, podLabelVal := range podLabels {
+		labelKey := podLabelKey + podLabelVal
+		if ipsMgr.ExistsInLabelMap(labelKey, podIP) {
+			return nil
+		}
+		labelKeys = append(labelKeys, labelKey)
+		ipsMgr.AddToLabelMap(labelKey, podIP)
+	}
+
+	for _, np := range ns.npQueue {
+		selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
+		if err != nil {
+			fmt.Printf("Error converting label selector\n")
+		}
+		if selector.Matches(labels.Set(podLabels)) {
+			fmt.Printf("--------------found matching policy-----------------\n")
+
+			for _, labelKey := range labelKeys {
+				fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
 			}
+			// Create rule for all matching labels.
+
+			/*
+				rule, err = iptMgr.Create(np, npMgr.ipSet)
+				if err != nil {
+					fmt.Printf("Error creating rule.\n")
+				}
+
+				if err = iptMgr.Apply(rule); err != nil {
+					fmt.Printf("Error applying rule.\n")
+				}
+			*/
 		}
 	}
 
