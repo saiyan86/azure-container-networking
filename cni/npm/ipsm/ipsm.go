@@ -1,8 +1,10 @@
 package ipsm
 
+import "fmt"
+
 type ipsEntry struct {
-	name          string
 	operationFlag string
+	name          string
 	set           string
 	spec          string
 }
@@ -14,7 +16,7 @@ type IpsetManager struct {
 }
 
 // ExistsInLabelMap checks if the ip exists in LabelMap.
-func (ipsMgr *IpsetManager) ExistsInLabelMap(key string, val string) bool {
+func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 	_, exists := ipsMgr.labelMap[key]
 	if !exists {
 		return false
@@ -29,9 +31,23 @@ func (ipsMgr *IpsetManager) ExistsInLabelMap(key string, val string) bool {
 	return false
 }
 
-// AddToLabelMap insert an entry to labelMap.
-func (ipsMgr *IpsetManager) AddToLabelMap(key string, val string) {
+// Add insert an ip to an entry in labelMap, and create/update the corresponding ipset.
+func (ipsMgr *IpsetManager) Add(key string, val string) {
 	ipsMgr.labelMap[key] = append(ipsMgr.labelMap[key], val)
+
+	_, exists := ipsMgr.entryMap[key]
+	if !exists {
+		ipsMgr.entryMap[key] = &ipsEntry{
+			operationFlag: "add",
+			set:           key,
+			spec:          val,
+		}
+	} else {
+		ipsMgr.entryMap[key].spec += val
+	}
+
+	fmt.Printf("~~~~~~~~~~~~~~~~~~~~~~~~~~\n%+v\n", ipsMgr.entryMap[key])
+
 }
 
 // NewIpsetManager creates a new instance for IpsetManager object.

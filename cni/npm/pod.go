@@ -61,11 +61,11 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podLabelKey + podLabelVal
-		if ipsMgr.ExistsInLabelMap(labelKey, podIP) {
+		if ipsMgr.Exists(labelKey, podIP) {
 			return nil
 		}
 		labelKeys = append(labelKeys, labelKey)
-		ipsMgr.AddToLabelMap(labelKey, podIP)
+		ipsMgr.Add(labelKey, podIP)
 	}
 
 	for _, np := range ns.npQueue {
