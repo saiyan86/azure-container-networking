@@ -53,7 +53,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
 	ipsMgr := npMgr.ipsMgr
-	//iptMgr := npMgr.iptMgr
+	iptMgr := npMgr.iptMgr
 	exists = false
 	podIP := podObj.Status.PodIP
 
