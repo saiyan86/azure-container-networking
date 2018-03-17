@@ -1,6 +1,10 @@
 package ipsm
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+)
 
 type ipsEntry struct {
 	operationFlag string
@@ -15,7 +19,7 @@ type IpsetManager struct {
 	labelMap map[string][]string //label -> []ip
 }
 
-// ExistsInLabelMap checks if the ip exists in LabelMap.
+// Exists checks if the ip exists in LabelMap.
 func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 	_, exists := ipsMgr.labelMap[key]
 	if !exists {
@@ -38,7 +42,7 @@ func (ipsMgr *IpsetManager) Add(key string, val string) {
 	_, exists := ipsMgr.entryMap[key]
 	if !exists {
 		ipsMgr.entryMap[key] = &ipsEntry{
-			operationFlag: "add",
+			operationFlag: "-N",
 			set:           key,
 			spec:          val,
 		}
@@ -47,7 +51,26 @@ func (ipsMgr *IpsetManager) Add(key string, val string) {
 	}
 
 	fmt.Printf("~~~~~~~~~~~~~~~~~~~~~~~~~~\n%+v\n", ipsMgr.entryMap[key])
+	if err := ipsMgr.create(ipsMgr.entryMap[key]); err != nil {
+		fmt.Printf("Error creating ipset rules.\n")
+	}
 
+}
+
+func (ipsMgr *IpsetManager) create(entry *ipsEntry) error {
+	cmdName := "ipset"
+	cmdArgs := []string{entry.operationFlag, entry.set, entry.spec}
+	var (
+		cmdOut []byte
+		err    error
+	)
+	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
+		fmt.Println(os.Stderr, "There was an error running git rev-parse command: ", err)
+		return err
+	}
+	fmt.Printf("%s", string(cmdOut))
+
+	return nil
 }
 
 // NewIpsetManager creates a new instance for IpsetManager object.
