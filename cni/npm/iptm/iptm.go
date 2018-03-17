@@ -1,5 +1,13 @@
 package iptm
 
+import (
+	"fmt"
+	"os"
+	"os/exec"
+
+	networkingv1 "k8s.io/api/networking/v1"
+)
+
 // IPManager interface manages iptables and ipset.
 type IPManager interface {
 	Create() error
@@ -28,9 +36,39 @@ func NewIptablesManager() *IptablesManager {
 	return iptMgr
 }
 
-// Create creates an iptables rule from network policy and ipset.
-/*
-func (*IptablesManager) Create() {
+// Add creates an entry in entryMap, and add corresponding rule in iptables.
+func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPolicy) error {
+	_, exists := iptMgr.entryMap[entryName]
+	if !exists {
+		iptMgr.entryMap[entryName] = &iptEntry{
+			name:          entryName,
+			operationFlag: "-A",
+			chain:         "FORWARD", //TODO: take dependency on ingress/egress. We also need create our own chain.
+			spec:          "-j DROP", //TODO: take dependency on network policy.
+		}
+	}
 
+	if err := iptMgr.create(iptMgr.entryMap[entryName]); err != nil {
+		fmt.Printf("Error creating ipset rules.\n")
+		return err
+	}
+
+	return nil
 }
-*/
+
+// create execute an iptables command to update iptables.
+func (iptMgr *IptablesManager) create(entry *iptEntry) error {
+	cmdName := "iptables"
+	cmdArgs := []string{entry.operationFlag, entry.chain, entry.spec}
+	var (
+		cmdOut []byte
+		err    error
+	)
+	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
+		fmt.Println(os.Stderr, "There was an error running command: ", err)
+		return err
+	}
+	fmt.Printf("%s", string(cmdOut))
+
+	return nil
+}

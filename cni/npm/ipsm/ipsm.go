@@ -36,26 +36,26 @@ func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 }
 
 // Add insert an ip to an entry in labelMap, and create/update the corresponding ipset.
-func (ipsMgr *IpsetManager) Add(key string, val string) error {
-	ipsMgr.labelMap[key] = append(ipsMgr.labelMap[key], val)
+func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
+	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
-	_, exists := ipsMgr.entryMap[key]
+	_, exists := ipsMgr.entryMap[setName]
 	if !exists {
-		ipsMgr.entryMap[key] = &ipsEntry{
+		ipsMgr.entryMap[setName] = &ipsEntry{
 			operationFlag: "-N",
-			set:           key,
+			set:           setName,
 			spec:          "nethash",
 		}
-		if err := ipsMgr.create(ipsMgr.entryMap[key]); err != nil {
+		if err := ipsMgr.create(ipsMgr.entryMap[setName]); err != nil {
 			fmt.Printf("Error creating ipset.\n")
 			return err
 		}
 	}
 
-	ipsMgr.entryMap[key].operationFlag = "-A"
-	ipsMgr.entryMap[key].spec = val
+	ipsMgr.entryMap[setName].operationFlag = "-A"
+	ipsMgr.entryMap[setName].spec = ip
 
-	if err := ipsMgr.create(ipsMgr.entryMap[key]); err != nil {
+	if err := ipsMgr.create(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
 		return err
 	}

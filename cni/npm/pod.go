@@ -80,12 +80,10 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 			for _, labelKey := range labelKeys {
 				fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
 				// Create rule for all matching labels.
-				/*
-					if err := iptMgr.Add(labelKey); err != nil {
-						fmt.Printf("Error creating iptables rule.\n")
-						return err
-					}
-				*/
+				if err := iptMgr.Add(labelKey, np); err != nil {
+					fmt.Printf("Error creating iptables rule.\n")
+					return err
+				}
 			}
 		}
 	}
