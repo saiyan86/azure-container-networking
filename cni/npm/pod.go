@@ -25,7 +25,6 @@ func isRunning(podObj *corev1.Pod) bool {
 
 // AddPod handles add pod.
 func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
-
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
@@ -65,7 +64,9 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 			return nil
 		}
 		labelKeys = append(labelKeys, labelKey)
-		ipsMgr.Add(labelKey, podIP)
+		if err := ipsMgr.Add(labelKey, podIP); err != nil {
+			return err
+		}
 	}
 
 	for _, np := range ns.npQueue {
@@ -78,19 +79,14 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 			for _, labelKey := range labelKeys {
 				fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
+				// Create rule for all matching labels.
+				/*
+					if err := iptMgr.Add(labelKey); err != nil {
+						fmt.Printf("Error creating iptables rule.\n")
+						return err
+					}
+				*/
 			}
-			// Create rule for all matching labels.
-
-			/*
-				rule, err = iptMgr.Create(np, npMgr.ipSet)
-				if err != nil {
-					fmt.Printf("Error creating rule.\n")
-				}
-
-				if err = iptMgr.Apply(rule); err != nil {
-					fmt.Printf("Error applying rule.\n")
-				}
-			*/
 		}
 	}
 
