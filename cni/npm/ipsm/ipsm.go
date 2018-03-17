@@ -44,7 +44,7 @@ func (ipsMgr *IpsetManager) Add(key string, val string) {
 		ipsMgr.entryMap[key] = &ipsEntry{
 			operationFlag: "-N",
 			set:           key,
-			spec:          val,
+			spec:          "nethash",
 		}
 	} else {
 		ipsMgr.entryMap[key].spec += val
@@ -65,7 +65,7 @@ func (ipsMgr *IpsetManager) create(entry *ipsEntry) error {
 		err    error
 	)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Println(os.Stderr, "There was an error running git rev-parse command: ", err)
+		fmt.Println(os.Stderr, "There was an error running command: ", err)
 		return err
 	}
 	fmt.Printf("%s", string(cmdOut))
