@@ -20,7 +20,7 @@ type iptEntry struct {
 	operationFlag string
 	chain         string
 	flag          string
-	spec          string
+	specs         []string
 }
 
 // IptablesManager stores iptables entries.
@@ -44,8 +44,8 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 		iptMgr.entryMap[entryName] = &iptEntry{
 			name:          entryName,
 			operationFlag: "-I",
-			chain:         "FORWARD", //TODO: take dependency on ingress/egress. We also need create our own chain.
-			spec:          "-j DROP", //TODO: take dependency on network policy.
+			chain:         "FORWARD",              //TODO: take dependency on ingress/egress. We also need create our own chain.
+			specs:         []string{"-j", "DROP"}, //TODO: take dependency on network policy.
 		}
 	}
 
@@ -60,7 +60,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 // create execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) create(entry *iptEntry) error {
 	cmdName := "iptables"
-	cmdArgs := []string{entry.operationFlag, entry.chain, entry.spec}
+	cmdArgs := append([]string{entry.operationFlag, entry.chain}, entry.specs...)
 	var (
 		cmdOut []byte
 		err    error
