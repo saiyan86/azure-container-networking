@@ -19,6 +19,7 @@ type iptEntry struct {
 	name          string
 	operationFlag string
 	chain         string
+	flag          string
 	spec          string
 }
 
@@ -42,7 +43,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 	if !exists {
 		iptMgr.entryMap[entryName] = &iptEntry{
 			name:          entryName,
-			operationFlag: "-A",
+			operationFlag: "-I",
 			chain:         "FORWARD", //TODO: take dependency on ingress/egress. We also need create our own chain.
 			spec:          "-j DROP", //TODO: take dependency on network policy.
 		}
