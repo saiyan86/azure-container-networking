@@ -17,7 +17,6 @@ type portsInfo struct {
 }
 
 func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
-	entries := iptMgr.entryMap[ipsetName]
 	var protAndPortsSlice []*portsInfo
 	for _, rule := range rules {
 		for _, portInfoFromRule := range rule.Ports {
@@ -36,7 +35,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			chain:         "FORWARD",
 			specs:         []string{"-p", protAndPorts.protocol, protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
-		entries = append(entries, entry)
+		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], entry)
 	}
 
 	for _, ent := range iptMgr.entryMap[ipsetName] {
