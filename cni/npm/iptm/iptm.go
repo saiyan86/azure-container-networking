@@ -25,13 +25,13 @@ type iptEntry struct {
 
 // IptablesManager stores iptables entries.
 type IptablesManager struct {
-	entryMap map[string]*iptEntry
+	entryMap map[string][]*iptEntry
 }
 
 // NewIptablesManager creates a new instance for IptablesManager object.
 func NewIptablesManager() *IptablesManager {
 	iptMgr := &IptablesManager{
-		entryMap: make(map[string]*iptEntry),
+		entryMap: make(map[string][]*iptEntry),
 	}
 
 	return iptMgr
@@ -39,19 +39,29 @@ func NewIptablesManager() *IptablesManager {
 
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPolicy) error {
+	var err error
+
 	_, exists := iptMgr.entryMap[entryName]
 	if !exists {
-		iptMgr.entryMap[entryName] = &iptEntry{
-			name:          entryName,
-			operationFlag: "-I",
-			chain:         "FORWARD",              //TODO: take dependency on ingress/egress. We also need create our own chain.
-			specs:         []string{"-j", "DROP"}, //TODO: take dependency on network policy.
+		err = iptMgr.parsePolicy(entryName, np)
+		if err != nil {
+			fmt.Printf("Error parsing network policy for iptables.\n")
 		}
+		/*
+			&iptEntry{
+				name:          entryName,
+				operationFlag: "-I",
+				chain:         "FORWARD",              //TODO: take dependency on ingress/egress. We also need create our own chain.
+				specs:         []string{"-j", "DROP"}, //TODO: take dependency on network policy.
+			}
+		*/
 	}
 
-	if err := iptMgr.create(iptMgr.entryMap[entryName]); err != nil {
-		fmt.Printf("Error creating ipset rules.\n")
-		return err
+	for _, entry := range iptMgr.entryMap[entryName] {
+		if err := iptMgr.create(entry); err != nil {
+			fmt.Printf("Error creating ipset rules.\n")
+			return err
+		}
 	}
 
 	return nil
