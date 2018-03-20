@@ -51,6 +51,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 
 	// Create iptalbes rules for every entry in the entryMap.
 	for _, entry := range iptMgr.entryMap[entryName] {
+		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.create(entry); err != nil {
 			fmt.Printf("Error creating ipset rules.\n")
 			return err
