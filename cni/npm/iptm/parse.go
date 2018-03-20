@@ -39,6 +39,10 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		entries = append(entries, entry)
 	}
 
+	for _, ent := range iptMgr.entryMap[ipsetName] {
+		fmt.Printf("%+v\n", ent)
+	}
+
 	return nil
 }
 
