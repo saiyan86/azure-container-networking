@@ -16,14 +16,15 @@ type portsInfo struct {
 	port     string
 }
 
-func (iptMgr *IptablesManager) parseIngress(ipsetName string, entries []*iptEntry, rules []networkingv1.NetworkPolicyIngressRule) error {
+func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
+	entries := iptMgr.entryMap[ipsetName]
 	var protAndPortsSlice []*portsInfo
 	for _, rule := range rules {
-		for _, portInfo := range rule.Ports {
+		for _, portInfoFromRule := range rule.Ports {
 			protAndPortsSlice = append(protAndPortsSlice,
 				&portsInfo{
-					protocol: string(*portInfo.Protocol),
-					port:     fmt.Sprint(portInfo.Port.IntVal),
+					protocol: string(*portInfoFromRule.Protocol),
+					port:     fmt.Sprint(portInfoFromRule.Port.IntVal),
 				})
 		}
 	}
@@ -41,19 +42,19 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, entries []*iptEntr
 	return nil
 }
 
-func (iptMgr *IptablesManager) parseEgress(ipsetName string, entries []*iptEntry, rules []networkingv1.NetworkPolicyEgressRule) error {
+func (iptMgr *IptablesManager) parseEgress(ipsetName string, rules []networkingv1.NetworkPolicyEgressRule) error {
 
 	return nil
 }
 
 // ParsePolicy parses network policy.
 func (iptMgr *IptablesManager) parsePolicy(ipsetName string, np *networkingv1.NetworkPolicy) error {
-	if err := iptMgr.parseIngress(ipsetName, iptMgr.entryMap[ipsetName], np.Spec.Ingress); err != nil {
+	if err := iptMgr.parseIngress(ipsetName, np.Spec.Ingress); err != nil {
 		fmt.Printf("Error parsing ingress rule for iptables\n")
 		return err
 	}
 
-	if err := iptMgr.parseEgress(ipsetName, iptMgr.entryMap[ipsetName], np.Spec.Egress); err != nil {
+	if err := iptMgr.parseEgress(ipsetName, np.Spec.Egress); err != nil {
 		fmt.Printf("Error parsing egress rule for iptables\n")
 		return err
 	}
