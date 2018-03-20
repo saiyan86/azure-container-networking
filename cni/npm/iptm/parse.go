@@ -23,7 +23,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, entries []*iptEntr
 			protAndPortsSlice = append(protAndPortsSlice,
 				&portsInfo{
 					protocol: string(*portInfo.Protocol),
-					port:     portInfo.Port.StrVal,
+					port:     fmt.Sprint(portInfo.Port.IntVal),
 				})
 		}
 	}
@@ -36,7 +36,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, entries []*iptEntr
 			specs:         []string{"-p", protAndPorts.protocol, protAndPorts.port},
 		}
 		entries = append(entries, entry)
-		fmt.Printf("%+v", entry)
+		fmt.Printf("%+v\n", entry)
 	}
 
 	return nil
