@@ -33,10 +33,9 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, entries []*iptEntr
 			name:          ipsetName,
 			operationFlag: "-A",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, protAndPorts.port},
+			specs:         []string{"-p", protAndPorts.protocol, protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
 		entries = append(entries, entry)
-		fmt.Printf("%+v\n", entry)
 	}
 
 	return nil

@@ -47,16 +47,9 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 		if err != nil {
 			fmt.Printf("Error parsing network policy for iptables.\n")
 		}
-		/*
-			&iptEntry{
-				name:          entryName,
-				operationFlag: "-I",
-				chain:         "FORWARD",              //TODO: take dependency on ingress/egress. We also need create our own chain.
-				specs:         []string{"-j", "DROP"}, //TODO: take dependency on network policy.
-			}
-		*/
 	}
 
+	// Create iptalbes rules for every entry in the entryMap.
 	for _, entry := range iptMgr.entryMap[entryName] {
 		if err := iptMgr.create(entry); err != nil {
 			fmt.Printf("Error creating ipset rules.\n")
