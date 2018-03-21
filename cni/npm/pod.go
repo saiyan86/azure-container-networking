@@ -23,10 +23,19 @@ func isRunning(podObj *corev1.Pod) bool {
 		podObj.Status.Phase != "Unknown"
 }
 
+func isSystemPod(podObj *corev1.Pod) bool {
+	return podObj.ObjectMeta.Namespace == "kube-system"
+}
+
 // AddPod handles add pod.
 func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
+
+	// Don't deal with system pods.
+	if isSystemPod(podObj) {
+		return nil
+	}
 
 	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
 	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabels)
