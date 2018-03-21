@@ -74,6 +74,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
 		if err != nil {
 			fmt.Printf("Error converting label selector\n")
+			return err
 		}
 		if selector.Matches(labels.Set(podLabels)) {
 			fmt.Printf("--------------found matching policy-----------------\n")

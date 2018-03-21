@@ -38,8 +38,8 @@ func main() {
 	}
 
 	factory := informers.NewSharedInformerFactory(clientset, time.Hour*24)
-	npm := npm.NewNetworkPolicyManager(clientset, factory)
-	err = npm.Run(wait.NeverStop)
+	npMgr := npm.NewNetworkPolicyManager(clientset, factory)
+	err = npMgr.Run(wait.NeverStop)
 	if err != nil {
 		fmt.Printf("[cni-npm] npm failed with error %v.\n", err)
 		panic(err.Error)
