@@ -33,7 +33,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			name:          ipsetName,
 			operationFlag: "-A",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, "--sport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
+			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], entry)
 	}
