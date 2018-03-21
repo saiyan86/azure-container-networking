@@ -31,7 +31,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 	for _, protAndPorts := range protAndPortsSlice {
 		entry := &iptEntry{
 			name:          ipsetName,
-			operationFlag: "-A",
+			operationFlag: "-I",
 			chain:         "FORWARD",
 			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
 		}
