@@ -8,15 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-/*
-type podMgr interface {
-	AddPod(obj *corev1.Pod) error
-	UpdatePod(old *corev1.Pod, new *corev1.Pod) error
-	DeletePod(obj *corev1.Pod) error
-}
-*/
-// func (npc *controller) AddPod(obj *coreapi.Pod) error {
-
 func isRunning(podObj *corev1.Pod) bool {
 	return podObj.Status.Phase != "Failed" &&
 		podObj.Status.Phase != "Succeeded" &&

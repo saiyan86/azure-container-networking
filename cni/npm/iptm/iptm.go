@@ -8,13 +8,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
-// IPManager interface manages iptables and ipset.
-type IPManager interface {
-	Create() error
-	//	Delete() error
-	//	Apply() error
-}
-
 type iptEntry struct {
 	name          string
 	operationFlag string
