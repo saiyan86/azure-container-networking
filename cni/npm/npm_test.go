@@ -20,6 +20,8 @@ func TestAddPod(t *testing.T) {
 		Status: corev1.PodStatus{PodIP: fooPodIP},
 	}
 
-	err := npMgr.AddPod(podFoo)
+	if err := npMgr.AddPod(podFoo); err != nil {
+		t.Errorf("Addpod failed")
+	}
 
 }
