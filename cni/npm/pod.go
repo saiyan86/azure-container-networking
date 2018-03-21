@@ -31,6 +31,21 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
 	fmt.Printf("POD CREATED: %s/%s/%s%+v\n", podNs, podName, podNodeName, podLabels)
 
+	// Add pod to ipset
+	podIP := podObj.Status.PodIP
+	ipsMgr := npMgr.ipsMgr
+	var labelKeys []string
+	for podLabelKey, podLabelVal := range podLabels {
+		labelKey := podLabelKey + podLabelVal
+		if ipsMgr.Exists(labelKey, podIP) {
+			return nil
+		}
+		labelKeys = append(labelKeys, labelKey)
+		if err := ipsMgr.Add(labelKey, podIP); err != nil {
+			return err
+		}
+	}
+
 	// Check if the pod is local
 	if podObj.Spec.NodeName != npMgr.nodeName {
 		return nil
@@ -52,22 +67,8 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
-	ipsMgr := npMgr.ipsMgr
 	iptMgr := npMgr.iptMgr
 	exists = false
-	podIP := podObj.Status.PodIP
-
-	var labelKeys []string
-	for podLabelKey, podLabelVal := range podLabels {
-		labelKey := podLabelKey + podLabelVal
-		if ipsMgr.Exists(labelKey, podIP) {
-			return nil
-		}
-		labelKeys = append(labelKeys, labelKey)
-		if err := ipsMgr.Add(labelKey, podIP); err != nil {
-			return err
-		}
-	}
 
 	for _, np := range ns.npQueue {
 		selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
