@@ -11,7 +11,7 @@ import (
 )
 
 func TestParseIngress(t *testing.T) {
-	var iptMgr iptm.IptablesManager
+	var iptMgr IptablesManager
 
 	ruleOne := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{{
@@ -20,7 +20,6 @@ func TestParseIngress(t *testing.T) {
 			},
 		}},
 		Ports: []networkingv1.NetworkPolicyPort{{
-			Protocol: &corev1.Protocol{"tcp"},
 			Port: &intstr.IntOrString{
 				StrVal: "8000",
 			},
@@ -34,7 +33,6 @@ func TestParseIngress(t *testing.T) {
 			},
 		}},
 		Ports: []networkingv1.NetworkPolicyPort{{
-			Protocol: &corev1.Protocol{"udp"},
 			Port: &intstr.IntOrString{
 				StrVal: "8001",
 			},
