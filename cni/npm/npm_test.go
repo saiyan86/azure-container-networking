@@ -5,17 +5,14 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 )
 
 func TestAddPod(t *testing.T) {
-	
+
 	npMgr := &NetworkPolicyManager{
-		clientset:       clientset,
-		informerFactory: informerFactory,
-		podInformer:     podInformer,
-		nsInformer:      nsInformer,
-		npInformer:      npInformer,
-		nodeName:        os.Getenv("HOSTNAME"),
 		nsMap:           make(map[string]*namespace),
 		ipsMgr:          ipsm.NewIpsetManager(),
 		iptMgr:          iptm.NewIptablesManager(),
