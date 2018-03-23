@@ -11,7 +11,9 @@ import (
 )
 
 func TestParseIngress(t *testing.T) {
-	var iptMgr IptablesManager
+	iptMgr := &IptablesManager{
+		entryMap: make(map[string][]*iptEntry),
+	}
 
 	tcp, udp := corev1.ProtocolTCP, corev1.ProtocolUDP
 	ruleOne := networkingv1.NetworkPolicyIngressRule{
