@@ -39,13 +39,13 @@ func TestParseIngress(t *testing.T) {
 		From: []networkingv1.NetworkPolicyPeer{
 			PodSelector : &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": "test"},
-			}.
+			},
 		},
 		Ports: []networkingv1.NetworkPolicyPort{
 			Protocol: &networkingv1.Protocol{"tcp"},
 			Port: &intstr.IntOrString{
 				StrVal: "8000"
-			}
+			},
 		},
 	}
 
@@ -53,13 +53,13 @@ func TestParseIngress(t *testing.T) {
 		From: []networkingv1.NetworkPolicyPeer{
 			PodSelector : &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": "test"},
-			}.
+			},
 		},
 		Ports: []networkingv1.NetworkPolicyPort{
 			Protocol: &networkingv1.Protocol{"udp"},
 			Port: &intstr.IntOrString{
 				StrVal: "8001"
-			}
+			},
 		},
 	}	
 
