@@ -44,7 +44,7 @@ func TestParseIngress(t *testing.T) {
 		Ports: []networkingv1.NetworkPolicyPort{
 			Protocol: &networkingv1.Protocol{"tcp"},
 			Port: &intstr.IntOrString{
-				StrVal: "8000"
+				StrVal: "8000",
 			},
 		},
 	}
@@ -58,7 +58,7 @@ func TestParseIngress(t *testing.T) {
 		Ports: []networkingv1.NetworkPolicyPort{
 			Protocol: &networkingv1.Protocol{"udp"},
 			Port: &intstr.IntOrString{
-				StrVal: "8001"
+				StrVal: "8001",
 			},
 		},
 	}	
