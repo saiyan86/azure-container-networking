@@ -3,6 +3,7 @@ package iptm
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -12,6 +13,7 @@ import (
 func TestParseIngress(t *testing.T) {
 	var iptMgr IptablesManager
 
+	tcp, udp := corev1.ProtocolTCP, corev1.ProtocolUDP
 	ruleOne := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{{
 			PodSelector : &metav1.LabelSelector{
@@ -19,6 +21,7 @@ func TestParseIngress(t *testing.T) {
 			},
 		}},
 		Ports: []networkingv1.NetworkPolicyPort{{
+			Protocol: &tcp,
 			Port: &intstr.IntOrString{
 				StrVal: "8000",
 			},
@@ -32,6 +35,7 @@ func TestParseIngress(t *testing.T) {
 			},
 		}},
 		Ports: []networkingv1.NetworkPolicyPort{{
+			Protocol: &udp,
 			Port: &intstr.IntOrString{
 				StrVal: "8001",
 			},
