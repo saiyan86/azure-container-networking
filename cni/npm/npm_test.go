@@ -5,11 +5,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	//"github.com/Azure/azure-container-networking/cni/npm/ipsm"
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 )
 
 func TestAddPod(t *testing.T) {
