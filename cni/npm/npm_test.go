@@ -8,7 +8,18 @@ import (
 )
 
 func TestAddPod(t *testing.T) {
-	var npMgr NetworkPolicyManager
+	
+	npMgr := &NetworkPolicyManager{
+		clientset:       clientset,
+		informerFactory: informerFactory,
+		podInformer:     podInformer,
+		nsInformer:      nsInformer,
+		npInformer:      npInformer,
+		nodeName:        os.Getenv("HOSTNAME"),
+		nsMap:           make(map[string]*namespace),
+		ipsMgr:          ipsm.NewIpsetManager(),
+		iptMgr:          iptm.NewIptablesManager(),
+	}
 
 	testPodIP := "1.2.3.4"
 	testPod := &corev1.Pod{
