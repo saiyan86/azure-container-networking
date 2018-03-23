@@ -2,7 +2,6 @@ package iptm
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 
 	networkingv1 "k8s.io/api/networking/v1"
