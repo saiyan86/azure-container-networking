@@ -8,7 +8,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 )
 
 func TestParseIngress(t *testing.T) {
