@@ -25,10 +25,11 @@ func TestAddPod(t *testing.T) {
 		Status: corev1.PodStatus{PodIP: testPodIP},
 	}
 
-	if err := npMgr.AddPod(testPod; err != nil {
+	if err := npMgr.AddPod(testPod); err != nil {
 		t.Errorf("TestAddPod failed")
 	}
 
+	return nil
 }
 
 func TestParseIngress(t *testing.T) {
