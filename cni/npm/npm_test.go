@@ -8,7 +8,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
+	//"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 )
 
@@ -28,8 +28,6 @@ func TestAddPod(t *testing.T) {
 	if err := npMgr.AddPod(testPod); err != nil {
 		t.Errorf("TestAddPod failed")
 	}
-
-	return nil
 }
 
 func TestParseIngress(t *testing.T) {
@@ -71,8 +69,5 @@ func TestParseIngress(t *testing.T) {
 
 	if err := iptMgr.parseIngress(ipsetName, rules); err != nil {
 		t.Errorf("TestParseIngress failed")
-		return err
 	}
-
-	return nil
 }
