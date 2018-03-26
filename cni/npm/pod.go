@@ -128,12 +128,20 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podLabelKey + podLabelVal
 		if ipsMgr.Exists(labelKey, podIP) {
-			if err := ipsMgr.Delete(labelKey, podIP); err != nil {
+			isSetEmpty := false
+			var err error
+			if isSetEmpty, err = ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
 				fmt.Printf("Error deleting pod from ipset.\n")
 				return err
 			}
+			if isSetEmpty {
+				if err = ipsMgr.DeleteSet(labelKey); err != nil {
+					fmt.Printf("Error deleting ipset.\n")
+					return err
+				}
+			}
 		}
-	}	
+	}
 
 	return nil
 }

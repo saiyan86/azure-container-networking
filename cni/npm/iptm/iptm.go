@@ -41,10 +41,10 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 		}
 	}
 
-	// Create iptalbes rules for every entry in the entryMap.
+	// Create iptables rules for every entry in the entryMap.
 	for _, entry := range iptMgr.entryMap[entryName] {
 		fmt.Printf("%+v\n", entry)
-		if err := iptMgr.create(entry); err != nil {
+		if err := iptMgr.Run(entry); err != nil {
 			fmt.Printf("Error creating ipset rules.\n")
 			return err
 		}
@@ -53,8 +53,8 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 	return nil
 }
 
-// create execute an iptables command to update iptables.
-func (iptMgr *IptablesManager) create(entry *iptEntry) error {
+// Run execute an iptables command to update iptables.
+func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 	cmdName := "iptables"
 	cmdArgs := append([]string{entry.operationFlag, entry.chain}, entry.specs...)
 	var (

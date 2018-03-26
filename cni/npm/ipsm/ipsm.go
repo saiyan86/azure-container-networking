@@ -46,16 +46,16 @@ func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
 			set:           setName,
 			spec:          "nethash",
 		}
-		if err := ipsMgr.create(ipsMgr.entryMap[setName]); err != nil {
+		if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 			fmt.Printf("Error creating ipset.\n")
 			return err
 		}
 	}
 
 	ipsMgr.entryMap[setName].operationFlag = "-A"
-	ipsMgr.entryMap[setName].spec = ip
+	ipsMgr.entryMap[setName].spec = ip //This only holds one ip for now. Actually there will be multiple IPs under one setName.
 
-	if err := ipsMgr.create(ipsMgr.entryMap[setName]); err != nil {
+	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
 		return err
 	}
@@ -63,8 +63,55 @@ func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
 	return nil
 }
 
-// create execute an ipset command to update ipset.
-func (ipsMgr *IpsetManager) create(entry *ipsEntry) error {
+// DeleteFromSet removes an ip from an entry in labelMap, and delete/update the corresponding ipset.
+func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) (bool, error) {
+	isEmpty := false
+
+	_, exists := ipsMgr.labelMap[setName]
+	if !exists {
+		return false, fmt.Errorf("ipset with name %s not found", setName)
+	}
+
+	for i, val := range ipsMgr.labelMap[setName] {
+		if val == ip {
+			ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName][:i], ipsMgr.labelMap[setName][i+1:]...)
+		}
+	}
+
+	if len(ipsMgr.labelMap[setName]) == 0 {
+		isEmpty = true
+	}
+
+	entry := &ipsEntry{
+		operationFlag: "-D",
+		set:           setName,
+		spec:          ip,
+	}
+
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating ipset rules.\n")
+		return isEmpty, err
+	}
+
+	return isEmpty, nil
+}
+
+// DeleteSet removes a set from ipset.
+func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
+	entry := &ipsEntry{
+		operationFlag: "-D",
+		set:           setName,
+	}
+
+	if err := ipsMgr.Run(entry); err != nil {
+		return fmt.Errorf("Error deleting ipset %s", setName)
+	}
+
+	return nil
+}
+
+// Run execute an ipset command to update ipset.
+func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	cmdName := "ipset"
 	cmdArgs := []string{entry.operationFlag, entry.set, entry.spec}
 	var (
