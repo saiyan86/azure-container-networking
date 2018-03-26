@@ -30,7 +30,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		}
 		for _, fromRule := range rule.From {
 			for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
-				podLabels = append(podLabels, podLabelKey + podLabelVal)
+				podLabels = append(podLabels, podLabelKey+podLabelVal)
 			}
 		}
 	}
@@ -40,7 +40,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			name:          ipsetName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], entry)
 	}
@@ -48,13 +48,13 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 	// Handle PodSelector field of NetworkPolicyPeer.
 	for _, label := range podLabels {
 		entry := &iptEntry{
-			name: label,
+			name:          label,
 			operationFlag: "-I",
-			chain: "FORWARD",
-			specs:         []string{"-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+			chain:         "FORWARD",
+			specs:         []string{"-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[label] = append(iptMgr.entryMap[label], entry)
-	} 
+	}
 
 	// TODO: Handle NamespaceSelector field of NetworkPolicyPeer.
 	// TODO: Handle IPBlock field of NetworkPolicyPeer.
