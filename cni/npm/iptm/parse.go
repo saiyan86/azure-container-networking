@@ -18,13 +18,20 @@ type portsInfo struct {
 
 func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
 	var protAndPortsSlice []*portsInfo
+	var podLabels []string
+	//TODO: handle NamesapceSelector & IPBlock
 	for _, rule := range rules {
-		for _, portInfoFromRule := range rule.Ports {
+		for _, portRule := range rule.Ports {
 			protAndPortsSlice = append(protAndPortsSlice,
 				&portsInfo{
-					protocol: string(*portInfoFromRule.Protocol),
-					port:     fmt.Sprint(portInfoFromRule.Port.IntVal),
+					protocol: string(*portRule.Protocol),
+					port:     fmt.Sprint(portRule.Port.IntVal),
 				})
+		}
+		for _, fromRule := range rule.From {
+			for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
+				podLabels = append(podLabels, podLabelKey + podLabelVal)
+			}
 		}
 	}
 
@@ -38,7 +45,19 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], entry)
 	}
 
-	//TODO: handle "from" field of ingress rules.
+	// Handle PodSelector field of NetworkPolicyPeer.
+	for _, label := range podLabels {
+		entry := &iptEntry{
+			name: label,
+			operationFlag: "-I",
+			chain: "FORWARD",
+			specs:         []string{"-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+		}
+		iptMgr.entryMap[label] = append(iptMgr.entryMap[label], entry)
+	} 
+
+	// TODO: Handle NamespaceSelector field of NetworkPolicyPeer.
+	// TODO: Handle IPBlock field of NetworkPolicyPeer.
 
 	return nil
 }

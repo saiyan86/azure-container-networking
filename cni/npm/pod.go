@@ -42,6 +42,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		}
 		labelKeys = append(labelKeys, labelKey)
 		if err := ipsMgr.Add(labelKey, podIP); err != nil {
+			fmt.Printf("Error Adding pod to ipset.\n")
 			return err
 		}
 	}
@@ -113,8 +114,26 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	podNs, podName, podNodeName := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName
+	// Don't deal with system pods.
+	if isSystemPod(podObj) {
+		return nil
+	}
+
+	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
 	fmt.Printf("POD DELETED: %s/%s/%s\n", podNs, podName, podNodeName)
+
+	// Delete pod from ipset
+	podIP := podObj.Status.PodIP
+	ipsMgr := npMgr.ipsMgr
+	for podLabelKey, podLabelVal := range podLabels {
+		labelKey := podLabelKey + podLabelVal
+		if ipsMgr.Exists(labelKey, podIP) {
+			if err := ipsMgr.Delete(labelKey, podIP); err != nil {
+				fmt.Printf("Error deleting pod from ipset.\n")
+				return err
+			}
+		}
+	}	
 
 	return nil
 }
