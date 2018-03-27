@@ -17,12 +17,12 @@ type portsInfo struct {
 }
 
 func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
-	var protAndPortsSlice []*portsInfo
+	var protPortPairSlice []*portsInfo
 	var podLabels []string
 	//TODO: handle NamesapceSelector & IPBlock
 	for _, rule := range rules {
 		for _, portRule := range rule.Ports {
-			protAndPortsSlice = append(protAndPortsSlice,
+			protPortPairSlice = append(protPortPairSlice,
 				&portsInfo{
 					protocol: string(*portRule.Protocol),
 					port:     fmt.Sprint(portRule.Port.IntVal),
@@ -35,12 +35,12 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		}
 	}
 
-	for _, protAndPorts := range protAndPortsSlice {
+	for _, protPortPair := range protPortPairSlice {
 		srcEntry := &iptEntry{
 			name:          ipsetName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, "--sport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], srcEntry)
 
@@ -48,7 +48,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			name:          ipsetName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "dst", "-j", "ACCEPT"},
+			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "dst", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], dstEntry)
 	}
