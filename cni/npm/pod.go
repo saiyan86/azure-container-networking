@@ -57,10 +57,6 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		return nil
 	}
 
-	if !isRunning(podObj) {
-		return nil
-	}
-
 	ns, exists := npMgr.nsMap[podNs]
 	if !exists {
 		newns, err := newNs(podNs)
