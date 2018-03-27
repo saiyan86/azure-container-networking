@@ -57,6 +57,7 @@ func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
+		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
 		return err
 	}
 
