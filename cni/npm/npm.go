@@ -87,7 +87,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 				npMgr.DeletePod(obj.(*corev1.Pod))
 			},
 		},
-		time.Second*1,
+		time.Second*10,
 	)
 
 	nsInformer.Informer().AddEventHandler(
