@@ -100,6 +100,15 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
+	// Don't deal with system pods.
+	if isSystemPod(newPod) {
+		return nil
+	}
+
+	if !isValidPod(newPod) {
+		return nil
+	}
+
 	oldPodNs, oldPodName, newPodStatus := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, newPod.Status.Phase
 
 	fmt.Printf(
