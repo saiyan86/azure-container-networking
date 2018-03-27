@@ -24,12 +24,12 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	if !isValidPod(podObj) {
+	// Don't deal with system pods.
+	if isSystemPod(podObj) {
 		return nil
 	}
 
-	// Don't deal with system pods.
-	if isSystemPod(podObj) {
+	if !isValidPod(podObj) {
 		return nil
 	}
 
@@ -103,7 +103,7 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 	oldPodNs, oldPodName, newPodStatus := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, newPod.Status.Phase
 
 	fmt.Printf(
-		"POD UPDATED. %s/%s %s",
+		"POD UPDATED. %s/%s %s\n",
 		oldPodNs, oldPodName, newPodStatus,
 	)
 
