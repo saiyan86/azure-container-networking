@@ -36,13 +36,21 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 	}
 
 	for _, protAndPorts := range protAndPortsSlice {
-		entry := &iptEntry{
+		srcEntry := &iptEntry{
 			name:          ipsetName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
-			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+			specs:         []string{"-p", protAndPorts.protocol, "--sport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
 		}
-		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], entry)
+		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], srcEntry)
+
+		dstEntry := &iptEntry{
+			name:          ipsetName,
+			operationFlag: "-I",
+			chain:         "FORWARD",
+			specs:         []string{"-p", protAndPorts.protocol, "--dport", protAndPorts.port, "-m", "set", "--match-set", ipsetName, "dst", "-j", "ACCEPT"},
+		}
+		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], dstEntry)
 	}
 
 	// Handle PodSelector field of NetworkPolicyPeer.
