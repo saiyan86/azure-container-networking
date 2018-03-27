@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -73,7 +74,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 		iptMgr:          iptm.NewIptablesManager(),
 	}
 
-	podInformer.Informer().AddEventHandler(
+	podInformer.Informer().AddEventHandlerWithResyncPeriod(
 		// Pod event handlers
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
@@ -86,6 +87,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 				npMgr.DeletePod(obj.(*corev1.Pod))
 			},
 		},
+		time.Second*1,
 	)
 
 	nsInformer.Informer().AddEventHandler(
