@@ -117,6 +117,7 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 	)
 
 	fmt.Printf("calling add pod\n")
+	npMgr.Unlock()
 	npMgr.AddPod(newPod)
 
 	return nil
