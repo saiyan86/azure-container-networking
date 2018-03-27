@@ -8,10 +8,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func isRunning(podObj *corev1.Pod) bool {
+func isValidPod(podObj *corev1.Pod) bool {
 	return podObj.Status.Phase != "Failed" &&
 		podObj.Status.Phase != "Succeeded" &&
-		podObj.Status.Phase != "Unknown"
+		podObj.Status.Phase != "Unknown" &&
+		len(podObj.Status.PodIP) > 0
 }
 
 func isSystemPod(podObj *corev1.Pod) bool {
@@ -22,6 +23,10 @@ func isSystemPod(podObj *corev1.Pod) bool {
 func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
+
+	if !isValidPod(podObj) {
+		return nil
+	}
 
 	// Don't deal with system pods.
 	if isSystemPod(podObj) {
