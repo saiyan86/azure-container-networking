@@ -109,11 +109,11 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 		return nil
 	}
 
-	oldPodNs, oldPodName, newPodStatus := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, newPod.Status.Phase
+	oldPodNs, oldPodName, newPodStatus, newPodIP := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, newPod.Status.Phase, newPod.Status.PodIP
 
 	fmt.Printf(
-		"POD UPDATED. %s/%s %s\n",
-		oldPodNs, oldPodName, newPodStatus,
+		"POD UPDATED. %s/%s %s %s\n",
+		oldPodNs, oldPodName, newPodStatus, newPodIP,
 	)
 
 	//fmt.Printf("calling add pod\n")
