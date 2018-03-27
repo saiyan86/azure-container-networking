@@ -41,6 +41,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 			return nil
 		}
 		labelKeys = append(labelKeys, labelKey)
+		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
 		if err := ipsMgr.Add(labelKey, podIP); err != nil {
 			fmt.Printf("Error Adding pod to ipset.\n")
 			return err
