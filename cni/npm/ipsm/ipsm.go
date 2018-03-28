@@ -35,10 +35,8 @@ func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 	return false
 }
 
-// Add insert an ip to an entry in labelMap, and create/update the corresponding ipset.
-func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
-	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
-
+// Create creates an ipset.
+func (ipsMgr *IpsetManager) Create(setName string) error {
 	_, exists := ipsMgr.entryMap[setName]
 	if !exists {
 		ipsMgr.entryMap[setName] = &ipsEntry{
@@ -51,6 +49,15 @@ func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+// Add insert an ip to an entry in labelMap, and create/update the corresponding ipset.
+func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
+	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
+
+	ipsMgr.Create(setName)
 
 	ipsMgr.entryMap[setName].operationFlag = "-A"
 	ipsMgr.entryMap[setName].spec = ip //This only holds one ip for now. Actually there will be multiple IPs under one setName.
