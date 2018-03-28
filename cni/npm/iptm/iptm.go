@@ -7,6 +7,9 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
+const iptablesInsertionFlag string = "-I"
+const iptablesDeletionFlag string = "-D"
+
 type iptEntry struct {
 	name          string
 	operationFlag string
@@ -17,7 +20,8 @@ type iptEntry struct {
 
 // IptablesManager stores iptables entries.
 type IptablesManager struct {
-	entryMap map[string][]*iptEntry
+	entryMap      map[string][]*iptEntry
+	operationFlag string
 }
 
 // NewIptablesManager creates a new instance for IptablesManager object.
@@ -31,17 +35,37 @@ func NewIptablesManager() *IptablesManager {
 
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPolicy) error {
-	var err error
-
 	_, exists := iptMgr.entryMap[entryName]
 	if !exists {
-		err = iptMgr.parsePolicy(entryName, np)
-		if err != nil {
+		if err := iptMgr.parsePolicy(entryName, np); err != nil {
 			fmt.Printf("Error parsing network policy for iptables.\n")
 		}
 	}
 
 	// Create iptables rules for every entry in the entryMap.
+	iptMgr.operationFlag = iptablesInsertionFlag
+	for _, entry := range iptMgr.entryMap[entryName] {
+		fmt.Printf("%+v\n", entry)
+		if err := iptMgr.Run(entry); err != nil {
+			fmt.Printf("Error creating ipset rules.\n")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Delete removes an entry from entryMap, and deletes the corresponding iptables rule.
+func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.NetworkPolicy) error {
+	_, exists := iptMgr.entryMap[entryName]
+	if !exists {
+		if err := iptMgr.parsePolicy(entryName, np); err != nil {
+			fmt.Printf("Error parsing network policy for iptables.\n")
+		}
+	}
+
+	// Create iptables rules for every entry in the entryMap.
+	iptMgr.operationFlag = iptablesDeletionFlag
 	for _, entry := range iptMgr.entryMap[entryName] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
@@ -56,7 +80,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 	cmdName := "iptables"
-	cmdArgs := append([]string{entry.operationFlag, entry.chain}, entry.specs...)
+	cmdArgs := append([]string{iptMgr.operationFlag, entry.chain}, entry.specs...)
 	var (
 		cmdOut []byte
 		err    error

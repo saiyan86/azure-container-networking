@@ -57,7 +57,9 @@ func (ipsMgr *IpsetManager) Create(setName string) error {
 func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
 	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
-	ipsMgr.Create(setName)
+	if err := ipsMgr.Create(setName); err != nil {
+		return err
+	}
 
 	ipsMgr.entryMap[setName].operationFlag = "-A"
 	ipsMgr.entryMap[setName].spec = ip //This only holds one ip for now. Actually there will be multiple IPs under one setName.
@@ -97,7 +99,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) (bool, erro
 	}
 
 	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating ipset rules.\n")
+		fmt.Printf("Error deleing ipset entry.\n")
 		return isEmpty, err
 	}
 
