@@ -35,29 +35,57 @@ func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 	return false
 }
 
-// Create creates an ipset.
-func (ipsMgr *IpsetManager) Create(setName string) error {
-	_, exists := ipsMgr.entryMap[setName]
-	if !exists {
-		ipsMgr.entryMap[setName] = &ipsEntry{
-			operationFlag: "-N",
-			set:           setName,
-			spec:          "nethash",
-		}
-		if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
-			fmt.Printf("Error creating ipset.\n")
-			return err
-		}
+// CreateList creates an ipset list.
+func (ipsMgr *IpsetManager) CreateList(setListName string) error {
+	entry := &ipsEntry{
+		operationFlag: "-N",
+		set:           setListName,
+		spec:          "setlist",
+	}
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating ipset.\n")
+		return err
 	}
 
 	return nil
 }
 
-// Add insert an ip to an entry in labelMap, and create/update the corresponding ipset.
-func (ipsMgr *IpsetManager) Add(setName string, ip string) error {
+// Create creates an ipset.
+func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
+	_, exists := ipsMgr.entryMap[setName]
+	if exists {
+		return nil
+	}
+
+	ipsMgr.entryMap[setName] = &ipsEntry{
+		operationFlag: "-N",
+		set:           setName,
+		spec:          "nethash",
+	}
+	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
+		fmt.Printf("Error creating ipset.\n")
+		return err
+	}
+
+	// Add this ipset to the namespace's ipset list.
+	entry := &ipsEntry{
+		operationFlag: "-A",
+		set:           namespace,
+		spec:          setName,
+	}
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating ipset.\n")
+		return err
+	}
+
+	return nil
+}
+
+// Add inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
+func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) error {
 	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
-	if err := ipsMgr.Create(setName); err != nil {
+	if err := ipsMgr.Create(namespace, setName); err != nil {
 		return err
 	}
 

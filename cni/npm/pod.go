@@ -51,13 +51,13 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	ipsMgr := ns.ipsMgr
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
-		labelKey := podLabelKey + podLabelVal
+		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		if ipsMgr.Exists(labelKey, podIP) {
 			return nil
 		}
 		labelKeys = append(labelKeys, labelKey)
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
-		if err := ipsMgr.Add(labelKey, podIP); err != nil {
+		if err := ipsMgr.Add(podNs, labelKey, podIP); err != nil {
 			fmt.Printf("Error Adding pod to ipset.\n")
 			return err
 		}
