@@ -32,21 +32,38 @@ func newNs(name string) (*namespace, error) {
 	return ns, nil
 }
 
+func isSystemNs(nsObj *corev1.Namespace) bool {
+	return nsObj.ObjectMeta.Name == "kube-system"
+}
+
 // AddNamespace handles add name space.
 func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
+	// Don't deal with kube-system namespace
+	if isSystemNs(nsObj) {
+		return nil
+	}
+
 	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
 
-	_, exists := npMgr.nsMap[nsName]
+	ns, exists := npMgr.nsMap[nsName]
 	if !exists {
 		newns, err := newNs(nsName)
 		if err != nil {
 			return err
 		}
 		npMgr.nsMap[nsName] = newns
+		ns = newns
+	}
+
+	// Create ipset list for the namespace.
+	ipsMgr := ns.ipsMgr
+	if err := ipsMgr.CreateList(nsName); err != nil {
+		fmt.Printf("Error creating ipset list %s.\n", nsName)
+		return err
 	}
 
 	return nil
