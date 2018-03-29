@@ -13,9 +13,6 @@ import (
 	networkinginformers "k8s.io/client-go/informers/networking/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-
-	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 )
 
 // NetworkPolicyManager contains informers for pod, namespace and networkpolicy.
@@ -30,8 +27,6 @@ type NetworkPolicyManager struct {
 
 	nodeName string
 	nsMap    map[string]*namespace
-	ipsMgr   *ipsm.IpsetManager
-	iptMgr   *iptm.IptablesManager
 }
 
 // Run starts shared informers and waits for the shared informer cache to sync.
@@ -70,8 +65,6 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 		npInformer:      npInformer,
 		nodeName:        os.Getenv("HOSTNAME"),
 		nsMap:           make(map[string]*namespace),
-		ipsMgr:          ipsm.NewIpsetManager(),
-		iptMgr:          iptm.NewIptablesManager(),
 	}
 
 	podInformer.Informer().AddEventHandlerWithResyncPeriod(

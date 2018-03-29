@@ -3,6 +3,8 @@ package npm
 import (
 	"fmt"
 
+	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
+	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
@@ -13,6 +15,8 @@ type namespace struct {
 	name    string
 	podMap  map[types.UID]*corev1.Pod
 	npQueue []*networkingv1.NetworkPolicy // TODO: Optimize to ordered map.
+	ipsMgr  *ipsm.IpsetManager
+	iptMgr  *iptm.IptablesManager
 }
 
 // newNS constructs a new namespace object.
@@ -21,6 +25,8 @@ func newNs(name string) (*namespace, error) {
 		name:    name,
 		podMap:  make(map[types.UID]*corev1.Pod),
 		npQueue: []*networkingv1.NetworkPolicy{},
+		ipsMgr:  ipsm.NewIpsetManager(),
+		iptMgr:  iptm.NewIptablesManager(),
 	}
 
 	return ns, nil

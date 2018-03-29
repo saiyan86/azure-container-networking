@@ -28,7 +28,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	ns.npQueue = append(ns.npQueue, npObj) //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	// Creates ipset for specified labels.
-	ipsMgr := npMgr.ipsMgr
+	ipsMgr := ns.ipsMgr
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range selector.MatchLabels {
 		labelKey := podLabelKey + podLabelVal
@@ -43,7 +43,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		}
 	}
 
-	iptMgr := npMgr.iptMgr
+	iptMgr := ns.iptMgr
 	for _, labelKey := range labelKeys {
 		fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
 		// Create rule for all matching labels.
@@ -81,8 +81,18 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		labelKeys = append(labelKeys, podLabelKey+podLabelVal)
 	}
 
+	ns, exists := npMgr.nsMap[npNs]
+	if !exists {
+		newns, err := newNs(npNs)
+		if err != nil {
+			return err
+		}
+		npMgr.nsMap[npNs] = newns
+		ns = newns
+	}
+
 	//Remove iptables rules associated with those labels.
-	iptMgr := npMgr.iptMgr
+	iptMgr := ns.iptMgr
 	for _, labelKey := range labelKeys {
 		fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
 		// Create rule for all matching labels.

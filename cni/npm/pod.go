@@ -36,8 +36,19 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	podNs, podName, podNodeName, podLabels, podIP := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels, podObj.Status.PodIP
 	fmt.Printf("POD CREATED: %s/%s/%s%+v%s\n", podNs, podName, podNodeName, podLabels, podIP)
 
+	ns, exists := npMgr.nsMap[podNs]
+	if !exists {
+		newns, err := newNs(podNs)
+		if err != nil {
+			return err
+		}
+		npMgr.nsMap[podNs] = newns
+		ns = newns
+	}
+	ns.podMap[podObj.ObjectMeta.UID] = podObj
+
 	// Add pod to ipset
-	ipsMgr := npMgr.ipsMgr
+	ipsMgr := ns.ipsMgr
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podLabelKey + podLabelVal
@@ -57,19 +68,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		return nil
 	}
 
-	ns, exists := npMgr.nsMap[podNs]
-	if !exists {
-		newns, err := newNs(podNs)
-		if err != nil {
-			return err
-		}
-		npMgr.nsMap[podNs] = newns
-		ns = newns
-	}
-
-	ns.podMap[podObj.ObjectMeta.UID] = podObj
-
-	iptMgr := npMgr.iptMgr
+	iptMgr := ns.iptMgr
 	exists = false
 
 	for _, np := range ns.npQueue {
@@ -136,9 +135,20 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
 	fmt.Printf("POD DELETED: %s/%s/%s\n", podNs, podName, podNodeName)
 
+	ns, exists := npMgr.nsMap[podNs]
+	if !exists {
+		newns, err := newNs(podNs)
+		if err != nil {
+			return err
+		}
+		npMgr.nsMap[podNs] = newns
+		ns = newns
+	}
+	delete(ns.podMap, podObj.ObjectMeta.UID)
+
 	// Delete pod from ipset
 	podIP := podObj.Status.PodIP
-	ipsMgr := npMgr.ipsMgr
+	ipsMgr := ns.ipsMgr
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podLabelKey + podLabelVal
 		if ipsMgr.Exists(labelKey, podIP) {
