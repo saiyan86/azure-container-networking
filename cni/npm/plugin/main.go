@@ -6,7 +6,6 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/npm"
 
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -38,11 +37,13 @@ func main() {
 	}
 
 	factory := informers.NewSharedInformerFactory(clientset, time.Hour*24)
-	npMgr := npm.NewNetworkPolicyManager(clientset, factory)
-	err = npMgr.Run(wait.NeverStop)
+	npm := npm.NewNetworkPolicyManager(factory)
+	stop := make(chan struct{})
+	defer close(stop)
+	err = npm.Run(stop)
 	if err != nil {
 		fmt.Printf("[cni-npm] npm failed with error %v.\n", err)
 		panic(err.Error)
 	}
-	select {}
+
 }
