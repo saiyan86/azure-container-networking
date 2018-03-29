@@ -81,5 +81,15 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		labelKeys = append(labelKeys, podLabelKey+podLabelVal)
 	}
 
+	//Remove iptables rules associated with those labels.
+	for _, labelKey := range labelKeys {
+		fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
+		// Create rule for all matching labels.
+		if err := iptMgr.Delete(labelKey, np); err != nil {
+			fmt.Printf("Error deleting iptables rule.\n")
+			return err
+		}
+	}
+
 	return nil
 }
