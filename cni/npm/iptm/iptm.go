@@ -12,6 +12,7 @@ const iptablesDeletionFlag string = "-D"
 
 type iptEntry struct {
 	name          string
+	hashedName    string
 	operationFlag string
 	chain         string
 	flag          string
