@@ -78,7 +78,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	//Gather labels associated with this network policy.
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range selector.MatchLabels {
-		labelKeys = append(labelKeys, podLabelKey+podLabelVal)
+		labelKeys = append(labelKeys, npNs+"-"+podLabelKey+":"+podLabelVal)
 	}
 
 	ns, exists := npMgr.nsMap[npNs]
