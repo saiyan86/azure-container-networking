@@ -7,6 +7,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
+const defaultPolicyKey = "default-azure-policy"
+
 type policyInfo struct {
 	name  string
 	ports []networkingv1.NetworkPolicyPort
@@ -17,7 +19,15 @@ type portsInfo struct {
 	port     string
 }
 
-func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
+func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rules []networkingv1.NetworkPolicyIngressRule) error {
+	// By default block all traffic.
+	defaultBlock := &iptEntry{
+		operationFlag: iptMgr.operationFlag,
+		chain:         "FORWARD",
+		specs:         []string{"-j", "REJECT"},
+	}
+	iptMgr.entryMap[defaultPolicyKey] = append(iptMgr.entryMap[defaultPolicyKey], defaultBlock)
+
 	var protPortPairSlice []*portsInfo
 	var podLabels []string
 	//TODO: handle NamesapceSelector & IPBlock
@@ -44,18 +54,18 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
 		}
-		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], srcEntry)
+		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], srcEntry)
 
 		dstEntry := &iptEntry{
 			name:          ipsetName,
 			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "ACCEPT"},
 		}
-		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], dstEntry)
+		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], dstEntry)
 	}
 
 	// Handle PodSelector field of NetworkPolicyPeer.
@@ -65,9 +75,9 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			hashedName:    hashedName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
-			specs:         []string{"-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
+			specs:         []string{"-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
 		}
-		iptMgr.entryMap[label] = append(iptMgr.entryMap[label], entry)
+		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], entry)
 	}
 
 	// TODO: Handle NamespaceSelector field of NetworkPolicyPeer.
@@ -76,19 +86,19 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 	return nil
 }
 
-func (iptMgr *IptablesManager) parseEgress(ipsetName string, rules []networkingv1.NetworkPolicyEgressRule) error {
+func (iptMgr *IptablesManager) parseEgress(ipsetName string, npName string, rules []networkingv1.NetworkPolicyEgressRule) error {
 
 	return nil
 }
 
 // ParsePolicy parses network policy.
 func (iptMgr *IptablesManager) parsePolicy(ipsetName string, np *networkingv1.NetworkPolicy) error {
-	if err := iptMgr.parseIngress(ipsetName, np.Spec.Ingress); err != nil {
+	if err := iptMgr.parseIngress(ipsetName, np.ObjectMeta.Namespace+"-"+np.ObjectMeta.Name, np.Spec.Ingress); err != nil {
 		fmt.Printf("Error parsing ingress rule for iptables\n")
 		return err
 	}
 
-	if err := iptMgr.parseEgress(ipsetName, np.Spec.Egress); err != nil {
+	if err := iptMgr.parseEgress(ipsetName, np.ObjectMeta.Namespace+"-"+np.ObjectMeta.Name, np.Spec.Egress); err != nil {
 		fmt.Printf("Error parsing egress rule for iptables\n")
 		return err
 	}
