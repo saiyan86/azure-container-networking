@@ -7,8 +7,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
-const defaultPolicyKey = "default-azure-policy"
-
 type policyInfo struct {
 	name  string
 	ports []networkingv1.NetworkPolicyPort
@@ -26,7 +24,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 		chain:         "FORWARD",
 		specs:         []string{"-j", "REJECT"},
 	}
-	iptMgr.entryMap[defaultPolicyKey] = append(iptMgr.entryMap[defaultPolicyKey], defaultBlock)
+	iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], defaultBlock)
 
 	var protPortPairSlice []*portsInfo
 	var podLabels []string
