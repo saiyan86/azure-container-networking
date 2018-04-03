@@ -2,7 +2,6 @@ package iptm
 
 import (
 	"fmt"
-	"hash/fnv"
 
 	networkingv1 "k8s.io/api/networking/v1"
 )
@@ -15,12 +14,6 @@ type policyInfo struct {
 type portsInfo struct {
 	protocol string
 	port     string
-}
-
-func hash(s string) string {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return fmt.Sprint(h.Sum32())
 }
 
 func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networkingv1.NetworkPolicyIngressRule) error {
@@ -42,24 +35,22 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		}
 	}
 
-	// Use hashed string for set name, and annotate the real set name.
-	hashedName := hash(ipsetName)
 	for _, protPortPair := range protPortPairSlice {
 		srcEntry := &iptEntry{
-			name:          hashedName,
+			name:          ipsetName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "comment", "\"", hashedName, "\"", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
 		}
-		iptMgr.entryMap[hashedName] = append(iptMgr.entryMap[hashedName], srcEntry)
+		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], srcEntry)
 
 		dstEntry := &iptEntry{
-			name:          hashedName,
+			name:          ipsetName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "comment", "\"", hashedName, "\"", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "dst", "-j", "REJECT"},
 		}
-		iptMgr.entryMap[hashedName] = append(iptMgr.entryMap[hashedName], dstEntry)
+		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], dstEntry)
 	}
 
 	// Handle PodSelector field of NetworkPolicyPeer.

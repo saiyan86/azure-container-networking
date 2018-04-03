@@ -2,6 +2,7 @@ package ipsm
 
 import (
 	"fmt"
+	"hash/fnv"
 	"os"
 	"os/exec"
 )
@@ -17,6 +18,13 @@ type ipsEntry struct {
 type IpsetManager struct {
 	entryMap map[string]*ipsEntry
 	labelMap map[string][]string //label -> []ip
+}
+
+// hash hashes a string to another string with length <= 32.
+func hash(s string) string {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return fmt.Sprint(h.Sum32())
 }
 
 // Exists checks if the ip exists in LabelMap.
@@ -35,7 +43,7 @@ func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 	return false
 }
 
-// CreateList creates an ipset list.
+// CreateList creates an ipset list. npm maintains one setlist per namespace.
 func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 	entry := &ipsEntry{
 		operationFlag: "-N",
@@ -52,6 +60,8 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 
 // Create creates an ipset.
 func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
+	// Use hashed string for set name, and annotate the real set name.
+	hashedName := hash(setName)
 	_, exists := ipsMgr.entryMap[setName]
 	if exists {
 		return nil
@@ -59,7 +69,7 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 
 	ipsMgr.entryMap[setName] = &ipsEntry{
 		operationFlag: "-N",
-		set:           setName,
+		set:           hashedName,
 		spec:          "nethash",
 	}
 	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
@@ -71,7 +81,7 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 	entry := &ipsEntry{
 		operationFlag: "-A",
 		set:           namespace,
-		spec:          setName,
+		spec:          hashedName,
 	}
 	if err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating ipset.\n")
