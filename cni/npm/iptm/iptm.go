@@ -36,7 +36,8 @@ func NewIptablesManager() *IptablesManager {
 
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPolicy) error {
-	_, exists := iptMgr.entryMap[entryName]
+	key := np.ObjectMeta.Namespace + "-" + np.ObjectMeta.Name
+	_, exists := iptMgr.entryMap[key]
 	if !exists {
 		if err := iptMgr.parsePolicy(entryName, np); err != nil {
 			fmt.Printf("Error parsing network policy for iptables.\n")
@@ -45,7 +46,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.operationFlag = iptablesInsertionFlag
-	for _, entry := range iptMgr.entryMap[entryName] {
+	for _, entry := range iptMgr.entryMap[key] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
 			fmt.Printf("Error creating ipset rules.\n")
@@ -58,7 +59,8 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 
 // Delete removes an entry from entryMap, and deletes the corresponding iptables rule.
 func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.NetworkPolicy) error {
-	_, exists := iptMgr.entryMap[entryName]
+	key := np.ObjectMeta.Namespace + "-" + np.ObjectMeta.Name
+	_, exists := iptMgr.entryMap[key]
 	if !exists {
 		if err := iptMgr.parsePolicy(entryName, np); err != nil {
 			fmt.Printf("Error parsing network policy for iptables.\n")
@@ -67,14 +69,14 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.operationFlag = iptablesDeletionFlag
-	for _, entry := range iptMgr.entryMap[entryName] {
+	for _, entry := range iptMgr.entryMap[key] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
 			fmt.Printf("Error creating ipset rules.\n")
 			return err
 		}
 	}
-	delete(iptMgr.entryMap, entryName)
+	delete(iptMgr.entryMap, key)
 
 	return nil
 }
