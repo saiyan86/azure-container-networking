@@ -3,6 +3,7 @@ package iptm
 import (
 	"fmt"
 
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
@@ -35,12 +36,14 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		}
 	}
 
+	// Use hashed string for set name to avoid string length limit of ipset.
+	hashedName := "azure-npm-" + util.Hash(ipsetName)
 	for _, protPortPair := range protPortPairSlice {
 		srcEntry := &iptEntry{
 			name:          ipsetName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "src", "-j", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], srcEntry)
 
@@ -48,7 +51,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 			name:          ipsetName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
-			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", ipsetName, "dst", "-j", "REJECT"},
+			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "REJECT"},
 		}
 		iptMgr.entryMap[ipsetName] = append(iptMgr.entryMap[ipsetName], dstEntry)
 	}
