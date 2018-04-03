@@ -2,9 +2,10 @@ package ipsm
 
 import (
 	"fmt"
-	"hash/fnv"
 	"os"
 	"os/exec"
+
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 )
 
 type ipsEntry struct {
@@ -18,13 +19,6 @@ type ipsEntry struct {
 type IpsetManager struct {
 	entryMap map[string]*ipsEntry
 	labelMap map[string][]string //label -> []ip
-}
-
-// hash hashes a string to another string with length <= 32.
-func hash(s string) string {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return fmt.Sprint(h.Sum32())
 }
 
 // Exists checks if the ip exists in LabelMap.
@@ -60,8 +54,8 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 
 // Create creates an ipset.
 func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
-	// Use hashed string for set name, and annotate the real set name.
-	hashedName := hash(setName)
+	// Use hashed string for set name to avoid string length limit of ipset.
+	hashedName := "azure-npm-" + util.Hash(setName)
 	_, exists := ipsMgr.entryMap[setName]
 	if exists {
 		return nil
