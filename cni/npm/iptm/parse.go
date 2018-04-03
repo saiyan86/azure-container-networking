@@ -36,11 +36,12 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 		}
 	}
 
-	// Use hashed string for set name to avoid string length limit of ipset.
+	// Use hashed string for ipset name to avoid string length limit of ipset.
 	hashedName := "azure-npm-" + util.Hash(ipsetName)
 	for _, protPortPair := range protPortPairSlice {
 		srcEntry := &iptEntry{
 			name:          ipsetName,
+			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
 			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "REJECT"},
@@ -49,6 +50,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 
 		dstEntry := &iptEntry{
 			name:          ipsetName,
+			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         "FORWARD",
 			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "REJECT"},
@@ -60,6 +62,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, rules []networking
 	for _, label := range podLabels {
 		entry := &iptEntry{
 			name:          label,
+			hashedName:    hashedName,
 			operationFlag: "-I",
 			chain:         "FORWARD",
 			specs:         []string{"-m", "set", "--match-set", ipsetName, "src", "-j", "ACCEPT"},
