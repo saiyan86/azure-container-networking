@@ -64,7 +64,6 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 			fmt.Printf("Error parsing network policy for iptables.\n")
 		}
 	}
-	delete(iptMgr.entryMap, entryName)
 
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.operationFlag = iptablesDeletionFlag
@@ -75,6 +74,7 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 			return err
 		}
 	}
+	delete(iptMgr.entryMap, entryName)
 
 	return nil
 }
