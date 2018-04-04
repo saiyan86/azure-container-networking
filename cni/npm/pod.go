@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func isValidPod(podObj *corev1.Pod) bool {
@@ -64,33 +62,36 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	}
 
 	// Check if the pod is local
-	if podObj.Spec.NodeName != npMgr.nodeName {
-		return nil
-	}
-
-	iptMgr := ns.iptMgr
-	exists = false
-
-	for _, np := range ns.npQueue {
-		selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
-		if err != nil {
-			fmt.Printf("Error converting label selector\n")
-			return err
+	/*
+		if podObj.Spec.NodeName != npMgr.nodeName {
+			return nil
 		}
-		if selector.Matches(labels.Set(podLabels)) {
-			fmt.Printf("--------------found matching policy-----------------\n")
 
-			for _, labelKey := range labelKeys {
-				fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
-				// Create rule for all matching labels.
-				if err := iptMgr.Add(labelKey, np); err != nil {
-					fmt.Printf("Error creating iptables rule.\n")
-					return err
+		/*
+			iptMgr := ns.iptMgr
+			exists = false
+
+
+				for _, np := range ns.npQueue {
+					selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
+					if err != nil {
+						fmt.Printf("Error converting label selector\n")
+						return err
+					}
+					if selector.Matches(labels.Set(podLabels)) {
+						fmt.Printf("--------------found matching policy-----------------\n")
+
+						for _, labelKey := range labelKeys {
+							fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
+							// Create rule for all matching labels.
+							if err := iptMgr.Add(labelKey, np); err != nil {
+								fmt.Printf("Error creating iptables rule.\n")
+								return err
+							}
+						}
+					}
 				}
-			}
-		}
-	}
-
+	*/
 	return nil
 }
 
@@ -150,7 +151,7 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	podIP := podObj.Status.PodIP
 	ipsMgr := ns.ipsMgr
 	for podLabelKey, podLabelVal := range podLabels {
-		labelKey := podLabelKey + podLabelVal
+		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		if ipsMgr.Exists(labelKey, podIP) {
 			isSetEmpty := false
 			var err error
