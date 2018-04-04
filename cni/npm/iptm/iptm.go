@@ -41,9 +41,9 @@ func NewIptablesManager() *IptablesManager {
 
 // AddChain adds a chain to iptables
 func (iptMgr *IptablesManager) AddChain(chainName string) error {
+	iptMgr.operationFlag = iptablesChainCreationFlag
 	entry := &iptEntry{
-		operationFlag: iptablesChainCreationFlag,
-		chain:         AzureIptablesChain,
+		chain: AzureIptablesChain,
 	}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", chainName)
@@ -55,7 +55,7 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	}
 
 	// Insert AZURE-NPM chain to FORWARD chain.
-	entry.operationFlag = iptablesInsertionFlag
+	iptMgr.operationFlag = iptablesInsertionFlag
 	entry.chain = forwardChain
 	entry.specs = []string{AzureIptablesChain}
 	if err := iptMgr.Run(entry); err != nil {
@@ -116,18 +116,7 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 	cmdName := "iptables"
-	var operationFlag string
-	if entry.operationFlag == iptablesChainCreationFlag {
-		operationFlag = iptablesChainCreationFlag
-	} else {
-		operationFlag = iptMgr.operationFlag
-	}
-
-	cmdArgs := append([]string{operationFlag, entry.chain})
-	if len(entry.specs) > 0 {
-		cmdArgs = append(cmdArgs, entry.specs...)
-	}
-
+	cmdArgs := append([]string{iptMgr.operationFlag, entry.chain}, entry.specs...)
 	var (
 		cmdOut []byte
 		err    error
