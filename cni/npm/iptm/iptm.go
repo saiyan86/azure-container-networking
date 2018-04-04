@@ -57,9 +57,9 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	// Insert AZURE-NPM chain to FORWARD chain.
 	iptMgr.operationFlag = iptablesInsertionFlag
 	entry.chain = forwardChain
-	entry.specs = []string{AzureIptablesChain}
+	entry.specs = []string{"-j", AzureIptablesChain}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error adding AZURE-NPM chain to FORWARD%s\n", AzureIptablesChain)
+		fmt.Printf("Error adding AZURE-NPM chain to FORWARD\n")
 		return err
 	}
 
