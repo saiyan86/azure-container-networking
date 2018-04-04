@@ -40,6 +40,11 @@ func (ipsMgr *IpsetManager) ExistsInSet(key string, val string) bool {
 
 // CreateList creates an ipset list. npm maintains one setlist per namespace.
 func (ipsMgr *IpsetManager) CreateList(setListName string) error {
+	// Ignore system pods.
+	if setListName == "kube-system" {
+		return nil
+	}
+
 	_, exists := ipsMgr.listMap[setListName]
 	if exists {
 		return nil
