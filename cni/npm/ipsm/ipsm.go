@@ -56,9 +56,11 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		spec:          "setlist",
 	}
 	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating ipset.\n")
+		fmt.Printf("Error creating ipset %s.\n", setListName)
 		return err
 	}
+
+	ipsMgr.listMap[setListName] = true
 
 	return nil
 }
@@ -167,6 +169,8 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	if err := ipsMgr.Run(entry); err != nil {
 		return fmt.Errorf("Error deleting ipset %s", setName)
 	}
+
+	delete(ipsMgr.listMap, setName)
 
 	return nil
 }

@@ -96,7 +96,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 	npMgr.Lock()
 
-	// Don't deal with system pods.
+	// Ignore system pods.
 	if isSystemPod(newPod) {
 		npMgr.Unlock()
 		return nil
