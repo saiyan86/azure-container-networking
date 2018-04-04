@@ -17,12 +17,13 @@ type ipsEntry struct {
 
 // IpsetManager stores ipset entries.
 type IpsetManager struct {
+	listMap  map[string]bool
 	entryMap map[string]*ipsEntry
 	labelMap map[string][]string //label -> []ip
 }
 
-// Exists checks if the ip exists in LabelMap.
-func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
+// ExistsInSet checks if the ip exists in LabelMap.
+func (ipsMgr *IpsetManager) ExistsInSet(key string, val string) bool {
 	_, exists := ipsMgr.labelMap[key]
 	if !exists {
 		return false
@@ -39,6 +40,11 @@ func (ipsMgr *IpsetManager) Exists(key string, val string) bool {
 
 // CreateList creates an ipset list. npm maintains one setlist per namespace.
 func (ipsMgr *IpsetManager) CreateList(setListName string) error {
+	_, exists := ipsMgr.listMap[setListName]
+	if exists {
+		return nil
+	}
+
 	entry := &ipsEntry{
 		operationFlag: "-N",
 		set:           setListName,
@@ -87,6 +93,10 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 
 // Add inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
 func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) error {
+	if ipsMgr.ExistsInSet(setName, ip) {
+		return nil
+	}
+
 	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
 	if err := ipsMgr.Create(namespace, setName); err != nil {
