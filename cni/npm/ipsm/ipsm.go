@@ -196,6 +196,7 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 func NewIpsetManager() *IpsetManager {
 
 	ipsMgr := &IpsetManager{
+		listMap:  make(map[string]bool),
 		entryMap: make(map[string]*ipsEntry),
 		labelMap: make(map[string][]string),
 	}
