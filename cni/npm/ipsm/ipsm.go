@@ -17,7 +17,7 @@ type ipsEntry struct {
 
 // IpsetManager stores ipset entries.
 type IpsetManager struct {
-	listMap  map[string]bool
+	listSet  map[string]bool //tracks all set lists.
 	entryMap map[string]*ipsEntry
 	labelMap map[string][]string //label -> []ip
 }
@@ -45,7 +45,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		return nil
 	}
 
-	_, exists := ipsMgr.listMap[setListName]
+	_, exists := ipsMgr.listSet[setListName]
 	if exists {
 		return nil
 	}
@@ -60,7 +60,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		return err
 	}
 
-	ipsMgr.listMap[setListName] = true
+	ipsMgr.listSet[setListName] = true
 
 	return nil
 }
@@ -170,7 +170,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		return fmt.Errorf("Error deleting ipset %s", setName)
 	}
 
-	delete(ipsMgr.listMap, setName)
+	delete(ipsMgr.listSet, setName)
 
 	return nil
 }
@@ -196,7 +196,7 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 func NewIpsetManager() *IpsetManager {
 
 	ipsMgr := &IpsetManager{
-		listMap:  make(map[string]bool),
+		listSet:  make(map[string]bool),
 		entryMap: make(map[string]*ipsEntry),
 		labelMap: make(map[string][]string),
 	}

@@ -3,8 +3,12 @@ package npm
 import (
 	"fmt"
 
+	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+
 	networkingv1 "k8s.io/api/networking/v1"
 )
+
+var isAzureNpmChainCreated = false
 
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
@@ -24,8 +28,15 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		npMgr.nsMap[npNs] = newns
 		ns = newns
 	}
-
 	ns.npQueue = append(ns.npQueue, npObj) //No check for duplicate yet. Assuming duplicate is handled by k8s.
+
+	if !isAzureNpmChainCreated {
+		if err := ns.iptMgr.AddChain(iptm.AzureIptablesChain); err != nil {
+			fmt.Printf("Error creating iptables chain %s\n.", iptm.AzureIptablesChain)
+			return err
+		}
+		isAzureNpmChainCreated = true
+	}
 
 	// Creates ipset for specified labels.
 	ipsMgr := ns.ipsMgr

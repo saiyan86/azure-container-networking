@@ -58,37 +58,6 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		labelKeys = append(labelKeys, labelKey)
 	}
 
-	// Check if the pod is local
-	/*
-		if podObj.Spec.NodeName != npMgr.nodeName {
-			return nil
-		}
-
-		/*
-			iptMgr := ns.iptMgr
-			exists = false
-
-
-				for _, np := range ns.npQueue {
-					selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
-					if err != nil {
-						fmt.Printf("Error converting label selector\n")
-						return err
-					}
-					if selector.Matches(labels.Set(podLabels)) {
-						fmt.Printf("--------------found matching policy-----------------\n")
-
-						for _, labelKey := range labelKeys {
-							fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
-							// Create rule for all matching labels.
-							if err := iptMgr.Add(labelKey, np); err != nil {
-								fmt.Printf("Error creating iptables rule.\n")
-								return err
-							}
-						}
-					}
-				}
-	*/
 	return nil
 }
 

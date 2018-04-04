@@ -7,8 +7,10 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
+const iptablesChainCreationFlag string = "-N"
 const iptablesInsertionFlag string = "-I"
 const iptablesDeletionFlag string = "-D"
+const AzureIptablesChain string = "AZURE-NPM"
 
 type iptEntry struct {
 	name          string
@@ -34,6 +36,20 @@ func NewIptablesManager() *IptablesManager {
 	return iptMgr
 }
 
+// AddChain adds a chain to iptables
+func (iptMgr *IptablesManager) AddChain(chainName string) error {
+	entry := &iptEntry{
+		operationFlag: iptablesChainCreationFlag,
+		chain:         AzureIptablesChain,
+	}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", chainName)
+		return err
+	}
+
+	return nil
+}
+
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPolicy) error {
 	key := np.ObjectMeta.Namespace + "-" + np.ObjectMeta.Name
@@ -49,7 +65,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 	for _, entry := range iptMgr.entryMap[key] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
-			fmt.Printf("Error creating ipset rules.\n")
+			fmt.Printf("Error creating iptables rules.\n")
 			return err
 		}
 	}
@@ -72,7 +88,7 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 	for _, entry := range iptMgr.entryMap[key] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
-			fmt.Printf("Error creating ipset rules.\n")
+			fmt.Printf("Error creating iptables rules.\n")
 			return err
 		}
 	}
