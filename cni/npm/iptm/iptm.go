@@ -106,7 +106,7 @@ func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 		err    error
 	)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Printf("There was an error running command: %s\n", err)
+		fmt.Printf("There was an error running command: %s\n Arguments:[%+v]", err, cmdArgs)
 		return err
 	}
 	fmt.Printf("%s", string(cmdOut))
