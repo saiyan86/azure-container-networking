@@ -32,15 +32,17 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range selector.MatchLabels {
 		labelKey := npNs + "-" + podLabelKey + ":" + podLabelVal
-		if !ipsMgr.Exists(labelKey, "") {
-			labelKeys = append(labelKeys, labelKey)
-			fmt.Printf("Creating ipset %s\n", labelKey)
-
-			if err := ipsMgr.Create(npNs, labelKey); err != nil {
-				fmt.Printf("Error creating ipset %s.\n", labelKey)
-				return err
-			}
+		if err := ipsMgr.CreateList(npNs); err != nil {
+			fmt.Printf("Error creating ipset list %s.\n", npNs)
+			return err
 		}
+
+		if err := ipsMgr.Create(npNs, labelKey); err != nil {
+			fmt.Printf("Error creating ipset %s.\n", labelKey)
+			return err
+		}
+
+		labelKeys = append(labelKeys, labelKey)
 	}
 
 	iptMgr := ns.iptMgr
