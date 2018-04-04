@@ -116,12 +116,12 @@ func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) err
 }
 
 // DeleteFromSet removes an ip from an entry in labelMap, and delete/update the corresponding ipset.
-func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) (bool, error) {
+func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 	isEmpty := false
 
 	_, exists := ipsMgr.labelMap[setName]
 	if !exists {
-		return false, fmt.Errorf("ipset with name %s not found", setName)
+		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
 	for i, val := range ipsMgr.labelMap[setName] {
@@ -139,13 +139,19 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) (bool, erro
 		set:           setName,
 		spec:          ip,
 	}
-
 	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error deleing ipset entry.\n")
-		return isEmpty, err
+		fmt.Printf("Error deleting ipset entry.\n")
+		return err
 	}
 
-	return isEmpty, nil
+	if isEmpty {
+		if err := ipsMgr.DeleteSet(setName); err != nil {
+			fmt.Printf("Error deleting ipset %s.\n", setName)
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeleteSet removes a set from ipset.

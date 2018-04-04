@@ -50,15 +50,12 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
-		if ipsMgr.Exists(labelKey, podIP) {
-			return nil
-		}
-		labelKeys = append(labelKeys, labelKey)
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
 		if err := ipsMgr.Add(podNs, labelKey, podIP); err != nil {
 			fmt.Printf("Error Adding pod to ipset.\n")
 			return err
 		}
+		labelKeys = append(labelKeys, labelKey)
 	}
 
 	// Check if the pod is local
@@ -155,15 +152,9 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 		if ipsMgr.Exists(labelKey, podIP) {
 			isSetEmpty := false
 			var err error
-			if isSetEmpty, err = ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
+			if err := ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
 				fmt.Printf("Error deleting pod from ipset.\n")
 				return err
-			}
-			if isSetEmpty {
-				if err = ipsMgr.DeleteSet(labelKey); err != nil {
-					fmt.Printf("Error deleting ipset.\n")
-					return err
-				}
 			}
 		}
 	}
