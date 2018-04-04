@@ -130,9 +130,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		}
 	}
 
-	if len(ipsMgr.labelMap[setName]) == 0 {
-		isEmpty = true
-	}
+	isEmpty = len(ipsMgr.labelMap[setName]) == 0
 
 	entry := &ipsEntry{
 		operationFlag: "-D",
