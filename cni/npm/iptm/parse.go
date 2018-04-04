@@ -21,7 +21,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 	// By default block all traffic.
 	defaultBlock := &iptEntry{
 		operationFlag: iptMgr.operationFlag,
-		chain:         "FORWARD",
+		chain:         AzureIptablesChain,
 		specs:         []string{"-j", "REJECT"},
 	}
 	iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], defaultBlock)
@@ -51,7 +51,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 			name:          ipsetName,
 			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
-			chain:         "FORWARD",
+			chain:         AzureIptablesChain,
 			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
 		}
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], srcEntry)
@@ -60,7 +60,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 			name:          ipsetName,
 			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
-			chain:         "FORWARD",
+			chain:         AzureIptablesChain,
 			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "ACCEPT"},
 		}
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], dstEntry)
@@ -72,7 +72,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 			name:          label,
 			hashedName:    hashedName,
 			operationFlag: "-I",
-			chain:         "FORWARD",
+			chain:         AzureIptablesChain,
 			specs:         []string{"-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
 		}
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], entry)
