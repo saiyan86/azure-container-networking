@@ -13,6 +13,7 @@ const iptablesDeletionFlag string = "-D"
 
 // AzureIptablesChain specifies the name of azure-npm created chain in iptables.
 const AzureIptablesChain string = "AZURE-NPM"
+const forwardChain string = "FORWARD"
 
 type iptEntry struct {
 	name          string
@@ -46,6 +47,19 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", chainName)
+		return err
+	}
+
+	if chainName != AzureIptablesChain {
+		return nil
+	}
+
+	// Insert AZURE-NPM chain to FORWARD chain.
+	entry.operationFlag = iptablesInsertionFlag
+	entry.chain = forwardChain
+	entry.specs = []string{AzureIptablesChain}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error adding AZURE-NPM chain to FORWARD%s\n", AzureIptablesChain)
 		return err
 	}
 
