@@ -102,7 +102,14 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 	cmdName := "iptables"
-	cmdArgs := append([]string{iptMgr.operationFlag, entry.chain})
+	var operationFlag string
+	if entry.operationFlag == iptablesChainCreationFlag {
+		operationFlag = iptablesChainCreationFlag
+	} else {
+		operationFlag = iptMgr.operationFlag
+	}
+
+	cmdArgs := append([]string{operationFlag, entry.chain})
 	if len(entry.specs) > 0 {
 		cmdArgs = append(cmdArgs, entry.specs...)
 	}
@@ -112,7 +119,7 @@ func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 		err    error
 	)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Printf("There was an error running command: %s\n Arguments:%+v", err, cmdArgs)
+		fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		return err
 	}
 	fmt.Printf("%s", string(cmdOut))
