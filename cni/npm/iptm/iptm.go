@@ -10,6 +10,8 @@ import (
 const iptablesChainCreationFlag string = "-N"
 const iptablesInsertionFlag string = "-I"
 const iptablesDeletionFlag string = "-D"
+
+// AzureIptablesChain specifies the name of azure-npm created chain in iptables.
 const AzureIptablesChain string = "AZURE-NPM"
 
 type iptEntry struct {
@@ -100,13 +102,17 @@ func (iptMgr *IptablesManager) Delete(entryName string, np *networkingv1.Network
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *iptEntry) error {
 	cmdName := "iptables"
-	cmdArgs := append([]string{iptMgr.operationFlag, entry.chain}, entry.specs...)
+	cmdArgs := append([]string{iptMgr.operationFlag, entry.chain})
+	if len(entry.specs) > 0 {
+		cmdArgs = append(cmdArgs, entry.specs...)
+	}
+
 	var (
 		cmdOut []byte
 		err    error
 	)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Printf("There was an error running command: %s\n Arguments:[%+v]", err, cmdArgs)
+		fmt.Printf("There was an error running command: %s\n Arguments:%+v", err, cmdArgs)
 		return err
 	}
 	fmt.Printf("%s", string(cmdOut))
