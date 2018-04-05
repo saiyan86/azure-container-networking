@@ -10,7 +10,7 @@ import (
 const iptablesChainCreationFlag string = "-N"
 const iptablesInsertionFlag string = "-I"
 const iptablesDeletionFlag string = "-D"
-const iptablesJumpFlag string = "-J"
+const iptablesJumpFlag string = "-j"
 
 const iptablesAccept string = "ACCEPT"
 const iptablesReject string = "REJECT"
