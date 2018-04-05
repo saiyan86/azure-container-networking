@@ -72,10 +72,13 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 // UpdateNetworkPolicy updates network policy.
 func (npMgr *NetworkPolicyManager) UpdateNetworkPolicy(oldNpObj *networkingv1.NetworkPolicy, newNpObj *networkingv1.NetworkPolicy) error {
 	npMgr.Lock()
-	defer npMgr.Unlock()
 
 	oldNpNs, oldNpName := oldNpObj.ObjectMeta.Namespace, oldNpObj.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY UPDATED: %s/%s\n", oldNpNs, oldNpName)
+
+	npMgr.Unlock()
+	npMgr.DeleteNetworkPolicy(oldNpObj)
+	npMgr.AddNetworkPolicy(newNpObj)
 
 	return nil
 }
