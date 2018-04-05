@@ -9,7 +9,9 @@ import (
 
 const iptablesChainCreationFlag string = "-N"
 const iptablesInsertionFlag string = "-I"
+const iptablesAppendFlag string = "-A"
 const iptablesDeletionFlag string = "-D"
+
 const iptablesJumpFlag string = "-j"
 
 const iptablesAccept string = "ACCEPT"
@@ -100,7 +102,7 @@ func (iptMgr *IptablesManager) Add(entryName string, np *networkingv1.NetworkPol
 	}
 
 	// Create iptables rules for every entry in the entryMap.
-	iptMgr.operationFlag = iptablesInsertionFlag
+	iptMgr.operationFlag = iptablesAppendFlag
 	for _, entry := range iptMgr.entryMap[key] {
 		fmt.Printf("%+v\n", entry)
 		if err := iptMgr.Run(entry); err != nil {
