@@ -73,7 +73,21 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 		return err
 	}
 
-	// Allow default rule.
+	// Add default rule to FORWARD chain.
+	defaultBlock := &iptEntry{
+		operationFlag: iptMgr.operationFlag,
+		chain:         forwardChain,
+		specs: []string{
+			iptablesJumpFlag,
+			iptablesReject,
+		},
+	}
+	if err := iptMgr.Run(defaultBlock); err != nil {
+		fmt.Printf("Error adding default rule to FORWARD chain\n")
+		return err
+	}
+
+	// Add default rule to AZURE-NPM chain.
 	entry.chain = AzureIptablesChain
 	entry.specs = []string{
 		"-m",
