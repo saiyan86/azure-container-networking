@@ -84,6 +84,7 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 	)
 
 	npMgr.Unlock()
+	npMgr.DeletePod(oldPod)
 	npMgr.AddPod(newPod)
 
 	return nil
@@ -96,6 +97,10 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 
 	// Don't deal with system pods.
 	if isSystemPod(podObj) {
+		return nil
+	}
+
+	if !isValidPod(podObj) {
 		return nil
 	}
 

@@ -70,23 +70,33 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 }
 
 // UpdateNamespace handles update name space.
-func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNs *corev1.Namespace, newNs *corev1.Namespace) error {
+func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, newNsObj *corev1.Namespace) error {
 	npMgr.Lock()
-	defer npMgr.Unlock()
 
-	oldNsName, newNsName := oldNs.ObjectMeta.Name, newNs.ObjectMeta.Name
+	oldNsName, newNsName := oldNsObj.ObjectMeta.Name, newNsObj.ObjectMeta.Name
 	fmt.Printf("NAMESPACE UPDATED. %s/%s", oldNsName, newNsName)
+
+	npMgr.Unlock()
+	npMgr.DeleteNamespace(oldNsObj)
+	npMgr.AddNamespace(newNsObj)
 
 	return nil
 }
 
 // DeleteNamespace handles delete name space.
-func (npMgr *NetworkPolicyManager) DeleteNamespace(ns *corev1.Namespace) error {
+func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	nsName, nsNs := ns.ObjectMeta.Name, ns.ObjectMeta.Namespace
+	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE DELETED: %s/%s\n", nsName, nsNs)
+
+	_, exists := npMgr.nsMap[nsName]
+	if !exists {
+		return nil
+	}
+
+	delete(npMgr.nsMap, nsName)
 
 	return nil
 }
