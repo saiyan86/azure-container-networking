@@ -18,14 +18,6 @@ type portsInfo struct {
 }
 
 func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rules []networkingv1.NetworkPolicyIngressRule) error {
-	// By default block all traffic.
-	defaultBlock := &iptEntry{
-		operationFlag: iptMgr.operationFlag,
-		chain:         AzureIptablesChain,
-		specs:         []string{iptablesJumpFlag, iptablesReject},
-	}
-	iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], defaultBlock)
-
 	var protPortPairSlice []*portsInfo
 	var podLabels []string
 	//TODO: handle NamesapceSelector & IPBlock
