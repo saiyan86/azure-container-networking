@@ -64,19 +64,10 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 		return nil
 	}
 
-	// Insert AZURE-NPM chain to FORWARD chain.
-	iptMgr.operationFlag = iptablesInsertionFlag
-	entry.chain = forwardChain
-	entry.specs = []string{iptablesJumpFlag, AzureIptablesChain}
-	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error adding AZURE-NPM chain to FORWARD\n")
-		return err
-	}
-
 	// Add default rule to FORWARD chain.
+	iptMgr.operationFlag = iptablesInsertionFlag
 	defaultBlock := &iptEntry{
-		operationFlag: iptMgr.operationFlag,
-		chain:         forwardChain,
+		chain: forwardChain,
 		specs: []string{
 			iptablesJumpFlag,
 			iptablesReject,
@@ -84,6 +75,14 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	}
 	if err := iptMgr.Run(defaultBlock); err != nil {
 		fmt.Printf("Error adding default rule to FORWARD chain\n")
+		return err
+	}
+
+	// Insert AZURE-NPM chain to FORWARD chain.
+	entry.chain = forwardChain
+	entry.specs = []string{iptablesJumpFlag, AzureIptablesChain}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error adding AZURE-NPM chain to FORWARD\n")
 		return err
 	}
 
