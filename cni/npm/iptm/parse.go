@@ -22,7 +22,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 	defaultBlock := &iptEntry{
 		operationFlag: iptMgr.operationFlag,
 		chain:         AzureIptablesChain,
-		specs:         []string{"-j", "REJECT"},
+		specs:         []string{iptablesJumpFlag, iptablesReject},
 	}
 	iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], defaultBlock)
 
@@ -47,21 +47,22 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	hashedName := "azure-npm-" + util.Hash(ipsetName)
 	for _, protPortPair := range protPortPairSlice {
-		srcEntry := &iptEntry{
-			name:          ipsetName,
-			hashedName:    hashedName,
-			operationFlag: iptMgr.operationFlag,
-			chain:         AzureIptablesChain,
-			specs:         []string{"-p", protPortPair.protocol, "--sport", protPortPair.port, "-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
-		}
-		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], srcEntry)
-
 		dstEntry := &iptEntry{
 			name:          ipsetName,
 			hashedName:    hashedName,
 			operationFlag: iptMgr.operationFlag,
 			chain:         AzureIptablesChain,
-			specs:         []string{"-p", protPortPair.protocol, "--dport", protPortPair.port, "-m", "set", "--match-set", hashedName, "dst", "-j", "ACCEPT"},
+			specs: []string{
+				"-p", protPortPair.protocol,
+				"--dport", protPortPair.port,
+				"-m",
+				"set",
+				"--match-set",
+				hashedName,
+				"dst",
+				iptablesJumpFlag,
+				iptablesAccept,
+			},
 		}
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], dstEntry)
 	}
@@ -73,7 +74,15 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 			hashedName:    hashedName,
 			operationFlag: "-I",
 			chain:         AzureIptablesChain,
-			specs:         []string{"-m", "set", "--match-set", hashedName, "src", "-j", "ACCEPT"},
+			specs: []string{
+				"-m",
+				"set",
+				"--match-set",
+				hashedName,
+				"src",
+				iptablesJumpFlag,
+				iptablesAccept,
+			},
 		}
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], entry)
 	}
