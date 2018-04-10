@@ -51,13 +51,13 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		return nil
 	}
 
-	entry := &ipsEntry{
+	ipsMgr.entryMap[setListName] = &ipsEntry{
 		operationFlag: "-N",
 		set:           hashedName,
 		spec:          "setlist",
 	}
-	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating ipset %s.\n", setListName)
+	if err := ipsMgr.Run(ipsMgr.entryMap[setListName]); err != nil {
+		fmt.Printf("Error creating ipset list %s.\n", setListName)
 		return err
 	}
 
