@@ -80,7 +80,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 		iptMgr.entryMap[npName] = append(iptMgr.entryMap[npName], entry)
 	}
 
-	// TODO: Handle NamespaceSelector field of NetworkPolicyPeer.
+	// TODO: Handle NamespaceSelector field of NetworkPolicyPeer. Use namespace selector to match corresponding namespaces.
 	// TODO: Handle IPBlock field of NetworkPolicyPeer.
 
 	return nil
