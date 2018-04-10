@@ -45,14 +45,21 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	}
 	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
-	// Add pod to ipset
+	// Add the pod to ipset
 	ipsMgr := ns.ipsMgr
+	// Add the pod to its namespace's ipset.
+	fmt.Printf("Adding pod %s to ipset %s\n", podIP, podNs)
+	if err := ipsMgr.Add(podNs, podNs, podIP); err != nil {
+		fmt.Printf("Error adding pod to namespace ipset.\n")
+	}
+
+	// Add the pod to its label's ipset.
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
 		if err := ipsMgr.Add(podNs, labelKey, podIP); err != nil {
-			fmt.Printf("Error Adding pod to ipset.\n")
+			fmt.Printf("Error adding pod to label ipset.\n")
 			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
@@ -121,10 +128,16 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	// Delete pod from ipset
 	podIP := podObj.Status.PodIP
 	ipsMgr := ns.ipsMgr
+	// Delete the pod from its namespace's ipset.
+	if err := ipsMgr.DeleteFromSet(podNs, podIP); err != nil {
+		fmt.Printf("Error deleting pod from namespace ipset.\n")
+		return err
+	}
+	// Delete the pod from its label's ipset.
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		if err := ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
-			fmt.Printf("Error deleting pod from ipset.\n")
+			fmt.Printf("Error deleting pod from label ipset.\n")
 			return err
 		}
 	}

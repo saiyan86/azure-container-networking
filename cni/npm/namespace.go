@@ -12,21 +12,23 @@ import (
 )
 
 type namespace struct {
-	name    string
-	podMap  map[types.UID]*corev1.Pod
-	npQueue []*networkingv1.NetworkPolicy // TODO: Optimize to ordered map.
-	ipsMgr  *ipsm.IpsetManager
-	iptMgr  *iptm.IptablesManager
+	name     string
+	labelMap map[string]string
+	podMap   map[types.UID]*corev1.Pod
+	npQueue  []*networkingv1.NetworkPolicy // TODO: Optimize to ordered map.
+	ipsMgr   *ipsm.IpsetManager
+	iptMgr   *iptm.IptablesManager
 }
 
 // newNS constructs a new namespace object.
 func newNs(name string) (*namespace, error) {
 	ns := &namespace{
-		name:    name,
-		podMap:  make(map[types.UID]*corev1.Pod),
-		npQueue: []*networkingv1.NetworkPolicy{},
-		ipsMgr:  ipsm.NewIpsetManager(),
-		iptMgr:  iptm.NewIptablesManager(),
+		name:     name,
+		labelMap: make(map[string]string),
+		podMap:   make(map[types.UID]*corev1.Pod),
+		npQueue:  []*networkingv1.NetworkPolicy{},
+		ipsMgr:   ipsm.NewIpsetManager(),
+		iptMgr:   iptm.NewIptablesManager(),
 	}
 
 	return ns, nil
@@ -61,10 +63,12 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 
 	// Create ipset list for the namespace.
 	ipsMgr := ns.ipsMgr
-	if err := ipsMgr.CreateList(nsName); err != nil {
-		fmt.Printf("Error creating ipset list %s.\n", nsName)
+	if err := ipsMgr.Create(nsNs, nsName); err != nil {
+		fmt.Printf("Error creating ipset for namespace %s.\n", nsName)
 		return err
 	}
+
+	ns.labelMap = nsObj.ObjectMeta.Labels
 
 	return nil
 }
@@ -78,6 +82,7 @@ func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, n
 
 	npMgr.Unlock()
 	npMgr.DeleteNamespace(oldNsObj)
+
 	npMgr.AddNamespace(newNsObj)
 
 	return nil
