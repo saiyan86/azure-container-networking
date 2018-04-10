@@ -43,13 +43,13 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range selector.MatchLabels {
 		labelKey := npNs + "-" + podLabelKey + ":" + podLabelVal
-		if err := ipsMgr.CreateList(npNs); err != nil {
-			fmt.Printf("Error creating ipset list %s.\n", npNs)
+		if err := ipsMgr.Create(npNs, npNs); err != nil {
+			fmt.Printf("Error creating namespace ipset %s.\n", npNs)
 			return err
 		}
 
 		if err := ipsMgr.Create(npNs, labelKey); err != nil {
-			fmt.Printf("Error creating ipset %s.\n", labelKey)
+			fmt.Printf("Error creating label ipset %s.\n", labelKey)
 			return err
 		}
 
