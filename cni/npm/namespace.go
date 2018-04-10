@@ -74,7 +74,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	for nsLabelKey, nsLabelVal := range nsLabels {
 		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
 		fmt.Printf("Adding namespace %s to ipset list %s\n", nsName, labelKey)
-		if err := ipsMgr.AddToList(nsName, labelKey) {
+		if err := ipsMgr.AddToList(nsName, labelKey); err != nil {
 			fmt.Printf("Error Adding namespace %s to ipset list %s\n", nsName, labelKey)
 			return err
 		}

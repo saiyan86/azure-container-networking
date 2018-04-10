@@ -17,7 +17,7 @@ type ipsEntry struct {
 
 // IpsetManager stores ipset entries.
 type IpsetManager struct {
-	listSet  map[string]bool //tracks all set lists.
+	listMap  map[string][]string //tracks all set lists.
 	entryMap map[string]*ipsEntry
 	labelMap map[string][]string //label -> []ip
 }
@@ -38,29 +38,28 @@ func (ipsMgr *IpsetManager) ExistsInSet(key string, val string) bool {
 	return false
 }
 
-// CreateList creates an ipset list. npm maintains one setlist per namespace.
+// CreateList creates an ipset list. npm maintains one setlist per namespace label.
 func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 	// Ignore system pods.
 	if setListName == "kube-system" {
 		return nil
 	}
 
-	_, exists := ipsMgr.listSet[setListName]
+	hashedName := "azure-npm-" + util.Hash(setListName)
+	_, exists := ipsMgr.listMap[setListName]
 	if exists {
 		return nil
 	}
 
 	entry := &ipsEntry{
 		operationFlag: "-N",
-		set:           setListName,
+		set:           hashedName,
 		spec:          "setlist",
 	}
 	if err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating ipset %s.\n", setListName)
 		return err
 	}
-
-	ipsMgr.listSet[setListName] = true
 
 	return nil
 }
@@ -99,8 +98,31 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 	return nil
 }
 
-// Add inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
-func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) error {
+// AddToList inserts an ipset to an ipset list.
+func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
+	if ipsMgr.ExistsInSet(listName, setName) {
+		return nil
+	}
+
+	if err := ipsMgr.CreateList(listName); err != nil {
+		return err
+	}
+
+	ipsMgr.entryMap[listName].operationFlag = "-A"
+	ipsMgr.entryMap[listName].spec = setName
+
+	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
+		fmt.Printf("Error creating ipset rules.\n")
+		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
+		return err
+	}
+	ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName], setName)
+
+	return nil
+}
+
+// AddToSet inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
+func (ipsMgr *IpsetManager) AddToSet(namespace string, setName string, ip string) error {
 	if ipsMgr.ExistsInSet(setName, ip) {
 		return nil
 	}
@@ -110,7 +132,7 @@ func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) err
 	}
 
 	ipsMgr.entryMap[setName].operationFlag = "-A"
-	ipsMgr.entryMap[setName].spec = ip //This only holds one ip for now. Actually there will be multiple IPs under one setName.
+	ipsMgr.entryMap[setName].spec = ip
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
@@ -170,7 +192,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		return fmt.Errorf("Error deleting ipset %s", setName)
 	}
 
-	delete(ipsMgr.listSet, setName)
+	delete(ipsMgr.listMap, setName)
 
 	return nil
 }
@@ -196,7 +218,7 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 func NewIpsetManager() *IpsetManager {
 
 	ipsMgr := &IpsetManager{
-		listSet:  make(map[string]bool),
+		listMap:  make(map[string][]string),
 		entryMap: make(map[string]*ipsEntry),
 		labelMap: make(map[string][]string),
 	}
