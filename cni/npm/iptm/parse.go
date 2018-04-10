@@ -29,6 +29,7 @@ func (iptMgr *IptablesManager) parseIngress(ipsetName string, npName string, rul
 					port:     fmt.Sprint(portRule.Port.IntVal),
 				})
 		}
+
 		for _, fromRule := range rule.From {
 			for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
 				podLabels = append(podLabels, podLabelKey+podLabelVal)

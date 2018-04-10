@@ -85,16 +85,17 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 	}
 
 	// Add this ipset to the namespace's ipset list.
-	entry := &ipsEntry{
-		operationFlag: "-A",
-		set:           namespace,
-		spec:          hashedName,
-	}
-	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating ipset.\n")
-		return err
-	}
-
+	/*
+		entry := &ipsEntry{
+			operationFlag: "-A",
+			set:           namespace,
+			spec:          hashedName,
+		}
+		if err := ipsMgr.Run(entry); err != nil {
+			fmt.Printf("Error creating ipset.\n")
+			return err
+		}
+	*/
 	return nil
 }
 
@@ -103,8 +104,6 @@ func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) err
 	if ipsMgr.ExistsInSet(setName, ip) {
 		return nil
 	}
-
-	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
 	if err := ipsMgr.Create(namespace, setName); err != nil {
 		return err
@@ -118,6 +117,7 @@ func (ipsMgr *IpsetManager) Add(namespace string, setName string, ip string) err
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
 		return err
 	}
+	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
 
 	return nil
 }
