@@ -38,34 +38,52 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		isAzureNpmChainCreated = true
 	}
 
-	// Creates ipset for specified labels.
+	sets, iptEntries := parsePolicy(npObj)
+
 	ipsMgr := ns.ipsMgr
-	var labelKeys []string
-	for podLabelKey, podLabelVal := range selector.MatchLabels {
-		labelKey := npNs + "-" + podLabelKey + ":" + podLabelVal
-		if err := ipsMgr.Create(npNs, npNs); err != nil {
-			fmt.Printf("Error creating namespace ipset %s.\n", npNs)
+	for _, set := range sets {
+		if err := ipsMgr.Create(npNs, set); err != nil {
+			fmt.Printf("Error creating ipset %s-%s\n", npNs, set)
 			return err
 		}
-
-		if err := ipsMgr.Create(npNs, labelKey); err != nil {
-			fmt.Printf("Error creating label ipset %s.\n", labelKey)
-			return err
-		}
-
-		labelKeys = append(labelKeys, labelKey)
 	}
 
 	iptMgr := ns.iptMgr
-	for _, labelKey := range labelKeys {
-		fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
-		// Create rule for all matching labels.
-		if err := iptMgr.Add(labelKey, npObj); err != nil {
-			fmt.Printf("Error creating iptables rule.\n")
+	for _, iptEntry := range iptEntries {
+		if err := iptMgr.Add(iptEntry); err != nil {
+			fmt.Printf("Error applying iptables rule\n")
+			fmt.Printf("%+v\n", iptEntry)
 			return err
 		}
 	}
 
+	/*
+		var labelKeys []string
+		for podLabelKey, podLabelVal := range selector.MatchLabels {
+			labelKey := npNs + "-" + podLabelKey + ":" + podLabelVal
+			if err := ipsMgr.Create(npNs, npNs); err != nil {
+				fmt.Printf("Error creating namespace ipset %s.\n", npNs)
+				return err
+			}
+
+			if err := ipsMgr.Create(npNs, labelKey); err != nil {
+				fmt.Printf("Error creating label ipset %s.\n", labelKey)
+				return err
+			}
+
+			labelKeys = append(labelKeys, labelKey)
+		}
+
+		iptMgr := ns.iptMgr
+		for _, labelKey := range labelKeys {
+			fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
+			// Create rule for all matching labels.
+			if err := iptMgr.Add(labelKey, npObj); err != nil {
+				fmt.Printf("Error creating iptables rule.\n")
+				return err
+			}
+		}
+	*/
 	return nil
 }
 
@@ -91,12 +109,6 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	npNs, npName, selector := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name, npObj.Spec.PodSelector
 	fmt.Printf("NETWORK POLICY DELETED: %s/%s\n", npNs, npName)
 
-	//Gather labels associated with this network policy.
-	var labelKeys []string
-	for podLabelKey, podLabelVal := range selector.MatchLabels {
-		labelKeys = append(labelKeys, npNs+"-"+podLabelKey+":"+podLabelVal)
-	}
-
 	ns, exists := npMgr.nsMap[npNs]
 	if !exists {
 		newns, err := newNs(npNs)
@@ -107,13 +119,13 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		ns = newns
 	}
 
-	//Remove iptables rules associated with those labels.
+	_, iptEntries := parsePolicy(npObj)
+
 	iptMgr := ns.iptMgr
-	for _, labelKey := range labelKeys {
-		fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
-		// Create rule for all matching labels.
-		if err := iptMgr.Delete(labelKey, npObj); err != nil {
-			fmt.Printf("Error deleting iptables rule.\n")
+	for _, iptEntry := range iptEntries {
+		if err := iptMgr.Delete(iptEntry); err != nil {
+			fmt.Printf("Error applying iptables rule\n")
+			fmt.Printf("%+v\n", iptEntry)
 			return err
 		}
 	}
