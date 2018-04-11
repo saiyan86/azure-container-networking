@@ -114,7 +114,7 @@ func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
 	}
 
 	ipsMgr.entryMap[listName].operationFlag = "-A"
-	ipsMgr.entryMap[listName].spec = setName
+	ipsMgr.entryMap[listName].spec = "azure-npm-" + util.Hash(setName)
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
