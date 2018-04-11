@@ -22,14 +22,19 @@ type IpsetManager struct {
 	labelMap map[string][]string //label -> []ip
 }
 
-// ExistsInSet checks if the ip exists in LabelMap.
-func (ipsMgr *IpsetManager) ExistsInSet(key string, val string) bool {
-	_, exists := ipsMgr.labelMap[key]
+// ExistsInSet checks if an element exists in labelMap/listMap.
+func (ipsMgr *IpsetManager) Exists(key string, val string, flag string) bool {
+	m := ipsMgr.labelMap
+	if flag == "setlist" {
+		m = ipsMgr.listMap
+	}
+
+	_, exists := m[key]
 	if !exists {
 		return false
 	}
 
-	for _, elem := range ipsMgr.labelMap[key] {
+	for _, elem := range m[key] {
 		if elem == val {
 			return true
 		}
@@ -100,7 +105,7 @@ func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
 
 // AddToList inserts an ipset to an ipset list.
 func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
-	if ipsMgr.ExistsInSet(listName, setName) {
+	if ipsMgr.Exists(listName, setName, "setlist") {
 		return nil
 	}
 
@@ -123,7 +128,7 @@ func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
 
 // AddToSet inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
 func (ipsMgr *IpsetManager) AddToSet(namespace string, setName string, ip string) error {
-	if ipsMgr.ExistsInSet(setName, ip) {
+	if ipsMgr.Exists(setName, ip, "nethash") {
 		return nil
 	}
 
