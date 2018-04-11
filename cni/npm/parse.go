@@ -46,10 +46,9 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		hashedTargetSetName := "azure-npm-" + util.Hash(targetSet)
 		for _, protPortPair := range protPortPairSlice {
 			entry := &iptm.IptEntry{
-				Name:          targetSet,
-				HashedName:    hashedTargetSetName,
-				OperationFlag: iptMgr.operationFlag,
-				Chain:         AzureIptablesChain,
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      iptm.AzureIptablesChain,
 				Specs: []string{
 					"-p", protPortPair.protocol,
 					"--dport", protPortPair.port,
@@ -58,8 +57,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					"--match-set",
 					hashedTargetSetName,
 					"dst",
-					iptablesJumpFlag,
-					iptablesAccept,
+					iptm.IptablesJumpFlag,
+					iptm.IptablesAccept,
 				},
 			}
 			entries = append(entries, entry)
@@ -69,10 +68,10 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		for _, ruleSet := range ruleSets {
 			hashedRuleSetName := "azure-npm-" + util.Hash(ruleSet)
 			entry := &iptm.IptEntry{
-				Name:          label,
+				Name:          ruleSet,
 				HashedName:    hashedTargetSetName,
 				OperationFlag: "-I",
-				Chain:         AzureIptablesChain,
+				Chain:         iptm.AzureIptablesChain,
 				Specs: []string{
 					"-m",
 					"set",
@@ -84,8 +83,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					"--match-set",
 					hashedTargetSetName,
 					"dst",
-					iptablesJumpFlag,
-					iptablesAccept,
+					iptm.IptablesJumpFlag,
+					iptm.IptablesAccept,
 				},
 			}
 			entries = append(entries, entry)
@@ -117,9 +116,9 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 		sets = append(sets, set)
 	}
 
-	ingressSets, ingressEntries := parseIngress(npNs, sets, np.Spec.Ingress)
-	append(sets, ingressSets)
-	append(entries, ingressEntries)
+	ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
+	sets = append(sets, ingressSets...)
+	entries = append(entries, ingressEntries...)
 
 	/*
 		egressSets, egressEntries := parseEgress(np.Spec.Egress)

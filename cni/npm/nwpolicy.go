@@ -16,7 +16,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	npNs, npName, selector := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name, npObj.Spec.PodSelector
+	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
 
 	ns, exists := npMgr.nsMap[npNs]
@@ -106,7 +106,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	npNs, npName, selector := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name, npObj.Spec.PodSelector
+	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	fmt.Printf("NETWORK POLICY DELETED: %s/%s\n", npNs, npName)
 
 	ns, exists := npMgr.nsMap[npNs]
