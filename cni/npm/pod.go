@@ -83,11 +83,11 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
 		return nil
 	}
 
-	oldPodNs, oldPodName, oldPodIP, newPodNs, newPodName, newPodIP := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, oldPod.Status.PodIP, newPod.ObjectMeta.Namespace, newPod.ObjectMeta.Name, newPod.Status.PodIP
+	oldPodNs, oldPodName, oldPodPhase, oldPodIP, newPodNs, newPodName, newPodPhase, newPodIP := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, oldPod.Status.PodIP, oldPod.Status.Phase, newPod.ObjectMeta.Namespace, newPod.ObjectMeta.Name, newPod.Status.Phase, newPod.Status.PodIP
 
 	fmt.Printf(
-		"POD UPDATED. %s/%s %s %s %s %s\n",
-		oldPodNs, oldPodName, oldPodIP, newPodNs, newPodName, newPodIP,
+		"POD UPDATED. %s %s %s %s %s %s %s %s\n",
+		oldPodNs, oldPodName, oldPodPhase, oldPodIP, newPodNs, newPodName, newPodPhase, newPodIP,
 	)
 
 	npMgr.Unlock()
