@@ -166,9 +166,10 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 	isEmpty = len(ipsMgr.labelMap[setName]) == 0
 
+	hashedName := "azure-npm-" + util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: "-D",
-		set:           setName,
+		set:           hashedName,
 		spec:          ip,
 	}
 	if err := ipsMgr.Run(entry); err != nil {
@@ -189,9 +190,10 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 // DeleteSet removes a set from ipset.
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
+	hashedName := "azure-npm-" + util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: "-D",
-		set:           setName,
+		set:           hashedName,
 	}
 
 	if err := ipsMgr.Run(entry); err != nil {
