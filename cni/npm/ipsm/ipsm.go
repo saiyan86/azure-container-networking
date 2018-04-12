@@ -173,6 +173,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 	}
 	if err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error deleting ipset entry.\n")
+		fmt.Printf("%+v\n", entry)
 		return err
 	}
 
@@ -194,7 +195,9 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	}
 
 	if err := ipsMgr.Run(entry); err != nil {
-		return fmt.Errorf("Error deleting ipset %s", setName)
+		fmt.Printf("Error deleting ipset %s", setName)
+		fmt.Printf("%+v\n", entry)
+		return err
 	}
 
 	delete(ipsMgr.listMap, setName)
