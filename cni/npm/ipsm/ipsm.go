@@ -151,8 +151,6 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 
 // DeleteFromSet removes an ip from an entry in setMap, and delete/update the corresponding ipset.
 func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
-	isEmpty := false
-
 	_, exists := ipsMgr.setMap[setName]
 	if !exists {
 		return fmt.Errorf("ipset with name %s not found", setName)
@@ -163,8 +161,6 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 			ipsMgr.setMap[setName] = append(ipsMgr.setMap[setName][:i], ipsMgr.setMap[setName][i+1:]...)
 		}
 	}
-
-	isEmpty = len(ipsMgr.setMap[setName]) == 0
 
 	hashedName := "azure-npm-" + util.Hash(setName)
 	entry := &ipsEntry{
@@ -178,7 +174,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		return err
 	}
 
-	if isEmpty {
+	if len(ipsMgr.setMap[setName]) == 0 {
 		if err := ipsMgr.DeleteSet(setName); err != nil {
 			fmt.Printf("Error deleting ipset %s.\n", setName)
 			return err
