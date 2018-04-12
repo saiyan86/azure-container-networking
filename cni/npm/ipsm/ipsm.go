@@ -19,12 +19,12 @@ type ipsEntry struct {
 type IpsetManager struct {
 	listMap  map[string][]string //tracks all set lists.
 	entryMap map[string]*ipsEntry
-	labelMap map[string][]string //label -> []ip
+	setMap   map[string][]string //label -> []ip
 }
 
-// ExistsInSet checks if an element exists in labelMap/listMap.
+// ExistsInSet checks if an element exists in setMap/listMap.
 func (ipsMgr *IpsetManager) Exists(key string, val string, flag string) bool {
-	m := ipsMgr.labelMap
+	m := ipsMgr.setMap
 	if flag == "setlist" {
 		m = ipsMgr.listMap
 	}
@@ -70,7 +70,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 }
 
 // Create creates an ipset.
-func (ipsMgr *IpsetManager) Create(namespace string, setName string) error {
+func (ipsMgr *IpsetManager) Create(setName string) error {
 	// Use hashed string for set name to avoid string length limit of ipset.
 	hashedName := "azure-npm-" + util.Hash(setName)
 	_, exists := ipsMgr.entryMap[setName]
@@ -126,13 +126,13 @@ func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
 	return nil
 }
 
-// AddToSet inserts an ip to an entry in labelMap, and creates/updates the corresponding ipset.
-func (ipsMgr *IpsetManager) AddToSet(namespace string, setName string, ip string) error {
+// AddToSet inserts an ip to an entry in setMap, and creates/updates the corresponding ipset.
+func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 	if ipsMgr.Exists(setName, ip, "nethash") {
 		return nil
 	}
 
-	if err := ipsMgr.Create(namespace, setName); err != nil {
+	if err := ipsMgr.Create(setName); err != nil {
 		return err
 	}
 
@@ -144,27 +144,27 @@ func (ipsMgr *IpsetManager) AddToSet(namespace string, setName string, ip string
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
 		return err
 	}
-	ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName], ip)
+	ipsMgr.setMap[setName] = append(ipsMgr.setMap[setName], ip)
 
 	return nil
 }
 
-// DeleteFromSet removes an ip from an entry in labelMap, and delete/update the corresponding ipset.
+// DeleteFromSet removes an ip from an entry in setMap, and delete/update the corresponding ipset.
 func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 	isEmpty := false
 
-	_, exists := ipsMgr.labelMap[setName]
+	_, exists := ipsMgr.setMap[setName]
 	if !exists {
 		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
-	for i, val := range ipsMgr.labelMap[setName] {
+	for i, val := range ipsMgr.setMap[setName] {
 		if val == ip {
-			ipsMgr.labelMap[setName] = append(ipsMgr.labelMap[setName][:i], ipsMgr.labelMap[setName][i+1:]...)
+			ipsMgr.setMap[setName] = append(ipsMgr.setMap[setName][:i], ipsMgr.setMap[setName][i+1:]...)
 		}
 	}
 
-	isEmpty = len(ipsMgr.labelMap[setName]) == 0
+	isEmpty = len(ipsMgr.setMap[setName]) == 0
 
 	hashedName := "azure-npm-" + util.Hash(setName)
 	entry := &ipsEntry{
@@ -230,7 +230,7 @@ func NewIpsetManager() *IpsetManager {
 	ipsMgr := &IpsetManager{
 		listMap:  make(map[string][]string),
 		entryMap: make(map[string]*ipsEntry),
-		labelMap: make(map[string][]string),
+		setMap:   make(map[string][]string),
 	}
 
 	return ipsMgr
