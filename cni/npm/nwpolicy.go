@@ -42,7 +42,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 
 	ipsMgr := ns.ipsMgr
 	for _, set := range sets {
-		if err := ipsMgr.Create(npNs, set); err != nil {
+		if err := ipsMgr.Create(set); err != nil {
 			fmt.Printf("Error creating ipset %s-%s\n", npNs, set)
 			return err
 		}

@@ -49,7 +49,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	ipsMgr := ns.ipsMgr
 	// Add the pod to its namespace's ipset.
 	fmt.Printf("Adding pod %s to ipset %s\n", podIP, podNs)
-	if err := ipsMgr.AddToSet(podNs, podNs, podIP); err != nil {
+	if err := ipsMgr.AddToSet(podNs, podIP); err != nil {
 		fmt.Printf("Error adding pod to namespace ipset.\n")
 	}
 
@@ -58,7 +58,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	for podLabelKey, podLabelVal := range podLabels {
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
-		if err := ipsMgr.AddToSet(podNs, labelKey, podIP); err != nil {
+		if err := ipsMgr.AddToSet(labelKey, podIP); err != nil {
 			fmt.Printf("Error adding pod to label ipset.\n")
 			return err
 		}
