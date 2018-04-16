@@ -217,6 +217,8 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 		return err
 	}
 
+	fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
+
 	return nil
 }
 
