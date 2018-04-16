@@ -94,7 +94,6 @@ func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, n
 	fmt.Printf("NAMESPACE UPDATED. %s/%s", oldNsName, newNsName)
 
 	npMgr.Unlock()
-
 	npMgr.DeleteNamespace(oldNsObj)
 
 	if newNsObj.ObjectMeta.DeletionTimestamp == nil && newNsObj.ObjectMeta.DeletionGracePeriodSeconds == nil {

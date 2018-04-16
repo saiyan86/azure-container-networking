@@ -2,6 +2,7 @@ package npm
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -14,7 +15,7 @@ func isValidPod(podObj *corev1.Pod) bool {
 }
 
 func isSystemPod(podObj *corev1.Pod) bool {
-	return podObj.ObjectMeta.Namespace == "kube-system"
+	return podObj.ObjectMeta.Namespace == "kube-system" || strings.Contains(podObj.ObjectMeta.Namespace, "pod-template-hash")
 }
 
 // AddPod handles add pod.
