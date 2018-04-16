@@ -69,30 +69,36 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 }
 
 // UpdatePod handles update pod.
-func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
+func (npMgr *NetworkPolicyManager) UpdatePod(oldPodObj, newPodObj *corev1.Pod) error {
 	npMgr.Lock()
 
 	// Ignore system pods.
-	if isSystemPod(newPod) {
+	if isSystemPod(newPodObj) {
 		npMgr.Unlock()
 		return nil
 	}
 
-	if !isValidPod(newPod) {
+	if !isValidPod(newPodObj) {
 		npMgr.Unlock()
 		return nil
 	}
 
-	oldPodNs, oldPodName, oldPodPhase, oldPodIP, newPodNs, newPodName, newPodPhase, newPodIP := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, oldPod.Status.PodIP, oldPod.Status.Phase, newPod.ObjectMeta.Namespace, newPod.ObjectMeta.Name, newPod.Status.Phase, newPod.Status.PodIP
+	oldPodObjNs, oldPodObjName, oldPodObjPhase, oldPodObjIP, newPodObjNs, newPodObjName, newPodObjPhase, newPodObjIP := oldPodObj.ObjectMeta.Namespace, oldPodObj.ObjectMeta.Name, oldPodObj.Status.PodIP, oldPodObj.Status.Phase, newPodObj.ObjectMeta.Namespace, newPodObj.ObjectMeta.Name, newPodObj.Status.Phase, newPodObj.Status.PodIP
 
 	fmt.Printf(
 		"POD UPDATED. %s %s %s %s %s %s %s %s\n",
-		oldPodNs, oldPodName, oldPodPhase, oldPodIP, newPodNs, newPodName, newPodPhase, newPodIP,
+		oldPodObjNs, oldPodObjName, oldPodObjPhase, oldPodObjIP, newPodObjNs, newPodObjName, newPodObjPhase, newPodObjIP,
 	)
 
+	if oldPodObj == newPodObj {
+		fmt.Printf("oldPod & newPod has the same ip. Ignore.\n")
+		npMgr.Unlock()
+		return nil
+	}
+
 	npMgr.Unlock()
-	npMgr.DeletePod(oldPod)
-	npMgr.AddPod(newPod)
+	npMgr.DeletePod(oldPodObj)
+	npMgr.AddPod(newPodObj)
 
 	return nil
 }
