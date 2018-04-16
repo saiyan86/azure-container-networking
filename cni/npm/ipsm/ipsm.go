@@ -213,9 +213,9 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	)
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
 		fmt.Println(os.Stderr, "There was an error running command: ", err)
+		fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
 		return err
 	}
-	fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
 
 	return nil
 }
