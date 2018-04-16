@@ -66,6 +66,8 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		return err
 	}
 
+	ipsMgr.listMap[setListName] = []string{}
+
 	return nil
 }
 
