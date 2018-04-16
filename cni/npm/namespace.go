@@ -5,7 +5,6 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
-	"github.com/davecgh/go-spew/spew"
 	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
@@ -96,14 +95,11 @@ func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, n
 
 	npMgr.Unlock()
 
-	fmt.Printf("-------------------------------")
-	spew.Dump(oldNsObj)
-	fmt.Printf("-------------------------------")
-	spew.Dump(newNsObj)
-
 	npMgr.DeleteNamespace(oldNsObj)
 
-	npMgr.AddNamespace(newNsObj)
+	if newNsObj.ObjectMeta.DeletionTimestamp == nil && newNsObj.ObjectMeta.DeletionGracePeriodSeconds == nil {
+		npMgr.AddNamespace(newNsObj)
+	}
 
 	return nil
 }
