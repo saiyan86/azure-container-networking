@@ -215,7 +215,7 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 		fmt.Println(os.Stderr, "There was an error running command: ", err)
 		return err
 	}
-	fmt.Printf("%s", string(cmdOut))
+	fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
 
 	return nil
 }
