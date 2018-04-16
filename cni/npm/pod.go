@@ -3,6 +3,8 @@ package npm
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -92,6 +94,12 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPodObj, newPodObj *corev1.Pod) e
 
 	if oldPodObjIP == newPodObjIP {
 		fmt.Printf("oldPod & newPod has the same ip. Ignore.\n")
+
+		fmt.Printf("-----------------------------------\n")
+		spew.Dump(oldPodObj)
+		fmt.Printf("-----------------------------------\n")
+		spew.Dump(newPodObj)
+
 		npMgr.Unlock()
 		return nil
 	}
