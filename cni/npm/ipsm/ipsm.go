@@ -73,7 +73,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 func (ipsMgr *IpsetManager) Create(setName string) error {
 	// Use hashed string for set name to avoid string length limit of ipset.
 	hashedName := "azure-npm-" + util.Hash(setName)
-	_, exists := ipsMgr.entryMap[setName]
+	_, exists := ipsMgr.setMap[setName]
 	if exists {
 		return nil
 	}
@@ -88,18 +88,8 @@ func (ipsMgr *IpsetManager) Create(setName string) error {
 		return err
 	}
 
-	// Add this ipset to the namespace's ipset list.
-	/*
-		entry := &ipsEntry{
-			operationFlag: "-A",
-			set:           namespace,
-			spec:          hashedName,
-		}
-		if err := ipsMgr.Run(entry); err != nil {
-			fmt.Printf("Error creating ipset.\n")
-			return err
-		}
-	*/
+	ipsMgr.setMap[setName] = []string{}
+
 	return nil
 }
 
