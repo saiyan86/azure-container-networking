@@ -118,7 +118,7 @@ func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
-		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
+		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[listName])
 		return err
 	}
 	ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName], setName)
