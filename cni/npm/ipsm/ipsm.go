@@ -188,7 +188,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	hashedName := "azure-npm-" + util.Hash(setName)
 	entry := &ipsEntry{
-		operationFlag: "-D",
+		operationFlag: "-X",
 		set:           hashedName,
 	}
 
