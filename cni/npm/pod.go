@@ -156,5 +156,12 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 		}
 	}
 
+	if len(ns.npMap) == 0 {
+		if err := ipsMgr.Clean(); err != nil {
+			fmt.Printf("Error cleaning ipset\n")
+			return err
+		}
+	}
+
 	return nil
 }
