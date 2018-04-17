@@ -74,7 +74,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	for nsLabelKey, nsLabelVal := range nsLabels {
 		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
 		fmt.Printf("Adding namespace %s to ipset list %s\n", nsName, labelKey)
-		if err := ipsMgr.AddToList(nsName, labelKey); err != nil {
+		if err := ipsMgr.AddToList(labelKey, nsName); err != nil {
 			fmt.Printf("Error Adding namespace %s to ipset list %s\n", nsName, labelKey)
 			return err
 		}
@@ -111,10 +111,32 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	fmt.Printf("NAMESPACE DELETED: %s/%s\n", nsName, nsNs)
 
-	_, exists := npMgr.nsMap[nsName]
+	ns, exists := npMgr.nsMap[nsName]
 	if !exists {
 		return nil
 	}
+
+	// Delete ipset for the namespace.
+	ipsMgr := ns.ipsMgr
+	if err := ipsMgr.DeleteSet(nsName); err != nil {
+		fmt.Printf("Error deleting ipset for namespace %s.\n", nsName)
+		return err
+	}
+
+	// Add the namespace to its label's ipset list.
+	var labelKeys []string
+	nsLabels := nsObj.ObjectMeta.Labels
+	for nsLabelKey, nsLabelVal := range nsLabels {
+		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
+		fmt.Printf("Deleting namespace %s to ipset list %s\n", nsName, labelKey)
+		if err := ipsMgr.DeleteFromList(labelKey, nsName); err != nil {
+			fmt.Printf("Error deleting namespace %s from ipset list %s\n", nsName, labelKey)
+			return err
+		}
+		labelKeys = append(labelKeys, labelKey)
+	}
+
+	ns.setMap = make(map[string]string)
 
 	delete(npMgr.nsMap, nsName)
 

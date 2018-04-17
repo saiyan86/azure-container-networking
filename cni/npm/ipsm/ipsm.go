@@ -96,7 +96,7 @@ func (ipsMgr *IpsetManager) Create(setName string) error {
 }
 
 // AddToList inserts an ipset to an ipset list.
-func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
+func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 	if ipsMgr.Exists(listName, setName, "setlist") {
 		return nil
 	}
@@ -114,6 +114,41 @@ func (ipsMgr *IpsetManager) AddToList(setName string, listName string) error {
 		return err
 	}
 	ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName], setName)
+
+	return nil
+}
+
+// DeleteFromList removes an ipset to an ipset list.
+func (ipsMgr *IpsetManager) DeleteFromList(setName string, listName string) error {
+	_, exists := ipsMgr.listMap[listName]
+	if !exists {
+		return fmt.Errorf("ipset list with name %s not found", listName)
+	}
+
+	for i, val := range ipsMgr.listMap[listName] {
+		if val == setName {
+			ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName][:i], ipsMgr.listMap[listName][i+1:]...)
+		}
+	}
+
+	hashedListName, hashedSetName := "azure-npm-"+util.Hash(listName), "azure-npm-"+util.Hash(setName)
+	entry := &ipsEntry{
+		operationFlag: "-D",
+		set:           hashedListName,
+		spec:          hashedSetName,
+	}
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error deleting ipset entry.\n")
+		fmt.Printf("%+v\n", entry)
+		return err
+	}
+
+	if len(ipsMgr.listMap[listName]) == 0 {
+		if err := ipsMgr.DeleteSet(listName); err != nil {
+			fmt.Printf("Error deleting ipset %s.\n", listName)
+			return err
+		}
+	}
 
 	return nil
 }
