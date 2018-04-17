@@ -278,13 +278,17 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 
 // Clean destroys the whole ipset.
 func (ipsMgr *IpsetManager) Clean() error {
-	entry := &ipsEntry{
-		operationFlag: ipsetDestroyFlag,
-	}
-	if err := ipsMgr.Run(entry); err != nil {
-		fmt.Printf("Error cleaning ipset")
-		fmt.Printf("%+v\n", entry)
-		return err
+	for setName := range ipsMgr.setMap {
+		hashedName := AzureNpmPrefix + util.Hash(setName)
+		entry := &ipsEntry{
+			operationFlag: ipsetDestroyFlag,
+			set:           hashedName,
+		}
+		if err := ipsMgr.Run(entry); err != nil {
+			fmt.Printf("Error cleaning ipset")
+			fmt.Printf("%+v\n", entry)
+			return err
+		}
 	}
 
 	ipsMgr.setMap = make(map[string][]string)
