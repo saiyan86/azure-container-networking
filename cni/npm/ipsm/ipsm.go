@@ -251,6 +251,15 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 // DeleteSet removes a set from ipset.
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
+	_, exists := ipsMgr.setMap[setName]
+	if !exists {
+		return fmt.Errorf("ipset with name %s not found", setName)
+	}
+
+	if len(ipsMgr.setMap[setName]) > 0 {
+		return nil
+	}
+
 	hashedName := AzureNpmPrefix + util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: ipsetDestroyFlag,
