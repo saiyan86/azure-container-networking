@@ -57,9 +57,11 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	// Add the pod to its label's ipset.
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
+		//Ignore pod-template-hash label.
 		if strings.Contains(podLabelKey, "pod-template-hash") {
 			continue
 		}
+
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
 		if err := ipsMgr.AddToSet(labelKey, podIP); err != nil {
@@ -142,6 +144,11 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	}
 	// Delete the pod from its label's ipset.
 	for podLabelKey, podLabelVal := range podLabels {
+		//Ignore pod-template-hash label.
+		if strings.Contains(podLabelKey, "pod-template-hash") {
+			continue
+		}
+
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		if err := ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
 			fmt.Printf("Error deleting pod from label ipset.\n")
