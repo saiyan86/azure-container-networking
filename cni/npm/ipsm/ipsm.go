@@ -23,7 +23,7 @@ type IpsetManager struct {
 	setMap   map[string][]string //label -> []ip
 }
 
-// ExistsInSet checks if an element exists in setMap/listMap.
+// Exists checks if an element exists in setMap/listMap.
 func (ipsMgr *IpsetManager) Exists(key string, val string, flag string) bool {
 	m := ipsMgr.setMap
 	if flag == "setlist" {
@@ -68,30 +68,6 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 	}
 
 	ipsMgr.listMap[setListName] = []string{}
-
-	return nil
-}
-
-// Create creates an ipset.
-func (ipsMgr *IpsetManager) Create(setName string) error {
-	// Use hashed string for set name to avoid string length limit of ipset.
-	hashedName := "azure-npm-" + util.Hash(setName)
-	_, exists := ipsMgr.setMap[setName]
-	if exists {
-		return nil
-	}
-
-	ipsMgr.entryMap[setName] = &ipsEntry{
-		operationFlag: "-N",
-		set:           hashedName,
-		spec:          "nethash",
-	}
-	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
-		fmt.Printf("Error creating ipset.\n")
-		return err
-	}
-
-	ipsMgr.setMap[setName] = []string{}
 
 	return nil
 }
@@ -147,11 +123,54 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 	}
 
 	if len(ipsMgr.listMap[listName]) == 0 {
-		if err := ipsMgr.DeleteSet(listName); err != nil {
-			fmt.Printf("Error deleting ipset %s.\n", listName)
+		if err := ipsMgr.DeleteList(listName); err != nil {
+			fmt.Printf("Error deleting ipset list %s.\n", listName)
 			return err
 		}
 	}
+
+	return nil
+}
+
+// DeleteList removes an ipset list.
+func (ipsMgr *IpsetManager) DeleteList(listName string) error {
+	hashedName := "azure-npm-" + util.Hash(listName)
+	entry := &ipsEntry{
+		operationFlag: "-X",
+		set:           hashedName,
+	}
+
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error deleting ipset %s", listName)
+		fmt.Printf("%+v\n", entry)
+		return err
+	}
+
+	delete(ipsMgr.listMap, listName)
+
+	return nil
+}
+
+// CreateSet creates an ipset.
+func (ipsMgr *IpsetManager) CreateSet(setName string) error {
+	// Use hashed string for set name to avoid string length limit of ipset.
+	hashedName := "azure-npm-" + util.Hash(setName)
+	_, exists := ipsMgr.setMap[setName]
+	if exists {
+		return nil
+	}
+
+	ipsMgr.entryMap[setName] = &ipsEntry{
+		operationFlag: "-N",
+		set:           hashedName,
+		spec:          "nethash",
+	}
+	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
+		fmt.Printf("Error creating ipset.\n")
+		return err
+	}
+
+	ipsMgr.setMap[setName] = []string{}
 
 	return nil
 }
@@ -162,7 +181,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 		return nil
 	}
 
-	if err := ipsMgr.Create(setName); err != nil {
+	if err := ipsMgr.CreateSet(setName); err != nil {
 		return err
 	}
 
@@ -221,7 +240,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		return err
 	}
 
-	delete(ipsMgr.listMap, setName)
+	delete(ipsMgr.setMap, setName)
 
 	return nil
 }
