@@ -12,7 +12,6 @@ var isAzureNpmChainCreated = false
 
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
-
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
@@ -28,7 +27,6 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		npMgr.nsMap[npNs] = newns
 		ns = newns
 	}
-	ns.npQueue = append(ns.npQueue, npObj) //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	if !isAzureNpmChainCreated {
 		if err := ns.iptMgr.AddChain(iptm.IptablesAzureChain); err != nil {
@@ -56,6 +54,8 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 			return err
 		}
 	}
+
+	ns.npMap[npName] = npObj //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	return nil
 }
@@ -108,6 +108,14 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	for _, set := range sets {
 		if err := ipsMgr.DeleteSet(set); err != nil {
 			fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
+			return err
+		}
+	}
+
+	delete(ns.npMap, npName)
+	if len(ns.npMap) == 0 {
+		if err := ipsMgr.Clean(); err != nil {
+			fmt.Printf("Error cleaning ipset\n")
 			return err
 		}
 	}
