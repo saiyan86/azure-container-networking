@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
-	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -120,8 +119,6 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 
 // DeleteFromList removes an ipset to an ipset list.
 func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) error {
-	spew.Dump(ipsMgr.listMap)
-
 	_, exists := ipsMgr.listMap[listName]
 	if !exists {
 		return fmt.Errorf("ipset list with name %s not found", listName)
@@ -284,8 +281,6 @@ func (ipsMgr *IpsetManager) Clean() error {
 			return err
 		}
 	}
-
-	ipsMgr.setMap = make(map[string][]string)
 
 	return nil
 }
