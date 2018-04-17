@@ -63,7 +63,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 
 	// Create ipset for the namespace.
 	ipsMgr := ns.ipsMgr
-	if err := ipsMgr.Create(nsName); err != nil {
+	if err := ipsMgr.CreateSet(nsName); err != nil {
 		fmt.Printf("Error creating ipset for namespace %s.\n", nsName)
 		return err
 	}
