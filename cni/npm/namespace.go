@@ -122,7 +122,7 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 	nsLabels := nsObj.ObjectMeta.Labels
 	for nsLabelKey, nsLabelVal := range nsLabels {
 		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
-		fmt.Printf("Deleting namespace %s to ipset list %s\n", nsName, labelKey)
+		fmt.Printf("Deleting namespace %s from ipset list %s\n", nsName, labelKey)
 		if err := ipsMgr.DeleteFromList(labelKey, nsName); err != nil {
 			fmt.Printf("Error deleting namespace %s from ipset list %s\n", nsName, labelKey)
 			return err
