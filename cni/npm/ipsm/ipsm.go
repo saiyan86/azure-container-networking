@@ -68,7 +68,7 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 }
 
 func isNsSet(setName string) bool {
-	return strings.Contains(setName, "-") && strings.Contains(setName, ":")
+	return !strings.Contains(setName, "-") && !strings.Contains(setName, ":")
 }
 
 // CreateList creates an ipset list. npm maintains one setlist per namespace label.
