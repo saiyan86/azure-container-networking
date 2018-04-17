@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 	"github.com/davecgh/go-spew/spew"
@@ -202,6 +203,11 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		fmt.Printf("Error deleting ipset entry.\n")
 		fmt.Printf("%+v\n", entry)
 		return err
+	}
+
+	// Ignore namespace ipsets.
+	if !strings.Contains(setName, "-") && !strings.Contains(setName, ":") {
+		return nil
 	}
 
 	if len(ipsMgr.setMap[setName]) == 0 {
