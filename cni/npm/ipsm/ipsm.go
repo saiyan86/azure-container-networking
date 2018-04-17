@@ -198,7 +198,11 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 // Run execute an ipset command to update ipset.
 func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	cmdName := "ipset"
-	cmdArgs := []string{entry.operationFlag, entry.set, entry.spec}
+	cmdArgs := []string{entry.operationFlag, entry.set}
+	if len(entry.spec) > 0 {
+		cmdArgs = append(cmdArgs, entry.spec)
+	}
+
 	var (
 		cmdOut []byte
 		err    error
