@@ -9,6 +9,18 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+const (
+	ipset             string = "ipset"
+	ipsetCreationFlag string = "-N"
+	ipsetAppendFlag   string = "-A"
+	ipsetDeletionFlag string = "-D"
+	ipsetDestroyFlag  string = "-X"
+
+	ipsetSetListFlag string = "setlist"
+	// AzureNpmPrefix defines prefix for ipset.
+	AzureNpmPrefix string = "azure-npm-"
+)
+
 type ipsEntry struct {
 	operationFlag string
 	name          string
@@ -23,10 +35,21 @@ type IpsetManager struct {
 	setMap   map[string][]string //label -> []ip
 }
 
+// NewIpsetManager creates a new instance for IpsetManager object.
+func NewIpsetManager() *IpsetManager {
+	ipsMgr := &IpsetManager{
+		listMap:  make(map[string][]string),
+		entryMap: make(map[string]*ipsEntry),
+		setMap:   make(map[string][]string),
+	}
+
+	return ipsMgr
+}
+
 // Exists checks if an element exists in setMap/listMap.
-func (ipsMgr *IpsetManager) Exists(key string, val string, flag string) bool {
+func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 	m := ipsMgr.setMap
-	if flag == "setlist" {
+	if kind == ipsetSetListFlag {
 		m = ipsMgr.listMap
 	}
 
@@ -51,7 +74,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 		return nil
 	}
 
-	hashedName := "azure-npm-" + util.Hash(setListName)
+	hashedName := AzureNpmPrefix + util.Hash(setListName)
 	_, exists := ipsMgr.listMap[setListName]
 	if exists {
 		return nil
@@ -60,7 +83,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 	ipsMgr.entryMap[setListName] = &ipsEntry{
 		operationFlag: "-N",
 		set:           hashedName,
-		spec:          "setlist",
+		spec:          ipsetSetListFlag,
 	}
 	if err := ipsMgr.Run(ipsMgr.entryMap[setListName]); err != nil {
 		fmt.Printf("Error creating ipset list %s.\n", setListName)
@@ -74,7 +97,7 @@ func (ipsMgr *IpsetManager) CreateList(setListName string) error {
 
 // AddToList inserts an ipset to an ipset list.
 func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
-	if ipsMgr.Exists(listName, setName, "setlist") {
+	if ipsMgr.Exists(listName, setName, ipsetSetListFlag) {
 		return nil
 	}
 
@@ -82,8 +105,8 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 		return err
 	}
 
-	ipsMgr.entryMap[listName].operationFlag = "-A"
-	ipsMgr.entryMap[listName].spec = "azure-npm-" + util.Hash(setName)
+	ipsMgr.entryMap[listName].operationFlag = ipsetAppendFlag
+	ipsMgr.entryMap[listName].spec = AzureNpmPrefix + util.Hash(setName)
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
@@ -110,9 +133,9 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		}
 	}
 
-	hashedListName, hashedSetName := "azure-npm-"+util.Hash(listName), "azure-npm-"+util.Hash(setName)
+	hashedListName, hashedSetName := AzureNpmPrefix+util.Hash(listName), AzureNpmPrefix+util.Hash(setName)
 	entry := &ipsEntry{
-		operationFlag: "-D",
+		operationFlag: ipsetDeletionFlag,
 		set:           hashedListName,
 		spec:          hashedSetName,
 	}
@@ -134,9 +157,9 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 
 // DeleteList removes an ipset list.
 func (ipsMgr *IpsetManager) DeleteList(listName string) error {
-	hashedName := "azure-npm-" + util.Hash(listName)
+	hashedName := AzureNpmPrefix + util.Hash(listName)
 	entry := &ipsEntry{
-		operationFlag: "-X",
+		operationFlag: ipsetDestroyFlag,
 		set:           hashedName,
 	}
 
@@ -154,7 +177,7 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 // CreateSet creates an ipset.
 func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 	// Use hashed string for set name to avoid string length limit of ipset.
-	hashedName := "azure-npm-" + util.Hash(setName)
+	hashedName := AzureNpmPrefix + util.Hash(setName)
 	_, exists := ipsMgr.setMap[setName]
 	if exists {
 		return nil
@@ -185,7 +208,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 		return err
 	}
 
-	ipsMgr.entryMap[setName].operationFlag = "-A"
+	ipsMgr.entryMap[setName].operationFlag = ipsetAppendFlag
 	ipsMgr.entryMap[setName].spec = ip
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
@@ -211,9 +234,9 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		}
 	}
 
-	hashedName := "azure-npm-" + util.Hash(setName)
+	hashedName := AzureNpmPrefix + util.Hash(setName)
 	entry := &ipsEntry{
-		operationFlag: "-D",
+		operationFlag: ipsetDeletionFlag,
 		set:           hashedName,
 		spec:          ip,
 	}
@@ -228,9 +251,9 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 // DeleteSet removes a set from ipset.
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
-	hashedName := "azure-npm-" + util.Hash(setName)
+	hashedName := AzureNpmPrefix + util.Hash(setName)
 	entry := &ipsEntry{
-		operationFlag: "-X",
+		operationFlag: ipsetDestroyFlag,
 		set:           hashedName,
 	}
 
@@ -247,7 +270,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 
 // Run execute an ipset command to update ipset.
 func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
-	cmdName := "ipset"
+	cmdName := ipset
 	cmdArgs := []string{entry.operationFlag, entry.set}
 	if len(entry.spec) > 0 {
 		cmdArgs = append(cmdArgs, entry.spec)
@@ -266,16 +289,4 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
 
 	return nil
-}
-
-// NewIpsetManager creates a new instance for IpsetManager object.
-func NewIpsetManager() *IpsetManager {
-
-	ipsMgr := &IpsetManager{
-		listMap:  make(map[string][]string),
-		entryMap: make(map[string]*ipsEntry),
-		setMap:   make(map[string][]string),
-	}
-
-	return ipsMgr
 }

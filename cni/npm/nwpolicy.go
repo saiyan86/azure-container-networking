@@ -31,8 +31,8 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	ns.npQueue = append(ns.npQueue, npObj) //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	if !isAzureNpmChainCreated {
-		if err := ns.iptMgr.AddChain(iptm.AzureIptablesChain); err != nil {
-			fmt.Printf("Error creating iptables chain %s\n.", iptm.AzureIptablesChain)
+		if err := ns.iptMgr.AddChain(iptm.IptablesAzureChain); err != nil {
+			fmt.Printf("Error creating iptables chain %s\n.", iptm.IptablesAzureChain)
 			return err
 		}
 		isAzureNpmChainCreated = true

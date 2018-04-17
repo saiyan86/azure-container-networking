@@ -8,6 +8,9 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
+// AzureNpmPrefix defines prefix for ipset.
+const AzureNpmPrefix string = "azure-npm-"
+
 type policyInfo struct {
 	name  string
 	ports []networkingv1.NetworkPolicyPort
@@ -43,20 +46,20 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		hashedTargetSetName := "azure-npm-" + util.Hash(targetSet)
+		hashedTargetSetName := AzureNpmPrefix + util.Hash(targetSet)
 		for _, protPortPair := range protPortPairSlice {
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
-				Chain:      iptm.AzureIptablesChain,
+				Chain:      iptm.IptablesAzureChain,
 				Specs: []string{
-					"-p", protPortPair.protocol,
-					"--dport", protPortPair.port,
-					"-m",
-					"set",
-					"--match-set",
+					iptm.IptablesPortFlag, protPortPair.protocol,
+					iptm.IptablesDstPortFlag, protPortPair.port,
+					iptm.IptablesMatchFlag,
+					iptm.IptablesSetFlag,
+					iptm.IptablesMatchSetFlag,
 					hashedTargetSetName,
-					"dst",
+					iptm.IptablesDstFlag,
 					iptm.IptablesJumpFlag,
 					iptm.IptablesAccept,
 				},
@@ -66,23 +69,23 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		// Handle PodSelector field of NetworkPolicyPeer.
 		for _, ruleSet := range ruleSets {
-			hashedRuleSetName := "azure-npm-" + util.Hash(ruleSet)
+			hashedRuleSetName := AzureNpmPrefix + util.Hash(ruleSet)
 			entry := &iptm.IptEntry{
 				Name:          ruleSet,
 				HashedName:    hashedTargetSetName,
-				OperationFlag: "-I",
-				Chain:         iptm.AzureIptablesChain,
+				OperationFlag: iptm.IptablesInsertionFlag,
+				Chain:         iptm.IptablesAzureChain,
 				Specs: []string{
-					"-m",
-					"set",
-					"--match-set",
+					iptm.IptablesMatchFlag,
+					iptm.IptablesSetFlag,
+					iptm.IptablesMatchSetFlag,
 					hashedRuleSetName,
-					"src",
-					"-m",
-					"set",
-					"--match-set",
+					iptm.IptablesSrcFlag,
+					iptm.IptablesMatchFlag,
+					iptm.IptablesSetFlag,
+					iptm.IptablesMatchSetFlag,
 					hashedTargetSetName,
-					"dst",
+					iptm.IptablesDstFlag,
 					iptm.IptablesJumpFlag,
 					iptm.IptablesAccept,
 				},
