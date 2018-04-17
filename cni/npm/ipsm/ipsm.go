@@ -265,7 +265,6 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		operationFlag: ipsetDestroyFlag,
 		set:           hashedName,
 	}
-
 	if err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error deleting ipset %s", setName)
 		fmt.Printf("%+v\n", entry)
@@ -277,10 +276,29 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	return nil
 }
 
+// Clean destroys the whole ipset.
+func (ipsMgr *IpsetManager) Clean() error {
+	entry := &ipsEntry{
+		operationFlag: ipsetDestroyFlag,
+	}
+	if err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error cleaning ipset")
+		fmt.Printf("%+v\n", entry)
+		return err
+	}
+
+	ipsMgr.setMap = make(map[string][]string)
+
+	return nil
+}
+
 // Run execute an ipset command to update ipset.
 func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	cmdName := ipset
-	cmdArgs := []string{entry.operationFlag, entry.set}
+	cmdArgs := []string{entry.operationFlag}
+	if len(entry.set) > 0 {
+		cmdArgs = append(cmdArgs, entry.set)
+	}
 	if len(entry.spec) > 0 {
 		cmdArgs = append(cmdArgs, entry.spec)
 	}
