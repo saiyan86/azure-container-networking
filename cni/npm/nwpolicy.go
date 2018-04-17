@@ -93,21 +93,13 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		ns = newns
 	}
 
-	sets, iptEntries := parsePolicy(npObj)
+	_, iptEntries := parsePolicy(npObj)
 
 	iptMgr := ns.iptMgr
 	for _, iptEntry := range iptEntries {
 		if err := iptMgr.Delete(iptEntry); err != nil {
 			fmt.Printf("Error applying iptables rule\n")
 			fmt.Printf("%+v\n", iptEntry)
-			return err
-		}
-	}
-
-	ipsMgr := ns.ipsMgr
-	for _, set := range sets {
-		if err := ipsMgr.DeleteSet(set); err != nil {
-			fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
 			return err
 		}
 	}
