@@ -15,7 +15,7 @@ func isValidPod(podObj *corev1.Pod) bool {
 }
 
 func isSystemPod(podObj *corev1.Pod) bool {
-	return podObj.ObjectMeta.Namespace == "kube-system" || strings.Contains(podObj.ObjectMeta.Namespace, "pod-template-hash")
+	return podObj.ObjectMeta.Namespace == "kube-system"
 }
 
 // AddPod handles add pod.
@@ -57,6 +57,9 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	// Add the pod to its label's ipset.
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
+		if strings.Contains(podLabelKey, "pod-template-hash") {
+			continue
+		}
 		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
 		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
 		if err := ipsMgr.AddToSet(labelKey, podIP); err != nil {
