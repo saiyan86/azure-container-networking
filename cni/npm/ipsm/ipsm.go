@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 )
@@ -66,30 +67,34 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 	return false
 }
 
+func isNsSet(setName string) bool {
+	return strings.Contains(setName, "-") && strings.Contains(setName, ":")
+}
+
 // CreateList creates an ipset list. npm maintains one setlist per namespace label.
-func (ipsMgr *IpsetManager) CreateList(setListName string) error {
+func (ipsMgr *IpsetManager) CreateList(listName string) error {
 	// Ignore system pods.
-	if setListName == "kube-system" {
+	if listName == "kube-system" {
 		return nil
 	}
 
-	hashedName := AzureNpmPrefix + util.Hash(setListName)
-	_, exists := ipsMgr.listMap[setListName]
+	hashedName := AzureNpmPrefix + util.Hash(listName)
+	_, exists := ipsMgr.listMap[listName]
 	if exists {
 		return nil
 	}
 
-	ipsMgr.entryMap[setListName] = &ipsEntry{
+	ipsMgr.entryMap[listName] = &ipsEntry{
 		operationFlag: "-N",
 		set:           hashedName,
 		spec:          ipsetSetListFlag,
 	}
-	if err := ipsMgr.Run(ipsMgr.entryMap[setListName]); err != nil {
-		fmt.Printf("Error creating ipset list %s.\n", setListName)
+	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
+		fmt.Printf("Error creating ipset list %s.\n", listName)
 		return err
 	}
 
-	ipsMgr.listMap[setListName] = []string{}
+	ipsMgr.listMap[listName] = []string{}
 
 	return nil
 }
@@ -276,6 +281,10 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 // Clean removes all the empty sets under the namespace.
 func (ipsMgr *IpsetManager) Clean() error {
 	for setName := range ipsMgr.setMap {
+		if isNsSet(setName) {
+			continue
+		}
+
 		if err := ipsMgr.DeleteSet(setName); err != nil {
 			fmt.Printf("Error cleaning ipset\n")
 			return err
