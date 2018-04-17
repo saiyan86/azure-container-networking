@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type ipsEntry struct {
@@ -119,7 +120,9 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 }
 
 // DeleteFromList removes an ipset to an ipset list.
-func (ipsMgr *IpsetManager) DeleteFromList(setName string, listName string) error {
+func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) error {
+	spew.Dump(ipsMgr.listMap)
+
 	_, exists := ipsMgr.listMap[listName]
 	if !exists {
 		return fmt.Errorf("ipset list with name %s not found", listName)
