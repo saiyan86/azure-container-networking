@@ -5,23 +5,33 @@ import (
 	"os/exec"
 )
 
-const IptablesChainCreationFlag string = "-N"
-const IptablesInsertionFlag string = "-I"
-const IptablesAppendFlag string = "-A"
-const IptablesDeletionFlag string = "-D"
+const (
+	iptables                  string = "iptables"
+	IptablesChainCreationFlag string = "-N"
+	IptablesInsertionFlag     string = "-I"
+	IptablesAppendFlag        string = "-A"
+	IptablesDeletionFlag      string = "-D"
+	IptablesJumpFlag          string = "-j"
 
-const IptablesJumpFlag string = "-j"
+	IptablesAccept string = "ACCEPT"
+	IptablesReject string = "REJECT"
+	IptablesDrop   string = "DROP"
 
-const IptablesAccept string = "ACCEPT"
-const IptablesReject string = "REJECT"
-const IptablesDrop string = "DROP"
+	IptablesSrcFlag      string = "src"
+	IptablesDstFlag      string = "dst"
+	IptablesPortFlag     string = "-p"
+	IptablesDstPortFlag  string = "--dport"
+	IptablesMatchFlag    string = "-m"
+	IptablesSetFlag      string = "set"
+	IptablesMatchSetFlag string = "--match-set"
 
-const IptablesRelatedState string = "RELATED"
-const IptablesEstablishedState string = "ESTABLISHED"
+	IptablesRelatedState     string = "RELATED"
+	IptablesEstablishedState string = "ESTABLISHED"
 
-// AzureIptablesChain specifies the name of azure-npm created chain in iptables.
-const AzureIptablesChain string = "AZURE-NPM"
-const ForwardChain string = "FORWARD"
+	// IptablesAzureChain specifies the name of azure-npm created chain in iptables.
+	IptablesAzureChain   string = "AZURE-NPM"
+	IptablesForwardChain string = "FORWARD"
+)
 
 // IptEntry represents an iptables rule.
 type IptEntry struct {
@@ -52,21 +62,21 @@ func NewIptablesManager() *IptablesManager {
 func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	iptMgr.OperationFlag = IptablesChainCreationFlag
 	entry := &IptEntry{
-		Chain: AzureIptablesChain,
+		Chain: IptablesAzureChain,
 	}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", chainName)
 		return err
 	}
 
-	if chainName != AzureIptablesChain {
+	if chainName != IptablesAzureChain {
 		return nil
 	}
 
 	// Add default rule to FORWARD chain.
 	iptMgr.OperationFlag = IptablesInsertionFlag
 	defaultBlock := &IptEntry{
-		Chain: ForwardChain,
+		Chain: IptablesForwardChain,
 		Specs: []string{
 			IptablesJumpFlag,
 			IptablesReject,
@@ -78,15 +88,15 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	}
 
 	// Insert AZURE-NPM chain to FORWARD chain.
-	entry.Chain = ForwardChain
-	entry.Specs = []string{IptablesJumpFlag, AzureIptablesChain}
+	entry.Chain = IptablesForwardChain
+	entry.Specs = []string{IptablesJumpFlag, IptablesAzureChain}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM chain to FORWARD\n")
 		return err
 	}
 
 	// Add default rule to AZURE-NPM chain.
-	entry.Chain = AzureIptablesChain
+	entry.Chain = IptablesAzureChain
 	entry.Specs = []string{
 		"-m",
 		"state",
@@ -130,7 +140,7 @@ func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
-	cmdName := "iptables"
+	cmdName := iptables
 	cmdArgs := append([]string{iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
 	var (
 		cmdOut []byte
