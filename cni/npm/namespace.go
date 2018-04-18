@@ -38,7 +38,7 @@ func isSystemNs(nsObj *corev1.Namespace) bool {
 	return nsObj.ObjectMeta.Name == "kube-system"
 }
 
-// AddNamespace handles add name space.
+// AddNamespace handles add namespace.
 func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
@@ -86,7 +86,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	return nil
 }
 
-// UpdateNamespace handles update name space.
+// UpdateNamespace handles update namespace.
 func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, newNsObj *corev1.Namespace) error {
 	npMgr.Lock()
 
@@ -103,7 +103,7 @@ func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, n
 	return nil
 }
 
-// DeleteNamespace handles delete name space.
+// DeleteNamespace handles delete namespace.
 func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
