@@ -17,8 +17,7 @@ const (
 	ipsetDestroyFlag  string = "-X"
 
 	ipsetSetListFlag string = "setlist"
-	// AzureNpmPrefix defines prefix for ipset.
-	AzureNpmPrefix string = "azure-npm-"
+	azureNpmPrefix   string = "azure-npm-"
 )
 
 type ipsEntry struct {
@@ -78,7 +77,7 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 		return nil
 	}
 
-	hashedName := AzureNpmPrefix + util.Hash(listName)
+	hashedName := azureNpmPrefix + util.Hash(listName)
 	_, exists := ipsMgr.listMap[listName]
 	if exists {
 		return nil
@@ -110,7 +109,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 	}
 
 	ipsMgr.entryMap[listName].operationFlag = ipsetAppendFlag
-	ipsMgr.entryMap[listName].spec = AzureNpmPrefix + util.Hash(setName)
+	ipsMgr.entryMap[listName].spec = azureNpmPrefix + util.Hash(setName)
 
 	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
@@ -135,7 +134,7 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		}
 	}
 
-	hashedListName, hashedSetName := AzureNpmPrefix+util.Hash(listName), AzureNpmPrefix+util.Hash(setName)
+	hashedListName, hashedSetName := azureNpmPrefix+util.Hash(listName), azureNpmPrefix+util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: ipsetDeletionFlag,
 		set:           hashedListName,
@@ -159,7 +158,7 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 
 // DeleteList removes an ipset list.
 func (ipsMgr *IpsetManager) DeleteList(listName string) error {
-	hashedName := AzureNpmPrefix + util.Hash(listName)
+	hashedName := azureNpmPrefix + util.Hash(listName)
 	entry := &ipsEntry{
 		operationFlag: ipsetDestroyFlag,
 		set:           hashedName,
@@ -179,7 +178,7 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 // CreateSet creates an ipset.
 func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 	// Use hashed string for set name to avoid string length limit of ipset.
-	hashedName := AzureNpmPrefix + util.Hash(setName)
+	hashedName := azureNpmPrefix + util.Hash(setName)
 	_, exists := ipsMgr.setMap[setName]
 	if exists {
 		return nil
@@ -236,7 +235,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		}
 	}
 
-	hashedName := AzureNpmPrefix + util.Hash(setName)
+	hashedName := azureNpmPrefix + util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: ipsetDeletionFlag,
 		set:           hashedName,
@@ -262,7 +261,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		return nil
 	}
 
-	hashedName := AzureNpmPrefix + util.Hash(setName)
+	hashedName := azureNpmPrefix + util.Hash(setName)
 	entry := &ipsEntry{
 		operationFlag: ipsetDestroyFlag,
 		set:           hashedName,

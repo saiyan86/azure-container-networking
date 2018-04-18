@@ -8,8 +8,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
-// AzureNpmPrefix defines prefix for ipset.
-const AzureNpmPrefix string = "azure-npm-"
+// azureNpmPrefix defines prefix for ipset.
+const azureNpmPrefix string = "azure-npm-"
 
 type policyInfo struct {
 	name  string
@@ -46,7 +46,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		hashedTargetSetName := AzureNpmPrefix + util.Hash(targetSet)
+		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
 		for _, protPortPair := range protPortPairSlice {
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
@@ -69,7 +69,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		// Handle PodSelector field of NetworkPolicyPeer.
 		for _, ruleSet := range ruleSets {
-			hashedRuleSetName := AzureNpmPrefix + util.Hash(ruleSet)
+			hashedRuleSetName := azureNpmPrefix + util.Hash(ruleSet)
 			entry := &iptm.IptEntry{
 				Name:          ruleSet,
 				HashedName:    hashedTargetSetName,
