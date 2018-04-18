@@ -24,10 +24,11 @@ type portsInfo struct {
 func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []*iptm.IptEntry) {
 	var (
 		protPortPairSlice []*portsInfo
-		ruleSets          []string // Sets listed in Ingress rules.
+		podRuleSets       []string // pod sets listed in Ingress rules.
+		nsRuleSets        []string // namespace sets listed in Ingress rules
 		entries           []*iptm.IptEntry
 	)
-	//TODO: handle NamesapceSelector & IPBlock
+	//TODO: handle IPBlock
 	for _, rule := range rules {
 		for _, portRule := range rule.Ports {
 			protPortPairSlice = append(protPortPairSlice,
@@ -39,7 +40,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		for _, fromRule := range rule.From {
 			for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
-				ruleSets = append(ruleSets, ns+"-"+podLabelKey+":"+podLabelVal)
+				podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
+			}
+
+			for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
+				nsRuleSets = append(nsRuleSets, ns+"-"+nsLabelKey+":"+nsLabelVal)
 			}
 		}
 	}
@@ -68,13 +73,12 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		// Handle PodSelector field of NetworkPolicyPeer.
-		for _, ruleSet := range ruleSets {
-			hashedRuleSetName := azureNpmPrefix + util.Hash(ruleSet)
+		for _, podRuleSet := range podRuleSets {
+			hashedRuleSetName := azureNpmPrefix + util.Hash(podRuleSet)
 			entry := &iptm.IptEntry{
-				Name:          ruleSet,
-				HashedName:    hashedTargetSetName,
-				OperationFlag: iptm.IptablesInsertionFlag,
-				Chain:         iptm.IptablesAzureChain,
+				Name:       podRuleSet,
+				HashedName: hashedRuleSetName,
+				Chain:      iptm.IptablesAzureChain,
 				Specs: []string{
 					iptm.IptablesMatchFlag,
 					iptm.IptablesSetFlag,
@@ -94,9 +98,32 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		// TODO: Handle NamespaceSelector field of NetworkPolicyPeer. Use namespace selector to match corresponding namespaces.
+		for _, nsRuleSet := range nsRuleSets {
+			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
+			entry := &iptm.IptEntry{
+				Name:       nsRuleSet,
+				HashedName: hashedRuleSetName,
+				Chain:      iptm.IptablesAzureChain,
+				Specs: []string{
+					iptm.IptablesMatchFlag,
+					iptm.IptablesSetFlag,
+					iptm.IptablesMatchSetFlag,
+					hashedRuleSetName,
+					iptm.IptablesSrcFlag,
+					iptm.IptablesMatchFlag,
+					iptm.IptablesSetFlag,
+					iptm.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					iptm.IptablesDstFlag,
+					iptm.IptablesJumpFlag,
+					iptm.IptablesAccept,
+				},
+			}
+			entries = append(entries, entry)
+		}
 		// TODO: Handle IPBlock field of NetworkPolicyPeer.
 	}
-	return ruleSets, entries
+	return podRuleSets, entries
 }
 
 func parseEgress(rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {

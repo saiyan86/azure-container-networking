@@ -35,12 +35,11 @@ const (
 
 // IptEntry represents an iptables rule.
 type IptEntry struct {
-	Name          string
-	HashedName    string
-	OperationFlag string
-	Chain         string
-	Flag          string
-	Specs         []string
+	Name       string
+	HashedName string
+	Chain      string
+	Flag       string
+	Specs      []string
 }
 
 // IptablesManager stores iptables entries.
