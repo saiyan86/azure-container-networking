@@ -27,6 +27,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		podRuleSets       []string // pod sets listed in Ingress rules.
 		nsRuleSets        []string // namespace sets listed in Ingress rules
 		entries           []*iptm.IptEntry
+		ipblock           *networkingv1.IPBlock
 	)
 	//TODO: handle IPBlock
 	for _, rule := range rules {
@@ -49,6 +50,10 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
 					nsRuleSets = append(nsRuleSets, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}
+			}
+
+			if fromRule.IPBlock != nil {
+				ipblock = fromRule.IPBlock
 			}
 		}
 	}
@@ -101,7 +106,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entries = append(entries, entry)
 		}
 
-		// TODO: Handle NamespaceSelector field of NetworkPolicyPeer. Use namespace selector to match corresponding namespaces.
+		// Handle NamespaceSelector field of NetworkPolicyPeer
 		for _, nsRuleSet := range nsRuleSets {
 			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
 			entry := &iptm.IptEntry{
@@ -126,7 +131,32 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entries = append(entries, entry)
 		}
 
-		// TODO: Handle IPBlock field of NetworkPolicyPeer.
+		// Handle ipblock field of NetworkPolicyPeer
+		for _, except := range ipblock.Except {
+			entry := &iptm.IptEntry{
+				Chain: iptm.IptablesAzureChain,
+				Specs: []string{
+					iptm.IptablesSFlag,
+					except,
+					iptm.IptablesJumpFlag,
+					iptm.IptablesAccept,
+				},
+			}
+			entries = append(entries, entry)
+		}
+
+		if len(ipblock.CIDR) > 0 {
+			cidrEntry := &iptm.IptEntry{
+				Chain: iptm.IptablesAzureChain,
+				Specs: []string{
+					iptm.IptablesSFlag,
+					ipblock.CIDR,
+					iptm.IptablesJumpFlag,
+					iptm.IptablesAccept,
+				},
+			}
+			entries = append(entries, cidrEntry)
+		}
 	}
 	return podRuleSets, entries
 }
