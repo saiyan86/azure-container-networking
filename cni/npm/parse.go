@@ -139,7 +139,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					iptm.IptablesSFlag,
 					except,
 					iptm.IptablesJumpFlag,
-					iptm.IptablesAccept,
+					iptm.IptablesReject,
 				},
 			}
 			entries = append(entries, entry)
