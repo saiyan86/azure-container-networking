@@ -47,7 +47,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 			if fromRule.NamespaceSelector != nil {
 				for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
-					nsRuleSets = append(nsRuleSets, ns+"-"+nsLabelKey+":"+nsLabelVal)
+					nsRuleSets = append(nsRuleSets, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}
 			}
 		}
