@@ -121,6 +121,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			}
 			entries = append(entries, entry)
 		}
+
 		// TODO: Handle IPBlock field of NetworkPolicyPeer.
 	}
 	return podRuleSets, entries
