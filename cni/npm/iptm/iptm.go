@@ -20,6 +20,8 @@ const (
 	IptablesSrcFlag      string = "src"
 	IptablesDstFlag      string = "dst"
 	IptablesPortFlag     string = "-p"
+	IptablesSFlag        string = "-s"
+	IptablesDFlag        string = "-d"
 	IptablesDstPortFlag  string = "--dport"
 	IptablesMatchFlag    string = "-m"
 	IptablesSetFlag      string = "set"
