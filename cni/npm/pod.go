@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/azure-container-networking/cni/npm/util"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -15,7 +17,7 @@ func isValidPod(podObj *corev1.Pod) bool {
 }
 
 func isSystemPod(podObj *corev1.Pod) bool {
-	return podObj.ObjectMeta.Namespace == "kube-system"
+	return podObj.ObjectMeta.Namespace == util.KubeSystemFlag
 }
 
 // AddPod handles add pod.
@@ -58,7 +60,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
 		//Ignore pod-template-hash label.
-		if strings.Contains(podLabelKey, "pod-template-hash") {
+		if strings.Contains(podLabelKey, util.KubePodTemplateHashFlag) {
 			continue
 		}
 
