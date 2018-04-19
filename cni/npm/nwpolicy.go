@@ -3,8 +3,7 @@ package npm
 import (
 	"fmt"
 
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
-
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
@@ -29,8 +28,8 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	}
 
 	if !isAzureNpmChainCreated {
-		if err := ns.iptMgr.AddChain(iptm.IptablesAzureChain); err != nil {
-			fmt.Printf("Error creating iptables chain %s\n.", iptm.IptablesAzureChain)
+		if err := ns.iptMgr.AddChain(util.IptablesAzureChain); err != nil {
+			fmt.Printf("Error creating iptables chain %s\n.", util.IptablesAzureChain)
 			return err
 		}
 		isAzureNpmChainCreated = true

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
@@ -35,7 +36,11 @@ func newNs(name string) (*namespace, error) {
 }
 
 func isSystemNs(nsObj *corev1.Namespace) bool {
-	return nsObj.ObjectMeta.Name == "kube-system"
+	return nsObj.ObjectMeta.Name == util.KubeSystemFlag
+}
+
+func getNsIpsetName(k, v string) string {
+	return "ns-" + k + ":" + v
 }
 
 // AddNamespace handles add namespace.
@@ -72,7 +77,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	var labelKeys []string
 	nsLabels := nsObj.ObjectMeta.Labels
 	for nsLabelKey, nsLabelVal := range nsLabels {
-		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
+		labelKey := getNsIpsetName(nsLabelKey, nsLabelVal)
 		fmt.Printf("Adding namespace %s to ipset list %s\n", nsName, labelKey)
 		if err := ipsMgr.AddToList(labelKey, nsName); err != nil {
 			fmt.Printf("Error Adding namespace %s to ipset list %s\n", nsName, labelKey)
@@ -121,7 +126,7 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 	var labelKeys []string
 	nsLabels := nsObj.ObjectMeta.Labels
 	for nsLabelKey, nsLabelVal := range nsLabels {
-		labelKey := "ns" + "-" + nsLabelKey + ":" + nsLabelVal
+		labelKey := getNsIpsetName(nsLabelKey, nsLabelVal)
 		fmt.Printf("Deleting namespace %s from ipset list %s\n", nsName, labelKey)
 		if err := ipsMgr.DeleteFromList(labelKey, nsName); err != nil {
 			fmt.Printf("Error deleting namespace %s from ipset list %s\n", nsName, labelKey)
