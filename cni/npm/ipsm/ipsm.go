@@ -17,7 +17,10 @@ const (
 	ipsetDestroyFlag  string = "-X"
 
 	ipsetSetListFlag string = "setlist"
+	ipsetNetHashFlag string = "nethash"
 	azureNpmPrefix   string = "azure-npm-"
+
+	kubeSystemFlag string = "kube-system"
 )
 
 type ipsEntry struct {
@@ -52,8 +55,7 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 		m = ipsMgr.listMap
 	}
 
-	_, exists := m[key]
-	if !exists {
+	if _, exists := m[key]; !exists {
 		return false
 	}
 
@@ -73,18 +75,17 @@ func isNsSet(setName string) bool {
 // CreateList creates an ipset list. npm maintains one setlist per namespace label.
 func (ipsMgr *IpsetManager) CreateList(listName string) error {
 	// Ignore system pods.
-	if listName == "kube-system" {
+	if listName == kubeSystemFlag {
 		return nil
 	}
 
 	hashedName := azureNpmPrefix + util.Hash(listName)
-	_, exists := ipsMgr.listMap[listName]
-	if exists {
+	if _, exists := ipsMgr.listMap[listName]; exists {
 		return nil
 	}
 
 	ipsMgr.entryMap[listName] = &ipsEntry{
-		operationFlag: "-N",
+		operationFlag: ipsetCreationFlag,
 		set:           hashedName,
 		spec:          ipsetSetListFlag,
 	}
@@ -116,6 +117,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[listName])
 		return err
 	}
+
 	ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName], setName)
 
 	return nil
@@ -123,8 +125,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 
 // DeleteFromList removes an ipset to an ipset list.
 func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) error {
-	_, exists := ipsMgr.listMap[listName]
-	if !exists {
+	if _, exists := ipsMgr.listMap[listName]; !exists {
 		return fmt.Errorf("ipset list with name %s not found", listName)
 	}
 
@@ -179,15 +180,14 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 	// Use hashed string for set name to avoid string length limit of ipset.
 	hashedName := azureNpmPrefix + util.Hash(setName)
-	_, exists := ipsMgr.setMap[setName]
-	if exists {
+	if _, exists := ipsMgr.setMap[setName]; exists {
 		return nil
 	}
 
 	ipsMgr.entryMap[setName] = &ipsEntry{
-		operationFlag: "-N",
+		operationFlag: ipsetCreationFlag,
 		set:           hashedName,
-		spec:          "nethash",
+		spec:          ipsetNetHashFlag,
 	}
 	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset.\n")
@@ -201,7 +201,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 
 // AddToSet inserts an ip to an entry in setMap, and creates/updates the corresponding ipset.
 func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
-	if ipsMgr.Exists(setName, ip, "nethash") {
+	if ipsMgr.Exists(setName, ip, ipsetNetHashFlag) {
 		return nil
 	}
 
@@ -224,8 +224,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 
 // DeleteFromSet removes an ip from an entry in setMap, and delete/update the corresponding ipset.
 func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
-	_, exists := ipsMgr.setMap[setName]
-	if !exists {
+	if _, exists := ipsMgr.setMap[setName]; !exists {
 		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
@@ -252,8 +251,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 // DeleteSet removes a set from ipset.
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
-	_, exists := ipsMgr.setMap[setName]
-	if !exists {
+	if _, exists := ipsMgr.setMap[setName]; !exists {
 		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
