@@ -2,8 +2,8 @@ package util
 
 //kubernetes related constants.
 const (
-	KubeSystemFlag          = "kube-system"
-	KubePodTemplateHashFlag = "pod-template-hash"
+	KubeSystemFlag          string = "kube-system"
+	KubePodTemplateHashFlag string = "pod-template-hash"
 )
 
 //iptables related constants.
@@ -30,9 +30,8 @@ const (
 	IPtablesMatchStateFlag    string = "--state"
 	IptablesRelatedState      string = "RELATED"
 	IptablesEstablishedState  string = "ESTABLISHED"
-	// IptablesAzureChain specifies the name of azure-npm created chain in iptables.
-	IptablesAzureChain   string = "AZURE-NPM"
-	IptablesForwardChain string = "FORWARD"
+	IptablesAzureChain        string = "AZURE-NPM"
+	IptablesForwardChain      string = "FORWARD"
 )
 
 //ipset related constants.
