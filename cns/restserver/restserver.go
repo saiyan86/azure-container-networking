@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/Azure/azure-container-networking/cns"
@@ -14,33 +15,54 @@ import (
 	"github.com/Azure/azure-container-networking/cns/dockerclient"
 	"github.com/Azure/azure-container-networking/cns/imdsclient"
 	"github.com/Azure/azure-container-networking/cns/ipamclient"
+	"github.com/Azure/azure-container-networking/cns/networkcontainers"
 	"github.com/Azure/azure-container-networking/cns/routes"
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/platform"
 	"github.com/Azure/azure-container-networking/store"
 )
 
 const (
 	// Key against which CNS state is persisted.
-	storeKey = "ContainerNetworkService"
+	storeKey        = "ContainerNetworkService"
+	swiftAPIVersion = "1"
 )
 
 // httpRestService represents http listener for CNS - Container Networking Service.
 type httpRestService struct {
 	*cns.Service
-	dockerClient *dockerclient.DockerClient
-	imdsClient   *imdsclient.ImdsClient
-	ipamClient   *ipamclient.IpamClient
-	routingTable *routes.RoutingTable
-	store        store.KeyValueStore
-	state        httpRestServiceState
+	dockerClient     *dockerclient.DockerClient
+	imdsClient       *imdsclient.ImdsClient
+	ipamClient       *ipamclient.IpamClient
+	networkContainer *networkcontainers.NetworkContainers
+	routingTable     *routes.RoutingTable
+	store            store.KeyValueStore
+	state            *httpRestServiceState
+	lock             sync.Mutex
+}
+
+// containerstatus is used to save status of an existing container
+type containerstatus struct {
+	ID                            string
+	VMVersion                     string
+	HostVersion                   string
+	CreateNetworkContainerRequest cns.CreateNetworkContainerRequest
 }
 
 // httpRestServiceState contains the state we would like to persist.
 type httpRestServiceState struct {
-	Location    string
-	NetworkType string
-	Initialized bool
-	TimeStamp   time.Time
+	Location        string
+	NetworkType     string
+	Initialized     bool
+	ContainerStatus map[string]containerstatus
+	Networks        map[string]*networkInfo
+	TimeStamp       time.Time
+}
+
+type networkInfo struct {
+	NetworkName string
+	NicInfo     *imdsclient.InterfaceInfo
+	Options     map[string]interface{}
 }
 
 // HTTPService describes the min API interface that every service should have.
@@ -57,7 +79,9 @@ func NewHTTPRestService(config *common.ServiceConfig) (HTTPService, error) {
 
 	imdsClient := &imdsclient.ImdsClient{}
 	routingTable := &routes.RoutingTable{}
+	nc := &networkcontainers.NetworkContainers{}
 	dc, err := dockerclient.NewDefaultDockerClient(imdsClient)
+
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +91,20 @@ func NewHTTPRestService(config *common.ServiceConfig) (HTTPService, error) {
 		return nil, err
 	}
 
+	serviceState := &httpRestServiceState{}
+	serviceState.Networks = make(map[string]*networkInfo)
+
 	return &httpRestService{
-		Service:      service,
-		store:        service.Service.Store,
-		dockerClient: dc,
-		imdsClient:   imdsClient,
-		ipamClient:   ic,
-		routingTable: routingTable,
+		Service:          service,
+		store:            service.Service.Store,
+		dockerClient:     dc,
+		imdsClient:       imdsClient,
+		ipamClient:       ic,
+		networkContainer: nc,
+		routingTable:     routingTable,
+		state:            serviceState,
 	}, nil
+
 }
 
 // Start starts the CNS listener.
@@ -83,6 +113,18 @@ func (service *httpRestService) Start(config *common.ServiceConfig) error {
 	err := service.Initialize(config)
 	if err != nil {
 		log.Printf("[Azure CNS]  Failed to initialize base service, err:%v.", err)
+		return err
+	}
+
+	err = service.restoreState()
+	if err != nil {
+		log.Printf("[Azure CNS]  Failed to restore service state, err:%v.", err)
+		return err
+	}
+
+	err = service.restoreNetworkState()
+	if err != nil {
+		log.Printf("[Azure CNS]  Failed to restore network state, err:%v.", err)
 		return err
 	}
 
@@ -97,16 +139,24 @@ func (service *httpRestService) Start(config *common.ServiceConfig) error {
 	listener.AddHandler(cns.GetHostLocalIPPath, service.getHostLocalIP)
 	listener.AddHandler(cns.GetIPAddressUtilizationPath, service.getIPAddressUtilization)
 	listener.AddHandler(cns.GetUnhealthyIPAddressesPath, service.getUnhealthyIPAddresses)
+	listener.AddHandler(cns.CreateOrUpdateNetworkContainer, service.createOrUpdateNetworkContainer)
+	listener.AddHandler(cns.DeleteNetworkContainer, service.deleteNetworkContainer)
+	listener.AddHandler(cns.GetNetworkContainerStatus, service.getNetworkContainerStatus)
+	listener.AddHandler(cns.GetInterfaceForContainer, service.getInterfaceForContainer)
 
-	// handlers for v0.1
-	listener.AddHandler(cns.V1Prefix+cns.SetEnvironmentPath, service.setEnvironment)
-	listener.AddHandler(cns.V1Prefix+cns.CreateNetworkPath, service.createNetwork)
-	listener.AddHandler(cns.V1Prefix+cns.DeleteNetworkPath, service.deleteNetwork)
-	listener.AddHandler(cns.V1Prefix+cns.ReserveIPAddressPath, service.reserveIPAddress)
-	listener.AddHandler(cns.V1Prefix+cns.ReleaseIPAddressPath, service.releaseIPAddress)
-	listener.AddHandler(cns.V1Prefix+cns.GetHostLocalIPPath, service.getHostLocalIP)
-	listener.AddHandler(cns.V1Prefix+cns.GetIPAddressUtilizationPath, service.getIPAddressUtilization)
-	listener.AddHandler(cns.V1Prefix+cns.GetUnhealthyIPAddressesPath, service.getUnhealthyIPAddresses)
+	// handlers for v0.2
+	listener.AddHandler(cns.V2Prefix+cns.SetEnvironmentPath, service.setEnvironment)
+	listener.AddHandler(cns.V2Prefix+cns.CreateNetworkPath, service.createNetwork)
+	listener.AddHandler(cns.V2Prefix+cns.DeleteNetworkPath, service.deleteNetwork)
+	listener.AddHandler(cns.V2Prefix+cns.ReserveIPAddressPath, service.reserveIPAddress)
+	listener.AddHandler(cns.V2Prefix+cns.ReleaseIPAddressPath, service.releaseIPAddress)
+	listener.AddHandler(cns.V2Prefix+cns.GetHostLocalIPPath, service.getHostLocalIP)
+	listener.AddHandler(cns.V2Prefix+cns.GetIPAddressUtilizationPath, service.getIPAddressUtilization)
+	listener.AddHandler(cns.V2Prefix+cns.GetUnhealthyIPAddressesPath, service.getUnhealthyIPAddresses)
+	listener.AddHandler(cns.V2Prefix+cns.CreateOrUpdateNetworkContainer, service.createOrUpdateNetworkContainer)
+	listener.AddHandler(cns.V2Prefix+cns.DeleteNetworkContainer, service.deleteNetworkContainer)
+	listener.AddHandler(cns.V2Prefix+cns.GetNetworkContainerStatus, service.getNetworkContainerStatus)
+	listener.AddHandler(cns.V2Prefix+cns.GetInterfaceForContainer, service.getInterfaceForContainer)
 
 	log.Printf("[Azure CNS]  Listening.")
 	return nil
@@ -186,7 +236,14 @@ func (service *httpRestService) createNetwork(w http.ResponseWriter, r *http.Req
 								log.Printf("[Azure CNS] Unable to get routing table from node, %+v.", err.Error())
 							}
 
-							err = dc.CreateNetwork(req.NetworkName, req.Options)
+							nicInfo, err := service.imdsClient.GetPrimaryInterfaceInfoFromHost()
+							if err != nil {
+								returnMessage = fmt.Sprintf("[Azure CNS] Error. GetPrimaryInterfaceInfoFromHost failed %v.", err.Error())
+								returnCode = UnexpectedError
+								break
+							}
+
+							err = dc.CreateNetwork(req.NetworkName, nicInfo, req.Options)
 							if err != nil {
 								returnMessage = fmt.Sprintf("[Azure CNS] Error. CreateNetwork failed %v.", err.Error())
 								returnCode = UnexpectedError
@@ -196,6 +253,14 @@ func (service *httpRestService) createNetwork(w http.ResponseWriter, r *http.Req
 							if err != nil {
 								log.Printf("[Azure CNS] Unable to restore routing table on node, %+v.", err.Error())
 							}
+
+							networkInfo := &networkInfo{
+								NetworkName: req.NetworkName,
+								NicInfo:     nicInfo,
+								Options:     req.Options,
+							}
+
+							service.state.Networks[req.NetworkName] = networkInfo
 
 						case "StandAlone":
 							returnMessage = fmt.Sprintf("[Azure CNS] Error. Underlay network is not supported in StandAlone environment. %v.", err.Error())
@@ -227,6 +292,10 @@ func (service *httpRestService) createNetwork(w http.ResponseWriter, r *http.Req
 	}
 
 	err = service.Listener.Encode(w, &resp)
+
+	if returnCode == 0 {
+		service.saveState()
+	}
 
 	log.Response(service.Name, resp, err)
 }
@@ -278,6 +347,11 @@ func (service *httpRestService) deleteNetwork(w http.ResponseWriter, r *http.Req
 	}
 
 	err = service.Listener.Encode(w, &resp)
+
+	if returnCode == 0 {
+		delete(service.state.Networks, req.NetworkName)
+		service.saveState()
+	}
 
 	log.Response(service.Name, resp, err)
 }
@@ -721,5 +795,312 @@ func (service *httpRestService) restoreState() error {
 	}
 
 	log.Printf("[Azure CNS]  Restored state, %+v\n", service.state)
+	return nil
+}
+
+func (service *httpRestService) createOrUpdateNetworkContainer(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Azure CNS] createOrUpdateNetworkContainer")
+
+	var req cns.CreateNetworkContainerRequest
+
+	returnMessage := ""
+	returnCode := 0
+	err := service.Listener.Decode(w, r, &req)
+
+	log.Request(service.Name, &req, err)
+
+	if err != nil {
+		return
+	}
+
+	if req.NetworkContainerid == "" {
+		returnCode = NetworkContainerNotSpecified
+		returnMessage = fmt.Sprintf("[Azure CNS] Error. NetworkContainerid is empty")
+	}
+
+	switch r.Method {
+	case "POST":
+		nc := service.networkContainer
+		err := nc.Create(req)
+
+		if err != nil {
+			returnMessage = fmt.Sprintf("[Azure CNS] Error. CreateOrUpdateNetworkContainer failed %v", err.Error())
+			returnCode = UnexpectedError
+			break
+		}
+
+		// we don't want to overwrite what other calls may have written
+		service.lock.Lock()
+		defer service.lock.Unlock()
+
+		existing, ok := service.state.ContainerStatus[req.NetworkContainerid]
+		var hostVersion string
+		if ok {
+			hostVersion = existing.HostVersion
+		}
+
+		if service.state.ContainerStatus == nil {
+			service.state.ContainerStatus = make(map[string]containerstatus)
+		}
+
+		service.state.ContainerStatus[req.NetworkContainerid] =
+			containerstatus{
+				ID:                            req.NetworkContainerid,
+				VMVersion:                     req.Version,
+				CreateNetworkContainerRequest: req,
+				HostVersion:                   hostVersion}
+		service.saveState()
+
+	default:
+		returnMessage = "[Azure CNS] Error. CreateOrUpdateNetworkContainer did not receive a POST."
+		returnCode = InvalidParameter
+
+	}
+
+	resp := cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
+	}
+
+	reserveResp := &cns.CreateNetworkContainerResponse{Response: resp}
+	err = service.Listener.Encode(w, &reserveResp)
+
+	log.Response(service.Name, reserveResp, err)
+}
+
+func (service *httpRestService) getNetworkContainer(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Azure CNS] getNetworkContainer")
+
+	var req cns.GetNetworkContainerRequest
+
+	returnMessage := ""
+	returnCode := 0
+	err := service.Listener.Decode(w, r, &req)
+
+	log.Request(service.Name, &req, err)
+
+	if err != nil {
+		return
+	}
+
+	resp := cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
+	}
+
+	reserveResp := &cns.GetNetworkContainerResponse{Response: resp}
+	err = service.Listener.Encode(w, &reserveResp)
+
+	log.Response(service.Name, reserveResp, err)
+
+}
+
+func (service *httpRestService) deleteNetworkContainer(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Azure CNS] deleteNetworkContainer")
+
+	var req cns.DeleteNetworkContainerRequest
+
+	returnMessage := ""
+	returnCode := 0
+	err := service.Listener.Decode(w, r, &req)
+
+	log.Request(service.Name, &req, err)
+
+	if err != nil {
+		return
+	}
+
+	if req.NetworkContainerid == "" {
+		returnCode = NetworkContainerNotSpecified
+		returnMessage = fmt.Sprintf("[Azure CNS] Error. NetworkContainerid is empty")
+	}
+
+	switch r.Method {
+	case "POST":
+		nc := service.networkContainer
+		err := nc.Delete(req.NetworkContainerid)
+
+		if err != nil {
+			returnMessage = fmt.Sprintf("[Azure CNS] Error. DeleteNetworkContainer failed %v", err.Error())
+			returnCode = UnexpectedError
+			break
+		} else {
+			service.lock.Lock()
+			if service.state.ContainerStatus != nil {
+				delete(service.state.ContainerStatus, req.NetworkContainerid)
+			}
+			service.lock.Unlock()
+		}
+		break
+	default:
+		returnMessage = "[Azure CNS] Error. DeleteNetworkContainer did not receive a POST."
+		returnCode = InvalidParameter
+	}
+
+	resp := cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
+	}
+
+	reserveResp := &cns.DeleteNetworkContainerResponse{Response: resp}
+	err = service.Listener.Encode(w, &reserveResp)
+
+	log.Response(service.Name, reserveResp, err)
+}
+
+func (service *httpRestService) getNetworkContainerStatus(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Azure CNS] getNetworkContainerStatus")
+
+	var req cns.GetNetworkContainerStatusRequest
+	returnMessage := ""
+	returnCode := 0
+	err := service.Listener.Decode(w, r, &req)
+	log.Request(service.Name, &req, err)
+
+	if err != nil {
+		return
+	}
+
+	service.lock.Lock()
+	defer service.lock.Unlock()
+	var ok bool
+	var containerDetails containerstatus
+
+	containerInfo := service.state.ContainerStatus
+	if containerInfo != nil {
+		containerDetails, ok = containerInfo[req.NetworkContainerid]
+	} else {
+		ok = false
+	}
+
+	var hostVersion string
+	var vmVersion string
+
+	if ok {
+		savedReq := containerDetails.CreateNetworkContainerRequest
+		containerVersion, err := service.imdsClient.GetNetworkContainerInfoFromHost(
+			req.NetworkContainerid,
+			savedReq.PrimaryInterfaceIdentifier,
+			savedReq.AuthorizationToken, swiftAPIVersion)
+
+		if err != nil {
+			returnCode = CallToHostFailed
+			returnMessage = err.Error()
+		} else {
+			hostVersion = containerVersion.ProgrammedVersion
+		}
+	} else {
+		returnMessage = "[Azure CNS] Never received call to create this container."
+		returnCode = UnknownContainerID
+	}
+
+	resp := cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
+	}
+
+	networkContainerStatusReponse := cns.GetNetworkContainerStatusResponse{
+		Response:           resp,
+		NetworkContainerid: req.NetworkContainerid,
+		AzureHostVersion:   hostVersion,
+		Version:            vmVersion,
+	}
+
+	err = service.Listener.Encode(w, &networkContainerStatusReponse)
+
+	log.Response(service.Name, networkContainerStatusReponse, err)
+}
+
+func (service *httpRestService) getInterfaceForContainer(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Azure CNS] getInterfaceForContainer")
+
+	var req cns.GetInterfaceForContainerRequest
+	returnMessage := ""
+	returnCode := 0
+	err := service.Listener.Decode(w, r, &req)
+	log.Request(service.Name, &req, err)
+
+	if err != nil {
+		return
+	}
+
+	containerInfo := service.state.ContainerStatus
+	containerDetails, ok := containerInfo[req.NetworkContainerID]
+	var interfaceName string
+	var ipaddress string
+	var vnetSpace []cns.IPSubnet
+
+	if ok {
+		savedReq := containerDetails.CreateNetworkContainerRequest
+		interfaceName = savedReq.NetworkContainerid
+		vnetSpace = savedReq.VnetAddressSpace
+		ipaddress = savedReq.IPConfiguration.IPSubnet.IPAddress // it has to exist
+	} else {
+		returnMessage = "[Azure CNS] Never received call to create this container."
+		returnCode = UnknownContainerID
+		interfaceName = ""
+		ipaddress = ""
+	}
+
+	resp := cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
+	}
+
+	getInterfaceForContainerResponse := cns.GetInterfaceForContainerResponse{
+		Response:         resp,
+		NetworkInterface: cns.NetworkInterface{Name: interfaceName, IPAddress: ipaddress},
+		VnetAddressSpace: vnetSpace,
+	}
+
+	err = service.Listener.Encode(w, &getInterfaceForContainerResponse)
+
+	log.Response(service.Name, getInterfaceForContainerResponse, err)
+}
+
+// restoreNetworkState restores Network state that existed before reboot.
+func (service *httpRestService) restoreNetworkState() error {
+	log.Printf("[Azure CNS] Enter Restoring Network State")
+
+	if service.store == nil {
+		log.Printf("[Azure CNS] Store is not initialized, nothing to restore for network state.")
+		return nil
+	}
+
+	rebooted := false
+	modTime, err := service.store.GetModificationTime()
+
+	if err == nil {
+		log.Printf("[Azure CNS] Store timestamp is %v.", modTime)
+
+		rebootTime, err := platform.GetLastRebootTime()
+		if err == nil && rebootTime.After(modTime) {
+			log.Printf("[Azure CNS] reboot time %v mod time %v", rebootTime, modTime)
+			rebooted = true
+		}
+	}
+
+	if rebooted {
+		for _, nwInfo := range service.state.Networks {
+			enableSnat := true
+
+			log.Printf("[Azure CNS] Restore nwinfo %v", nwInfo)
+
+			if nwInfo.Options != nil {
+				if _, ok := nwInfo.Options[dockerclient.OptDisableSnat]; ok {
+					enableSnat = false
+				}
+			}
+
+			if enableSnat {
+				err := common.SetOutboundSNAT(nwInfo.NicInfo.Subnet)
+				if err != nil {
+					log.Printf("[Azure CNS] Error setting up SNAT outbound rule %v", err)
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }

@@ -2,10 +2,11 @@ package npm
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func isValidPod(podObj *corev1.Pod) bool {
@@ -16,7 +17,7 @@ func isValidPod(podObj *corev1.Pod) bool {
 }
 
 func isSystemPod(podObj *corev1.Pod) bool {
-	return podObj.ObjectMeta.Namespace == "kube-system"
+	return podObj.ObjectMeta.Namespace == util.KubeSystemFlag
 }
 
 // AddPod handles add pod.
@@ -47,77 +48,62 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	}
 	ns.podMap[podObj.ObjectMeta.UID] = podObj
 
-	// Add pod to ipset
+	// Add the pod to ipset
 	ipsMgr := ns.ipsMgr
+	// Add the pod to its namespace's ipset.
+	fmt.Printf("Adding pod %s to ipset %s\n", podIP, podNs)
+	if err := ipsMgr.AddToSet(podNs, podIP); err != nil {
+		fmt.Printf("Error adding pod to namespace ipset.\n")
+	}
+
+	// Add the pod to its label's ipset.
 	var labelKeys []string
 	for podLabelKey, podLabelVal := range podLabels {
-		labelKey := podLabelKey + podLabelVal
-		if ipsMgr.Exists(labelKey, podIP) {
-			return nil
+		//Ignore pod-template-hash label.
+		if strings.Contains(podLabelKey, util.KubePodTemplateHashFlag) {
+			continue
+		}
+
+		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
+		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
+		if err := ipsMgr.AddToSet(labelKey, podIP); err != nil {
+			fmt.Printf("Error adding pod to label ipset.\n")
+			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
-		fmt.Printf("Adding pod %s to ipset %s\n", podIP, labelKey)
-		if err := ipsMgr.Add(labelKey, podIP); err != nil {
-			fmt.Printf("Error Adding pod to ipset.\n")
-			return err
-		}
-	}
-
-	// Check if the pod is local
-	if podObj.Spec.NodeName != npMgr.nodeName {
-		return nil
-	}
-
-	iptMgr := ns.iptMgr
-	exists = false
-
-	for _, np := range ns.npQueue {
-		selector, err := metav1.LabelSelectorAsSelector(&np.Spec.PodSelector)
-		if err != nil {
-			fmt.Printf("Error converting label selector\n")
-			return err
-		}
-		if selector.Matches(labels.Set(podLabels)) {
-			fmt.Printf("--------------found matching policy-----------------\n")
-
-			for _, labelKey := range labelKeys {
-				fmt.Printf("!!!!!!!       %s        !!!!!!!\n", labelKey)
-				// Create rule for all matching labels.
-				if err := iptMgr.Add(labelKey, np); err != nil {
-					fmt.Printf("Error creating iptables rule.\n")
-					return err
-				}
-			}
-		}
 	}
 
 	return nil
 }
 
 // UpdatePod handles update pod.
-func (npMgr *NetworkPolicyManager) UpdatePod(oldPod, newPod *corev1.Pod) error {
+func (npMgr *NetworkPolicyManager) UpdatePod(oldPodObj, newPodObj *corev1.Pod) error {
 	npMgr.Lock()
 
-	// Don't deal with system pods.
-	if isSystemPod(newPod) {
+	// Ignore system pods.
+	if isSystemPod(newPodObj) {
 		npMgr.Unlock()
 		return nil
 	}
 
-	if !isValidPod(newPod) {
+	if !isValidPod(newPodObj) {
 		npMgr.Unlock()
 		return nil
 	}
 
-	oldPodNs, oldPodName, newPodStatus, newPodIP := oldPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Name, newPod.Status.Phase, newPod.Status.PodIP
+	oldPodObjNs, oldPodObjName, oldPodObjPhase, oldPodObjIP, newPodObjNs, newPodObjName, newPodObjPhase, newPodObjIP := oldPodObj.ObjectMeta.Namespace, oldPodObj.ObjectMeta.Name, oldPodObj.Status.Phase, oldPodObj.Status.PodIP, newPodObj.ObjectMeta.Namespace, newPodObj.ObjectMeta.Name, newPodObj.Status.Phase, newPodObj.Status.PodIP
 
 	fmt.Printf(
-		"POD UPDATED. %s/%s %s %s\n",
-		oldPodNs, oldPodName, newPodStatus, newPodIP,
+		"POD UPDATED. %s %s %s %s %s %s %s %s\n",
+		oldPodObjNs, oldPodObjName, oldPodObjPhase, oldPodObjIP, newPodObjNs, newPodObjName, newPodObjPhase, newPodObjIP,
 	)
 
 	npMgr.Unlock()
-	npMgr.AddPod(newPod)
+	npMgr.DeletePod(oldPodObj)
+
+	if newPodObj.ObjectMeta.DeletionTimestamp == nil && newPodObj.ObjectMeta.DeletionGracePeriodSeconds == nil {
+		npMgr.AddPod(newPodObj)
+	}
 
 	return nil
 }
@@ -129,6 +115,10 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 
 	// Don't deal with system pods.
 	if isSystemPod(podObj) {
+		return nil
+	}
+
+	if !isValidPod(podObj) {
 		return nil
 	}
 
@@ -149,21 +139,29 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	// Delete pod from ipset
 	podIP := podObj.Status.PodIP
 	ipsMgr := ns.ipsMgr
+	// Delete the pod from its namespace's ipset.
+	if err := ipsMgr.DeleteFromSet(podNs, podIP); err != nil {
+		fmt.Printf("Error deleting pod from namespace ipset.\n")
+		return err
+	}
+	// Delete the pod from its label's ipset.
 	for podLabelKey, podLabelVal := range podLabels {
-		labelKey := podLabelKey + podLabelVal
-		if ipsMgr.Exists(labelKey, podIP) {
-			isSetEmpty := false
-			var err error
-			if isSetEmpty, err = ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
-				fmt.Printf("Error deleting pod from ipset.\n")
-				return err
-			}
-			if isSetEmpty {
-				if err = ipsMgr.DeleteSet(labelKey); err != nil {
-					fmt.Printf("Error deleting ipset.\n")
-					return err
-				}
-			}
+		//Ignore pod-template-hash label.
+		if strings.Contains(podLabelKey, "pod-template-hash") {
+			continue
+		}
+
+		labelKey := podNs + "-" + podLabelKey + ":" + podLabelVal
+		if err := ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
+			fmt.Printf("Error deleting pod from label ipset.\n")
+			return err
+		}
+	}
+
+	if len(ns.npMap) == 0 {
+		if err := ipsMgr.Clean(); err != nil {
+			fmt.Printf("Error cleaning ipset\n")
+			return err
 		}
 	}
 

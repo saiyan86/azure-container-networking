@@ -73,10 +73,24 @@ var args = acn.ArgumentList{
 		},
 	},
 	{
+		Name:         acn.OptLogLocation,
+		Shorthand:    acn.OptLogLocationAlias,
+		Description:  "Set the directory location where logs will be saved",
+		Type:         "string",
+		DefaultValue: "",
+	},
+	{
 		Name:         acn.OptIpamQueryInterval,
 		Shorthand:    acn.OptIpamQueryIntervalAlias,
 		Description:  "Set the IPAM plugin query interval",
 		Type:         "int",
+		DefaultValue: "",
+	},
+	{
+		Name:         acn.OptCnsURL,
+		Shorthand:    acn.OptCnsURLAlias,
+		Description:  "Set the URL for CNS to listen on",
+		Type:         "string",
 		DefaultValue: "",
 	},
 	{
@@ -101,8 +115,10 @@ func main() {
 
 	environment := acn.GetArg(acn.OptEnvironment).(string)
 	url := acn.GetArg(acn.OptAPIServerURL).(string)
+	cnsURL := acn.GetArg(acn.OptCnsURL).(string)
 	logLevel := acn.GetArg(acn.OptLogLevel).(int)
 	logTarget := acn.GetArg(acn.OptLogTarget).(int)
+	logDirectory := acn.GetArg(acn.OptLogLocation).(string)
 	ipamQueryInterval, _ := acn.GetArg(acn.OptIpamQueryInterval).(int)
 	vers := acn.GetArg(acn.OptVersion).(bool)
 
@@ -121,7 +137,7 @@ func main() {
 
 	// Create the key value store.
 	var err error
-	config.Store, err = store.NewJsonFileStore(platform.RuntimePath + name + ".json")
+	config.Store, err = store.NewJsonFileStore(platform.CNMRuntimePath + name + ".json")
 	if err != nil {
 		fmt.Printf("Failed to create store: %v\n", err)
 		return
@@ -154,8 +170,14 @@ func main() {
 		return
 	}
 
+	err = acn.CreateDirectory(platform.CNMRuntimePath)
+	if err != nil {
+		fmt.Printf("Failed to create File Store directory Error:%v", err.Error())
+		return
+	}
+
 	// Create the key value store.
-	pluginConfig.Store, err = store.NewJsonFileStore(platform.RuntimePath + pluginName + ".json")
+	pluginConfig.Store, err = store.NewJsonFileStore(platform.CNMRuntimePath + pluginName + ".json")
 	if err != nil {
 		fmt.Printf("Failed to create store: %v\n", err)
 		return
@@ -164,6 +186,10 @@ func main() {
 	// Create logging provider.
 	log.SetName(name)
 	log.SetLevel(logLevel)
+	if logDirectory != "" {
+		log.SetLogDirectory(logDirectory)
+	}
+
 	err = log.SetTarget(logTarget)
 	if err != nil {
 		fmt.Printf("Failed to configure logging: %v\n", err)
@@ -174,7 +200,7 @@ func main() {
 	log.Printf("Running on %v", platform.GetOSInfo())
 
 	// Set CNS options.
-	httpRestService.SetOption(acn.OptAPIServerURL, url)
+	httpRestService.SetOption(acn.OptCnsURL, cnsURL)
 
 	// Start CNS.
 	if httpRestService != nil {
