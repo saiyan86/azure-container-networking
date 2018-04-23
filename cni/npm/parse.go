@@ -61,14 +61,17 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+
 		for _, protPortPair := range protPortPairSlice {
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
 				Chain:      util.IptablesAzureChain,
 				Specs: []string{
-					util.IptablesPortFlag, protPortPair.protocol,
-					util.IptablesDstPortFlag, protPortPair.port,
+					util.IptablesPortFlag,
+					protPortPair.protocol,
+					util.IptablesDstPortFlag,
+					protPortPair.port,
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
 					util.IptablesMatchSetFlag,
@@ -161,14 +164,62 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	return podRuleSets, entries
 }
 
-func parseEgress(rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
+func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
+	var (
+		protPortPairSlice []*portsInfo
+		podRuleSets       []string // pod sets listed in Ingress rules.
+		nsRuleSets        []string // namespace sets listed in Ingress rules
+		entries           []*iptm.IptEntry
+		ipblock           *networkingv1.IPBlock
+	)
+	//TODO: handle IPBlock
+	for _, rule := range rules {
+		for _, portRule := range rule.Ports {
+			protPortPairSlice = append(protPortPairSlice,
+				&portsInfo{
+					protocol: string(*portRule.Protocol),
+					port:     fmt.Sprint(portRule.Port.IntVal),
+				})
+		}
+
+		for _, toRule := range rule.To {
+			if toRule.PodSelector != nil {
+				for podLabelKey, podLabelVal := range toRule.PodSelector.MatchLabels {
+					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
+				}
+			}
+
+			if toRule.NamespaceSelector != nil {
+				for nsLabelKey, nsLabelVal := range toRule.NamespaceSelector.MatchLabels {
+					nsRuleSets = append(nsRuleSets, "ns-"+nsLabelKey+":"+nsLabelVal)
+				}
+			}
+
+			if toRule.IPBlock != nil {
+				ipblock = toRule.IPBlock
+			}
+		}
+	}
+
+	// Use hashed string for ipset name to avoid string length limit of ipset.
+	for _, targetSet := range targetSets {
+		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+
+		for _, protPortPair := range protPortPairSlice {
+			entry := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureChain,
+				Specs:      []string{},
+			}
+		}
+	}
 
 	return nil, nil
 }
 
 // ParsePolicy parses network policy.
 func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry) {
-
 	var (
 		sets    []string
 		entries []*iptm.IptEntry
@@ -185,11 +236,9 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 	sets = append(sets, ingressSets...)
 	entries = append(entries, ingressEntries...)
 
-	/*
-		egressSets, egressEntries := parseEgress(np.Spec.Egress)
-		append(sets, egressSets)
-		append(entries, egressEntries)
-	*/
+	egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
+	sets = append(sets, egressSets...)
+	entries = append(entries, egressEntries...)
 
-	return sets, entries
+	return util.UniqueStrSlice(sets), entries
 }
