@@ -134,6 +134,10 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entries = append(entries, entry)
 		}
 
+		if ipblock == nil {
+			continue
+		}
+
 		// Handle ipblock field of NetworkPolicyPeer
 		if len(ipblock.Except) > 0 {
 			for _, except := range ipblock.Except {
