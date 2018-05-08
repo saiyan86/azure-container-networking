@@ -135,17 +135,19 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		// Handle ipblock field of NetworkPolicyPeer
-		for _, except := range ipblock.Except {
-			entry := &iptm.IptEntry{
-				Chain: util.IptablesAzureChain,
-				Specs: []string{
-					util.IptablesSFlag,
-					except,
-					util.IptablesJumpFlag,
-					util.IptablesReject,
-				},
+		if len(ipblock.Except) > 0 {
+			for _, except := range ipblock.Except {
+				entry := &iptm.IptEntry{
+					Chain: util.IptablesAzureChain,
+					Specs: []string{
+						util.IptablesSFlag,
+						except,
+						util.IptablesJumpFlag,
+						util.IptablesReject,
+					},
+				}
+				entries = append(entries, entry)
 			}
-			entries = append(entries, entry)
 		}
 
 		if len(ipblock.CIDR) > 0 {
