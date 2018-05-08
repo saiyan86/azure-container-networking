@@ -164,6 +164,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	return podRuleSets, entries
 }
 
+/*
 func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
 	var (
 		protPortPairSlice []*portsInfo
@@ -217,7 +218,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 	return nil, nil
 }
-
+*/
 // ParsePolicy parses network policy.
 func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry) {
 	var (
@@ -236,9 +237,10 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 	sets = append(sets, ingressSets...)
 	entries = append(entries, ingressEntries...)
 
-	egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
-	sets = append(sets, egressSets...)
-	entries = append(entries, egressEntries...)
-
+	/*
+		egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
+		sets = append(sets, egressSets...)
+		entries = append(entries, egressEntries...)
+	*/
 	return util.UniqueStrSlice(sets), entries
 }
