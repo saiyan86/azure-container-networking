@@ -133,7 +133,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       podRuleSet,
 				HashedName: hashedRuleSetName,
-				Chain:      util.IptablesAzureChain,
+				Chain:      util.IptablesAzureFromChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -158,7 +158,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
 				HashedName: hashedRuleSetName,
-				Chain:      util.IptablesAzureChain,
+				Chain:      util.IptablesAzureFromChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -185,7 +185,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		if len(ipblock.Except) > 0 {
 			for _, except := range ipblock.Except {
 				entry := &iptm.IptEntry{
-					Chain: util.IptablesAzureChain,
+					Chain: util.IptablesAzureFromChain,
 					Specs: []string{
 						util.IptablesSFlag,
 						except,
@@ -199,7 +199,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		if len(ipblock.CIDR) > 0 {
 			cidrEntry := &iptm.IptEntry{
-				Chain: util.IptablesAzureChain,
+				Chain: util.IptablesAzureFromChain,
 				Specs: []string{
 					util.IptablesSFlag,
 					ipblock.CIDR,
