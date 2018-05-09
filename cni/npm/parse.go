@@ -72,7 +72,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
-				Chain:      util.IptablesAzurePortChain,
+				Chain:      util.IptablesAzureIngressPortChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -80,7 +80,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					hashedTargetSetName,
 					util.IptablesDstFlag,
 					util.IptablesJumpFlag,
-					util.IptablesAzureFromChain,
+					util.IptablesAzureIngressFromChain,
 				},
 			}
 			entries = append(entries, entry)
@@ -89,7 +89,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
 					HashedName: hashedTargetSetName,
-					Chain:      util.IptablesAzurePortChain,
+					Chain:      util.IptablesAzureIngressPortChain,
 					Specs: []string{
 						util.IptablesPortFlag,
 						protPortPair.protocol,
@@ -101,7 +101,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 						hashedTargetSetName,
 						util.IptablesDstFlag,
 						util.IptablesJumpFlag,
-						util.IptablesAzureFromChain,
+						util.IptablesAzureIngressFromChain,
 					},
 				}
 				entries = append(entries, entry)
@@ -112,7 +112,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
-				Chain:      util.IptablesAzureFromChain,
+				Chain:      util.IptablesAzureIngressFromChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -133,7 +133,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       podRuleSet,
 				HashedName: hashedRuleSetName,
-				Chain:      util.IptablesAzureFromChain,
+				Chain:      util.IptablesAzureIngressFromChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -158,7 +158,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
 				HashedName: hashedRuleSetName,
-				Chain:      util.IptablesAzureFromChain,
+				Chain:      util.IptablesAzureIngressFromChain,
 				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
@@ -185,7 +185,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		if len(ipblock.Except) > 0 {
 			for _, except := range ipblock.Except {
 				entry := &iptm.IptEntry{
-					Chain: util.IptablesAzureFromChain,
+					Chain: util.IptablesAzureIngressFromChain,
 					Specs: []string{
 						util.IptablesSFlag,
 						except,
@@ -199,7 +199,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		if len(ipblock.CIDR) > 0 {
 			cidrEntry := &iptm.IptEntry{
-				Chain: util.IptablesAzureFromChain,
+				Chain: util.IptablesAzureIngressFromChain,
 				Specs: []string{
 					util.IptablesSFlag,
 					ipblock.CIDR,
@@ -216,9 +216,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 /*
 func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
 	var (
+		portRuleExists    = false
+		toRuleExists      = false
 		protPortPairSlice []*portsInfo
-		podRuleSets       []string // pod sets listed in Ingress rules.
-		nsRuleSets        []string // namespace sets listed in Ingress rules
+		podRuleSets       []string // pod sets listed in Egress rules.
+		nsRuleSets        []string // namespace sets listed in Egress rules
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
@@ -230,6 +232,8 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					protocol: string(*portRule.Protocol),
 					port:     fmt.Sprint(portRule.Port.IntVal),
 				})
+
+			portRuleExists = true
 		}
 
 		for _, toRule := range rule.To {
@@ -248,6 +252,8 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			if toRule.IPBlock != nil {
 				ipblock = toRule.IPBlock
 			}
+
+			toRuleExists = true
 		}
 	}
 
@@ -255,13 +261,26 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
 
-		for _, protPortPair := range protPortPairSlice {
-			entry := &iptm.IptEntry{
-				Name:       targetSet,
-				HashedName: hashedTargetSetName,
-				Chain:      util.IptablesAzureChain,
-				Specs:      []string{},
+		if !portRuleExists {
+			for _, protPortPair := range protPortPairSlice {
+				entry := &iptm.IptEntry{
+					Name:       targetSet,
+					HashedName: hashedTargetSetName,
+					Chain:      util.IptablesAzureEgressPortChain,
+					Specs: []string{
+						util.IptablesMatchFlag,
+						util.IptablesSetFlag,
+						util.IptablesMatchSetFlag,
+						hashedTargetSetName,
+						util.IptablesDstFlag,
+						util.IptablesJumpFlag,
+						util.IptablesAzureEgressToChain,
+					},
+				}
+				entries = append(entries, entry)
 			}
+		} else {
+
 		}
 	}
 
@@ -285,7 +304,6 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 	ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
 	sets = append(sets, ingressSets...)
 	entries = append(entries, ingressEntries...)
-
 	/*
 		egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
 		sets = append(sets, egressSets...)

@@ -31,7 +31,7 @@ func NewIptablesManager() *IptablesManager {
 	return iptMgr
 }
 
-// AddChain adds a chain to iptables
+// InitNpmChains initializes Azure NPM chains in iptables.
 func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry := &IptEntry{
@@ -79,32 +79,61 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Create AZURE-NPM-PORT chain.
+	// Create AZURE-NPM-INGRESS-PORT chain.
 	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
-		Chain: util.IptablesAzurePortChain,
+		Chain: util.IptablesAzureIngressPortChain,
 	}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzurePortChain)
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressPortChain)
 		return err
 	}
 
-	// Insert AZURE-NPM-PORT chain to AZURE-NPM chain.
+	// Insert AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain.
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
-	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzurePortChain}
+	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error adding AZURE-NPM-PORT chain to AZURE-NPM chain\n")
+		fmt.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
 
-	// Create AZURE-NPM-FROM chain.
+	// Create AZURE-NPM-INGRESS-FROM chain.
 	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
-		Chain: util.IptablesAzureFromChain,
+		Chain: util.IptablesAzureIngressFromChain,
 	}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureFromChain)
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressFromChain)
+		return err
+	}
+
+	// Create AZURE-NPM-EGRESS-PORT chain.
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	entry = &IptEntry{
+		Chain: util.IptablesAzureEgressPortChain,
+	}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressPortChain)
+		return err
+	}
+
+	// Insert AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain.
+	iptMgr.OperationFlag = util.IptablesAppendFlag
+	entry.Chain = util.IptablesAzureChain
+	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
+		return err
+	}
+
+	// Create AZURE-NPM-EGRESS-FROM chain.
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	entry = &IptEntry{
+		Chain: util.IptablesAzureEgressToChain,
+	}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressToChain)
 		return err
 	}
 
