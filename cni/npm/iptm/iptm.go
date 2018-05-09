@@ -60,7 +60,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry.Chain = util.IptablesForwardChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureChain}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error adding AZURE-NPM chain to FORWARD\n")
+		fmt.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
 		return err
 	}
 
@@ -86,6 +86,14 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzurePortChain)
+		return err
+	}
+
+	// Insert AZURE-NPM-PORT chain to AZURE-NPM chain.
+	entry.Chain = util.IptablesAzureChain
+	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzurePortChain}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error adding AZURE-NPM-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
 
