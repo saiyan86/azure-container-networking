@@ -90,6 +90,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Insert AZURE-NPM-PORT chain to AZURE-NPM chain.
+	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzurePortChain}
 	if err := iptMgr.Run(entry); err != nil {
