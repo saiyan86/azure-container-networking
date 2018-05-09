@@ -22,6 +22,10 @@ type portsInfo struct {
 }
 
 func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []*iptm.IptEntry) {
+	if len(rules) == 0 {
+		return nil, nil
+	}
+
 	var (
 		portRuleExists    = false
 		fromRuleExists    = false
@@ -214,6 +218,10 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 }
 
 func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
+	if len(rules) == 0 {
+		return nil, nil
+	}
+
 	var (
 		portRuleExists    = false
 		toRuleExists      = false
@@ -223,6 +231,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
+
 	//TODO: handle IPBlock
 	for _, rule := range rules {
 		for _, portRule := range rule.Ports {
