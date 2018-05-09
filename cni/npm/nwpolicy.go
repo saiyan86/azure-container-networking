@@ -32,6 +32,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 			fmt.Printf("Error creating iptables chain %s\n.", util.IptablesAzureChain)
 			return err
 		}
+		isAzureNpmChainCreated = true
 	}
 
 	sets, iptEntries := parsePolicy(npObj)
