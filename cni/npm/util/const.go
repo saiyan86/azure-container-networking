@@ -13,6 +13,7 @@ const (
 	IptablesInsertionFlag         string = "-I"
 	IptablesAppendFlag            string = "-A"
 	IptablesDeletionFlag          string = "-D"
+	IptablesFlushFlag             string = "-F"
 	IptablesJumpFlag              string = "-j"
 	IptablesAccept                string = "ACCEPT"
 	IptablesReject                string = "REJECT"

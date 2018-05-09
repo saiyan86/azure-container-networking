@@ -140,6 +140,39 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	return nil
 }
 
+// UninitNpmChains uninitializes Azure NPM chains in iptables.
+func (iptMgr *IptablesManager) UninitNpmChains() error {
+	IptablesAzureChainList := []string{
+		util.IptablesAzureChain,
+		util.IptablesAzureIngressPortChain,
+		util.IptablesAzureIngressFromChain,
+		util.IptablesAzureEgressPortChain,
+		util.IptablesAzureEgressToChain,
+	}
+
+	iptMgr.OperationFlag = util.IptablesFlushFlag
+	for _, chain := range IptablesAzureChainList {
+		entry := &IptEntry{
+			Chain: chain,
+		}
+		if err := iptMgr.Run(entry); err != nil {
+			fmt.Printf("Error flushing iptables chain %s\n", chain)
+		}
+	}
+
+	iptMgr.OperationFlag = util.IptablesDeletionFlag
+	for _, chain := range IptablesAzureChainList {
+		entry := &IptEntry{
+			Chain: chain,
+		}
+		if err := iptMgr.Run(entry); err != nil {
+			fmt.Printf("Error deleting iptables chain %s\n", chain)
+		}
+	}
+
+	return nil
+}
+
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 	// Create iptables rules for every entry in the entryMap.
