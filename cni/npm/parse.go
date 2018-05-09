@@ -23,6 +23,8 @@ type portsInfo struct {
 
 func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []*iptm.IptEntry) {
 	var (
+		portRuleExists    = false
+		fromRuleExists    = false
 		protPortPairSlice []*portsInfo
 		podRuleSets       []string // pod sets listed in Ingress rules.
 		nsRuleSets        []string // namespace sets listed in Ingress rules
@@ -37,6 +39,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					protocol: string(*portRule.Protocol),
 					port:     fmt.Sprint(portRule.Port.IntVal),
 				})
+
+			portRuleExists = true
 		}
 
 		for _, fromRule := range rule.From {
@@ -55,6 +59,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			if fromRule.IPBlock != nil {
 				ipblock = fromRule.IPBlock
 			}
+
+			fromRuleExists = true
 		}
 	}
 
@@ -62,16 +68,52 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
 
-		for _, protPortPair := range protPortPairSlice {
+		if !portRuleExists {
 			entry := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
-				Chain:      util.IptablesAzureChain,
+				Chain:      util.IptablesAzurePortChain,
 				Specs: []string{
-					util.IptablesPortFlag,
-					protPortPair.protocol,
-					util.IptablesDstPortFlag,
-					protPortPair.port,
+					util.IptablesMatchFlag,
+					util.IptablesSetFlag,
+					util.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					util.IptablesDstFlag,
+					util.IptablesJumpFlag,
+					util.IptablesAzureFromChain,
+				},
+			}
+			entries = append(entries, entry)
+		} else {
+			for _, protPortPair := range protPortPairSlice {
+				entry := &iptm.IptEntry{
+					Name:       targetSet,
+					HashedName: hashedTargetSetName,
+					Chain:      util.IptablesAzurePortChain,
+					Specs: []string{
+						util.IptablesPortFlag,
+						protPortPair.protocol,
+						util.IptablesDstPortFlag,
+						protPortPair.port,
+						util.IptablesMatchFlag,
+						util.IptablesSetFlag,
+						util.IptablesMatchSetFlag,
+						hashedTargetSetName,
+						util.IptablesDstFlag,
+						util.IptablesJumpFlag,
+						util.IptablesAzureFromChain,
+					},
+				}
+				entries = append(entries, entry)
+			}
+		}
+
+		if !fromRuleExists {
+			entry := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureFromChain,
+				Specs: []string{
 					util.IptablesMatchFlag,
 					util.IptablesSetFlag,
 					util.IptablesMatchSetFlag,
@@ -82,6 +124,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				},
 			}
 			entries = append(entries, entry)
+			continue
 		}
 
 		// Handle PodSelector field of NetworkPolicyPeer.

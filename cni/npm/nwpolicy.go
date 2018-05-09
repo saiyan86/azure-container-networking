@@ -28,11 +28,10 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	}
 
 	if !isAzureNpmChainCreated {
-		if err := ns.iptMgr.AddChain(util.IptablesAzureChain); err != nil {
+		if err := ns.iptMgr.InitNpmChains(); err != nil {
 			fmt.Printf("Error creating iptables chain %s\n.", util.IptablesAzureChain)
 			return err
 		}
-		isAzureNpmChainCreated = true
 	}
 
 	sets, iptEntries := parsePolicy(npObj)

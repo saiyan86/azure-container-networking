@@ -31,6 +31,8 @@ const (
 	IptablesRelatedState      string = "RELATED"
 	IptablesEstablishedState  string = "ESTABLISHED"
 	IptablesAzureChain        string = "AZURE-NPM"
+	IptablesAzurePortChain    string = "AZURE-NPM-PORT"
+	IptablesAzureFromChain    string = "AZURE-NPM-FROM"
 	IptablesForwardChain      string = "FORWARD"
 )
 

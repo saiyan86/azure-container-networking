@@ -32,18 +32,14 @@ func NewIptablesManager() *IptablesManager {
 }
 
 // AddChain adds a chain to iptables
-func (iptMgr *IptablesManager) AddChain(chainName string) error {
+func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry := &IptEntry{
 		Chain: util.IptablesAzureChain,
 	}
 	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", chainName)
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureChain)
 		return err
-	}
-
-	if chainName != util.IptablesAzureChain {
-		return nil
 	}
 
 	// Add default rule to FORWARD chain.
@@ -80,6 +76,26 @@ func (iptMgr *IptablesManager) AddChain(chainName string) error {
 	}
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding default rule to AZURE-NPM chain\n")
+		return err
+	}
+
+	// Create AZURE-NPM-PORT chain.
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	entry = &IptEntry{
+		Chain: util.IptablesAzurePortChain,
+	}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzurePortChain)
+		return err
+	}
+
+	// Create AZURE-NPM-FROM chain.
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	entry = &IptEntry{
+		Chain: util.IptablesAzureFromChain,
+	}
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureFromChain)
 		return err
 	}
 
