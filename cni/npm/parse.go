@@ -429,13 +429,31 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 		sets = append(sets, set)
 	}
 
-	ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
-	sets = append(sets, ingressSets...)
-	entries = append(entries, ingressEntries...)
+	if len(npObj.Spec.PolicyTypes) == 0 {
+		ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
+		sets = append(sets, ingressSets...)
+		entries = append(entries, ingressEntries...)
 
-	egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
-	sets = append(sets, egressSets...)
-	entries = append(entries, egressEntries...)
+		egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
+		sets = append(sets, egressSets...)
+		entries = append(entries, egressEntries...)
+
+		return util.UniqueStrSlice(sets), entries
+	}
+
+	for _, ptype := range npObj.Spec.PolicyTypes {
+		if ptype == networkingv1.PolicyTypeIngress {
+			ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
+			sets = append(sets, ingressSets...)
+			entries = append(entries, ingressEntries...)
+		}
+
+		if ptype == networkingv1.PolicyTypeEgress {
+			egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
+			sets = append(sets, egressSets...)
+			entries = append(entries, egressEntries...)
+		}
+	}
 
 	return util.UniqueStrSlice(sets), entries
 }

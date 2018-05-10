@@ -175,9 +175,16 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
+	fmt.Printf("%+v\n", entry)
+
+	iptMgr.OperationFlag = util.IptablesCheckFlag
+	if err := iptMgr.Run(entry); err == nil {
+		fmt.Printf("Duplicate rule.\n")
+		return nil
+	}
+
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.OperationFlag = util.IptablesAppendFlag
-	fmt.Printf("%+v\n", entry)
 	if err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables rules.\n")
 		return err
