@@ -183,6 +183,13 @@ func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 		return nil
 	}
 
+	// Create iptables rules for every entry in the entryMap.
+	iptMgr.OperationFlag = util.IptablesAppendFlag
+	if err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables rules.\n")
+		return err
+	}
+
 	return nil
 }
 
