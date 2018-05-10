@@ -3,6 +3,7 @@ package iptm
 import (
 	"fmt"
 	"os/exec"
+	"syscall"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 )
@@ -211,15 +212,18 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
 	cmdName := util.Iptables
 	cmdArgs := append([]string{iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
 	var (
-		cmdOut []byte
-		err    error
+		cmdOut  []byte
+		err     error
+		errCode func() int
 	)
-	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
+	cmdOut, err = exec.Command(cmdName, cmdArgs...).Output()
+	if msg, ok := err.(*exec.ExitError); ok {
+		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus
 		fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		fmt.Printf("%s", string(cmdOut))
 		return err
 	}
 
-	fmt.Printf("%s", string(cmdOut))
+	fmt.Printf("%s\nExit code: %v\n", string(cmdOut), errCode)
 	return nil
 }
