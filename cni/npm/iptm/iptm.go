@@ -242,7 +242,7 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 		if errCode > 1 {
 			fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		}
-		fmt.Printf("%s", string(cmdOut))
+
 		fmt.Printf("%s\nExit code: %d\n", string(cmdOut), errCode)
 		return errCode, err
 	}
