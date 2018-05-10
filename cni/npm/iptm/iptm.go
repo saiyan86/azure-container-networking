@@ -221,6 +221,7 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
 		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus
 		fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		fmt.Printf("%s", string(cmdOut))
+		fmt.Printf("%s\nExit code: %v\n", string(cmdOut), errCode)
 		return err
 	}
 
