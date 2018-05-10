@@ -189,18 +189,6 @@ func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 // Delete removes an entry from entryMap, and deletes the corresponding iptables rule.
 func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 	// Create iptables rules for every entry in the entryMap.
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables rules.\n")
-		return err
-	}
-
-	return nil
-}
-
-// Delete removes an entry from entryMap, and deletes the corresponding iptables rule.
-func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
-	// Create iptables rules for every entry in the entryMap.
 	iptMgr.OperationFlag = util.IptablesDeletionFlag
 	fmt.Printf("%+v\n", entry)
 	if err := iptMgr.Run(entry); err != nil {
