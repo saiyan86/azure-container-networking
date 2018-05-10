@@ -38,7 +38,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry := &IptEntry{
 		Chain: util.IptablesAzureChain,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureChain)
 		return err
 	}
@@ -52,7 +52,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 			util.IptablesReject,
 		},
 	}
-	if err := iptMgr.Run(defaultBlock); err != nil {
+	if _, err := iptMgr.Run(defaultBlock); err != nil {
 		fmt.Printf("Error adding default rule to FORWARD chain\n")
 		return err
 	}
@@ -60,7 +60,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM chain to FORWARD chain.
 	entry.Chain = util.IptablesForwardChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureChain}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
 		return err
 	}
@@ -75,7 +75,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding default rule to AZURE-NPM chain\n")
 		return err
 	}
@@ -85,7 +85,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressPortChain,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressPortChain)
 		return err
 	}
@@ -94,7 +94,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
@@ -104,7 +104,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressFromChain,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressFromChain)
 		return err
 	}
@@ -114,7 +114,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressPortChain,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressPortChain)
 		return err
 	}
@@ -123,7 +123,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
@@ -133,7 +133,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressToChain,
 	}
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressToChain)
 		return err
 	}
@@ -156,7 +156,7 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 		entry := &IptEntry{
 			Chain: chain,
 		}
-		if err := iptMgr.Run(entry); err != nil {
+		if _, err := iptMgr.Run(entry); err != nil {
 			fmt.Printf("Error flushing iptables chain %s\n", chain)
 		}
 	}
@@ -166,7 +166,7 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 		entry := &IptEntry{
 			Chain: chain,
 		}
-		if err := iptMgr.Run(entry); err != nil {
+		if _, err := iptMgr.Run(entry); err != nil {
 			fmt.Printf("Error deleting iptables chain %s\n", chain)
 		}
 	}
@@ -174,19 +174,39 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 	return nil
 }
 
+// Exists checks if a rule exists in iptables.
+func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
+	iptMgr.OperationFlag = util.IptablesCheckFlag
+	returnCode, err := iptMgr.Run(entry)
+	if returnCode == 1 && err != nil {
+		fmt.Printf("Duplicate rule.%+v\n", entry)
+		return true, nil
+	}
+
+	if returnCode == 0 && err == nil {
+		fmt.Printf("Rule doesn't exist. %+v\n", entry)
+		return false, nil
+	}
+
+	return false, err
+}
+
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
 func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 	fmt.Printf("%+v\n", entry)
 
-	iptMgr.OperationFlag = util.IptablesCheckFlag
-	if err := iptMgr.Run(entry); err == nil {
-		fmt.Printf("Duplicate rule.\n")
+	exists, err := iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
 		return nil
 	}
 
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables rules.\n")
 		return err
 	}
@@ -199,7 +219,7 @@ func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 	// Create iptables rules for every entry in the entryMap.
 	iptMgr.OperationFlag = util.IptablesDeletionFlag
 	fmt.Printf("%+v\n", entry)
-	if err := iptMgr.Run(entry); err != nil {
+	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables rules.\n")
 		return err
 	}
@@ -208,7 +228,7 @@ func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 }
 
 // Run execute an iptables command to update iptables.
-func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
+func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 	cmdName := util.Iptables
 	cmdArgs := append([]string{iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
 	var (
@@ -217,14 +237,14 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
 		errCode int
 	)
 	cmdOut, err = exec.Command(cmdName, cmdArgs...).Output()
-	if msg, ok := err.(*exec.ExitError); ok {
+	if msg, failed := err.(*exec.ExitError); failed {
 		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
 		fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		fmt.Printf("%s", string(cmdOut))
 		fmt.Printf("%s\nExit code: %d\n", string(cmdOut), errCode)
-		return err
+		return errCode, err
 	}
 
-	fmt.Printf("%s\nExit code: %d\n", string(cmdOut), errCode)
-	return nil
+	fmt.Printf("%s\n", string(cmdOut))
+	return 0, nil
 }
