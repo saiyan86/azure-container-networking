@@ -214,17 +214,17 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) error {
 	var (
 		cmdOut  []byte
 		err     error
-		errCode func() int
+		errCode int
 	)
 	cmdOut, err = exec.Command(cmdName, cmdArgs...).Output()
 	if msg, ok := err.(*exec.ExitError); ok {
-		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus
+		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
 		fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		fmt.Printf("%s", string(cmdOut))
-		fmt.Printf("%s\nExit code: %v\n", string(cmdOut), errCode)
+		fmt.Printf("%s\nExit code: %d\n", string(cmdOut), errCode)
 		return err
 	}
 
-	fmt.Printf("%s\nExit code: %v\n", string(cmdOut), errCode)
+	fmt.Printf("%s\nExit code: %d\n", string(cmdOut), errCode)
 	return nil
 }
