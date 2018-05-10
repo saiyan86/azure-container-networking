@@ -178,14 +178,14 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 	iptMgr.OperationFlag = util.IptablesCheckFlag
 	returnCode, err := iptMgr.Run(entry)
-	if returnCode == 1 && err != nil {
-		fmt.Printf("Duplicate rule.%+v\n", entry)
-		return false, nil
+	if err == nil {
+		fmt.Printf("Duplicate rule. %+v\n", entry)
+		return true, nil
 	}
 
-	if err == nil {
+	if returnCode == 1 && err != nil {
 		fmt.Printf("Rule doesn't exist. %+v\n", entry)
-		return true, nil
+		return false, nil
 	}
 
 	return false, err
