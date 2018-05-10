@@ -180,12 +180,12 @@ func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 	returnCode, err := iptMgr.Run(entry)
 	if returnCode == 1 && err != nil {
 		fmt.Printf("Duplicate rule.%+v\n", entry)
-		return true, nil
+		return false, nil
 	}
 
-	if returnCode == 0 && err == nil {
+	if err == nil {
 		fmt.Printf("Rule doesn't exist. %+v\n", entry)
-		return false, nil
+		return true, nil
 	}
 
 	return false, err
