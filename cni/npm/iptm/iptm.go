@@ -76,6 +76,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return nil
 	}
 
+	iptMgr.OperationFlag = util.IptablesInsertionFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
 		return err
@@ -100,6 +101,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return nil
 	}
 
+	iptMgr.OperationFlag = util.IptablesInsertionFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding default rule to AZURE-NPM chain\n")
 		return err
