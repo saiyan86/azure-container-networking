@@ -177,6 +177,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 }
 
 // UninitNpmChains uninitializes Azure NPM chains in iptables.
+/*
 func (iptMgr *IptablesManager) UninitNpmChains() error {
 	IptablesAzureChainList := []string{
 		util.IptablesAzureChain,
@@ -208,6 +209,7 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 
 	return nil
 }
+*/
 
 // Exists checks if a rule exists in iptables.
 func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
