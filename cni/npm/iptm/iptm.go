@@ -38,8 +38,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry := &IptEntry{
 		Chain: util.IptablesAzureChain,
 	}
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureChain)
+	if err := iptMgr.AddChain(entry); err != nil {
 		return err
 	}
 
@@ -52,6 +51,15 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 			util.IptablesReject,
 		},
 	}
+	exists, err := iptMgr.Exists(defaultBlock)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(defaultBlock); err != nil {
 		fmt.Printf("Error adding default rule to FORWARD chain\n")
 		return err
@@ -60,6 +68,15 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM chain to FORWARD chain.
 	entry.Chain = util.IptablesForwardChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureChain}
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
 		return err
@@ -75,6 +92,15 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding default rule to AZURE-NPM chain\n")
 		return err
@@ -85,8 +111,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressPortChain,
 	}
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressPortChain)
+	if err := iptMgr.AddChain(entry); err != nil {
 		return err
 	}
 
@@ -94,6 +119,15 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
@@ -104,8 +138,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressFromChain,
 	}
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureIngressFromChain)
+	if err := iptMgr.AddChain(entry); err != nil {
 		return err
 	}
 
@@ -114,8 +147,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressPortChain,
 	}
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressPortChain)
+	if err := iptMgr.AddChain(entry); err != nil {
 		return err
 	}
 
@@ -123,6 +155,15 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
@@ -133,12 +174,9 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressToChain,
 	}
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureEgressToChain)
-		return err
-	}
+	err = iptMgr.AddChain(entry)
 
-	return nil
+	return err
 }
 
 // UninitNpmChains uninitializes Azure NPM chains in iptables.
@@ -189,6 +227,26 @@ func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 	}
 
 	return false, err
+}
+
+// AddChain adds a chain in iptables.
+func (iptMgr *IptablesManager) AddChain(entry *IptEntry) error {
+	exists, err := iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	if _, err := iptMgr.Run(entry); err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureChain)
+		return err
+	}
+
+	return nil
 }
 
 // Add creates an entry in entryMap, and add corresponding rule in iptables.
