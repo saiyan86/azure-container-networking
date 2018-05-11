@@ -228,18 +228,15 @@ func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 
 // AddChain adds a chain in iptables.
 func (iptMgr *IptablesManager) AddChain(entry *IptEntry) error {
-	exists, err := iptMgr.Exists(entry)
-	if err != nil {
-		return err
-	}
-
-	if exists {
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	errCode, err := iptMgr.Run(entry)
+	if errCode == 1 && err != nil {
+		fmt.Printf("Chain already exists %s\n", entry.Chain)
 		return nil
 	}
 
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		fmt.Printf("Error creating iptables chain %s\n", util.IptablesAzureChain)
+	if err != nil {
+		fmt.Printf("Error creating iptables chain %s\n", entry.Chain)
 		return err
 	}
 
