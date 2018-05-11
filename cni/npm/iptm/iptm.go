@@ -34,7 +34,6 @@ func NewIptablesManager() *IptablesManager {
 
 // InitNpmChains initializes Azure NPM chains in iptables.
 func (iptMgr *IptablesManager) InitNpmChains() error {
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry := &IptEntry{
 		Chain: util.IptablesAzureChain,
 	}
@@ -42,8 +41,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Add default rule to FORWARD chain.
-	iptMgr.OperationFlag = util.IptablesInsertionFlag
+	// Add default block rule to FORWARD chain.
 	defaultBlock := &IptEntry{
 		Chain: util.IptablesForwardChain,
 		Specs: []string{
@@ -60,6 +58,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return nil
 	}
 
+	iptMgr.OperationFlag = util.IptablesInsertionFlag
 	if _, err := iptMgr.Run(defaultBlock); err != nil {
 		fmt.Printf("Error adding default rule to FORWARD chain\n")
 		return err
@@ -107,7 +106,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Create AZURE-NPM-INGRESS-PORT chain.
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressPortChain,
 	}
@@ -116,7 +114,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Insert AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain.
-	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
 	exists, err = iptMgr.Exists(entry)
@@ -128,13 +125,13 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return nil
 	}
 
+	iptMgr.OperationFlag = util.IptablesAppendFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
 
 	// Create AZURE-NPM-INGRESS-FROM chain.
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
 		Chain: util.IptablesAzureIngressFromChain,
 	}
@@ -143,7 +140,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Create AZURE-NPM-EGRESS-PORT chain.
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressPortChain,
 	}
@@ -152,7 +148,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Insert AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain.
-	iptMgr.OperationFlag = util.IptablesAppendFlag
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
 	exists, err = iptMgr.Exists(entry)
@@ -164,13 +159,13 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return nil
 	}
 
+	iptMgr.OperationFlag = util.IptablesAppendFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
 		return err
 	}
 
 	// Create AZURE-NPM-EGRESS-FROM chain.
-	iptMgr.OperationFlag = util.IptablesChainCreationFlag
 	entry = &IptEntry{
 		Chain: util.IptablesAzureEgressToChain,
 	}
