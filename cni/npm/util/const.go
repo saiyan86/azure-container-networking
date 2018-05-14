@@ -15,6 +15,7 @@ const (
 	IptablesDeletionFlag          string = "-D"
 	IptablesFlushFlag             string = "-F"
 	IptablesCheckFlag             string = "-C"
+	IptablesDestroyFlag           string = "-X"
 	IptablesJumpFlag              string = "-j"
 	IptablesAccept                string = "ACCEPT"
 	IptablesReject                string = "REJECT"

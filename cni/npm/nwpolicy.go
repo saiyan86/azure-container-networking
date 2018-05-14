@@ -91,16 +91,6 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		ns = newns
 	}
 
-	/*
-		if isAzureNpmChainCreated {
-			if err := ns.iptMgr.UninitNpmChains(); err != nil {
-				fmt.Printf("Error uninitialize azure-npm chains.\n")
-				return err
-			}
-			isAzureNpmChainCreated = false
-		}
-	*/
-
 	sets, iptEntries := parsePolicy(npObj)
 
 	iptMgr := ns.iptMgr
@@ -126,6 +116,12 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 			fmt.Printf("Error cleaning ipset\n")
 			return err
 		}
+
+		if err := ns.iptMgr.UninitNpmChains(); err != nil {
+			fmt.Printf("Error uninitialize azure-npm chains.\n")
+			return err
+		}
+		isAzureNpmChainCreated = false
 	}
 
 	return nil
