@@ -234,7 +234,7 @@ func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 		return true, nil
 	}
 
-	if returnCode == 1 && err != nil {
+	if returnCode == 1 {
 		fmt.Printf("Rule doesn't exist. %+v\n", entry)
 		return false, nil
 	}
