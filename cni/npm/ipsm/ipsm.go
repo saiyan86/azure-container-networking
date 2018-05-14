@@ -16,22 +16,34 @@ type ipsEntry struct {
 	spec          string
 }
 
-// IpsetManager stores ipset entries.
+// IpsetManager stores ipset states.
 type IpsetManager struct {
-	listMap  map[string][]string //tracks all set lists.
+	listMap  map[string]*Ipset //tracks all set lists.
 	entryMap map[string]*ipsEntry
-	setMap   map[string][]string //label -> []ip
+	setMap   map[string]*Ipset //label -> []ip
+}
+
+// Ipset represents one ipset entry.
+type Ipset struct {
+	name       string
+	elements   []string
+	referCount int
+}
+
+// NewIpset creates a new instance for Ipset object.
+func NewIpset(setName string) *Ipset {
+	return &Ipset{
+		name: setName,
+	}
 }
 
 // NewIpsetManager creates a new instance for IpsetManager object.
 func NewIpsetManager() *IpsetManager {
-	ipsMgr := &IpsetManager{
-		listMap:  make(map[string][]string),
+	return &IpsetManager{
+		listMap:  make(map[string]*Ipset),
 		entryMap: make(map[string]*ipsEntry),
-		setMap:   make(map[string][]string),
+		setMap:   make(map[string]*Ipset),
 	}
-
-	return ipsMgr
 }
 
 // Exists checks if an element exists in setMap/listMap.
@@ -45,7 +57,7 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 		return false
 	}
 
-	for _, elem := range m[key] {
+	for _, elem := range m[key].elements {
 		if elem == val {
 			return true
 		}
@@ -56,6 +68,33 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 
 func isNsSet(setName string) bool {
 	return !strings.Contains(setName, "-") && !strings.Contains(setName, ":")
+}
+
+// IncrementReferCount increases referCount of a specific ipset by one.
+func (ipsMgr *IpsetManager) IncrementReferCount(setName string) error {
+	if _, exists := ipsMgr.setMap[setName]; !exists {
+		return fmt.Errorf("set %s doesn't exist, can't increment", setName)
+	}
+
+	ipsMgr.setMap[setName].referCount++
+
+	return nil
+}
+
+// DecrementReferCount decreases referCount of a specific ipset by one.
+func (ipsMgr *IpsetManager) DecrementReferCount(setName string) error {
+	if _, exists := ipsMgr.setMap[setName]; !exists {
+		return fmt.Errorf("set %s doesn't exist, can't increment", setName)
+	}
+
+	ipsMgr.setMap[setName].referCount--
+
+	return nil
+}
+
+// NotReferredByNwPolicy checks if a specific ipset is referred by any network policy.
+func (ipsMgr *IpsetManager) NotReferredByNwPolicy(setName string) bool {
+	return ipsMgr.setMap[setName].referCount == 0
 }
 
 // CreateList creates an ipset list. npm maintains one setlist per namespace label.
@@ -80,7 +119,7 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 		return err
 	}
 
-	ipsMgr.listMap[listName] = []string{}
+	ipsMgr.listMap[listName] = NewIpset(listName)
 
 	return nil
 }
@@ -104,7 +143,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 		return err
 	}
 
-	ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName], setName)
+	ipsMgr.listMap[listName].elements = append(ipsMgr.listMap[listName].elements, setName)
 
 	return nil
 }
@@ -115,9 +154,9 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		return fmt.Errorf("ipset list with name %s not found", listName)
 	}
 
-	for i, val := range ipsMgr.listMap[listName] {
+	for i, val := range ipsMgr.listMap[listName].elements {
 		if val == setName {
-			ipsMgr.listMap[listName] = append(ipsMgr.listMap[listName][:i], ipsMgr.listMap[listName][i+1:]...)
+			ipsMgr.listMap[listName].elements = append(ipsMgr.listMap[listName].elements[:i], ipsMgr.listMap[listName].elements[i+1:]...)
 		}
 	}
 
@@ -133,7 +172,7 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		return err
 	}
 
-	if len(ipsMgr.listMap[listName]) == 0 {
+	if len(ipsMgr.listMap[listName].elements) == 0 {
 		if err := ipsMgr.DeleteList(listName); err != nil {
 			fmt.Printf("Error deleting ipset list %s.\n", listName)
 			return err
@@ -180,8 +219,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 		return err
 	}
 
-	ipsMgr.setMap[setName] = []string{}
-
+	ipsMgr.setMap[setName] = NewIpset(setName)
 	return nil
 }
 
@@ -203,7 +241,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
 		return err
 	}
-	ipsMgr.setMap[setName] = append(ipsMgr.setMap[setName], ip)
+	ipsMgr.setMap[setName].elements = append(ipsMgr.setMap[setName].elements, ip)
 
 	return nil
 }
@@ -214,9 +252,9 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
-	for i, val := range ipsMgr.setMap[setName] {
+	for i, val := range ipsMgr.setMap[setName].elements {
 		if val == ip {
-			ipsMgr.setMap[setName] = append(ipsMgr.setMap[setName][:i], ipsMgr.setMap[setName][i+1:]...)
+			ipsMgr.setMap[setName].elements = append(ipsMgr.setMap[setName].elements[:i], ipsMgr.setMap[setName].elements[i+1:]...)
 		}
 	}
 
@@ -241,7 +279,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		return fmt.Errorf("ipset with name %s not found", setName)
 	}
 
-	if len(ipsMgr.setMap[setName]) > 0 {
+	if len(ipsMgr.setMap[setName].elements) > 0 {
 		return nil
 	}
 
