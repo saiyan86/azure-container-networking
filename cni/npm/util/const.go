@@ -49,6 +49,8 @@ const (
 	IpsetDeletionFlag string = "-D"
 	IpsetDestroyFlag  string = "-X"
 
+	IpsetExistFlag string = "-exist"
+
 	IpsetSetListFlag string = "setlist"
 	IpsetNetHashFlag string = "nethash"
 	AzureNpmPrefix   string = "azure-npm-"

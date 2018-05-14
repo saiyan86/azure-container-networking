@@ -318,7 +318,7 @@ func (ipsMgr *IpsetManager) Clean() error {
 // Run execute an ipset command to update ipset.
 func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	cmdName := util.Ipset
-	cmdArgs := []string{entry.operationFlag}
+	cmdArgs := []string{entry.operationFlag, util.IpsetExistFlag}
 	if len(entry.set) > 0 {
 		cmdArgs = append(cmdArgs, entry.set)
 	}
