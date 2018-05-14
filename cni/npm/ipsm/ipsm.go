@@ -2,9 +2,9 @@ package ipsm
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 )
@@ -114,7 +114,7 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 		set:           hashedName,
 		spec:          util.IpsetSetListFlag,
 	}
-	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
+	if _, err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset list %s.\n", listName)
 		return err
 	}
@@ -137,7 +137,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 	ipsMgr.entryMap[listName].operationFlag = util.IpsetAppendFlag
 	ipsMgr.entryMap[listName].spec = util.AzureNpmPrefix + util.Hash(setName)
 
-	if err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
+	if _, err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[listName])
 		return err
@@ -166,7 +166,7 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		set:           hashedListName,
 		spec:          hashedSetName,
 	}
-	if err := ipsMgr.Run(entry); err != nil {
+	if _, err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error deleting ipset entry.\n")
 		fmt.Printf("%+v\n", entry)
 		return err
@@ -190,7 +190,12 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 		set:           hashedName,
 	}
 
-	if err := ipsMgr.Run(entry); err != nil {
+	errCode, err := ipsMgr.Run(entry)
+	if errCode == 1 && err != nil {
+		fmt.Printf("Cannot delete list %s as it's being referred.\n", listName)
+	}
+
+	if err != nil {
 		fmt.Printf("Error deleting ipset %s", listName)
 		fmt.Printf("%+v\n", entry)
 		return err
@@ -214,7 +219,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 		set:           hashedName,
 		spec:          util.IpsetNetHashFlag,
 	}
-	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
+	if _, err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset.\n")
 		return err
 	}
@@ -236,7 +241,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 	ipsMgr.entryMap[setName].operationFlag = util.IpsetAppendFlag
 	ipsMgr.entryMap[setName].spec = ip
 
-	if err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
+	if _, err := ipsMgr.Run(ipsMgr.entryMap[setName]); err != nil {
 		fmt.Printf("Error creating ipset rules.\n")
 		fmt.Printf("rule: %+v\n", ipsMgr.entryMap[setName])
 		return err
@@ -264,7 +269,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		set:           hashedName,
 		spec:          ip,
 	}
-	if err := ipsMgr.Run(entry); err != nil {
+	if _, err := ipsMgr.Run(entry); err != nil {
 		fmt.Printf("Error deleting ipset entry.\n")
 		fmt.Printf("%+v\n", entry)
 		return err
@@ -288,7 +293,12 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		operationFlag: util.IpsetDestroyFlag,
 		set:           hashedName,
 	}
-	if err := ipsMgr.Run(entry); err != nil {
+	errCode, err := ipsMgr.Run(entry)
+	if errCode == 1 && err != nil {
+		fmt.Printf("Cannot delete set %s as it's being referred.\n", setName)
+	}
+
+	if err != nil {
 		fmt.Printf("Error deleting ipset %s", setName)
 		fmt.Printf("%+v\n", entry)
 		return err
@@ -316,7 +326,7 @@ func (ipsMgr *IpsetManager) Clean() error {
 }
 
 // Run execute an ipset command to update ipset.
-func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
+func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 	cmdName := util.Ipset
 	cmdArgs := []string{entry.operationFlag, util.IpsetExistFlag}
 	if len(entry.set) > 0 {
@@ -327,16 +337,20 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) error {
 	}
 
 	var (
-		cmdOut []byte
-		err    error
+		errCode int
 	)
-	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		fmt.Println(os.Stderr, "There was an error running command: ", err)
-		fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
-		return err
+	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
+	if msg, failed := err.(*exec.ExitError); failed {
+		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
+		if errCode > 1 {
+			fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
+		}
+
+		fmt.Printf("%s\n", string(cmdOut))
+		return errCode, err
 	}
 
-	fmt.Printf("%s %+v\n", string(cmdOut), cmdArgs)
+	fmt.Printf("%s\n", string(cmdOut))
 
-	return nil
+	return 0, nil
 }

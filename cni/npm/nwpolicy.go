@@ -42,7 +42,6 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 			fmt.Printf("Error creating ipset %s-%s\n", npNs, set)
 			return err
 		}
-		ipsMgr.IncrementReferCount(set)
 	}
 
 	iptMgr := ns.iptMgr
@@ -105,12 +104,9 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 
 	ipsMgr := ns.ipsMgr
 	for _, set := range sets {
-		ipsMgr.DecrementReferCount(set)
-		if ipsMgr.NotReferredByNwPolicy(set) {
-			if err := ipsMgr.DeleteSet(set); err != nil {
-				fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
-				return err
-			}
+		if err := ipsMgr.DeleteSet(set); err != nil {
+			fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
+			return err
 		}
 	}
 

@@ -332,11 +332,9 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 	cmdName := util.Iptables
 	cmdArgs := append([]string{iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
 	var (
-		cmdOut  []byte
-		err     error
 		errCode int
 	)
-	cmdOut, err = exec.Command(cmdName, cmdArgs...).Output()
+	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
 	if msg, failed := err.(*exec.ExitError); failed {
 		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
 		if errCode > 1 {
