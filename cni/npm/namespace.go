@@ -90,15 +90,15 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 		ns = newns
 	}
 
-	if err := npMgr.InitAllNsList(ns); err != nil {
-		fmt.Printf("Error initializing all-namespace ipset list.\n")
-		return err
-	}
-
 	// Create ipset for the namespace.
 	ipsMgr := ns.ipsMgr
 	if err := ipsMgr.CreateSet(nsName); err != nil {
 		fmt.Printf("Error creating ipset for namespace %s.\n", nsName)
+		return err
+	}
+
+	if err := npMgr.InitAllNsList(ns); err != nil {
+		fmt.Printf("Error initializing all-namespace ipset list.\n")
 		return err
 	}
 
