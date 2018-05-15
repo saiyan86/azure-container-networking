@@ -30,6 +30,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		portRuleExists    = false
 		fromRuleExists    = false
 		protPortPairSlice []*portsInfo
+		returnSets        []string
 		podRuleSets       []string // pod sets listed in Ingress rules.
 		nsRuleSets        []string // namespace sets listed in Ingress rules
 		entries           []*iptm.IptEntry
@@ -67,6 +68,9 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			fromRuleExists = true
 		}
 	}
+
+	returnSets = append(returnSets, podRuleSets...)
+	returnSets = append(returnSets, nsRuleSets...)
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
@@ -234,6 +238,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		portRuleExists    = false
 		toRuleExists      = false
 		protPortPairSlice []*portsInfo
+		returnSets        []string
 		podRuleSets       []string // pod sets listed in Egress rules.
 		nsRuleSets        []string // namespace sets listed in Egress rules
 		entries           []*iptm.IptEntry
@@ -272,6 +277,9 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			toRuleExists = true
 		}
 	}
+
+	returnSets = append(returnSets, podRuleSets...)
+	returnSets = append(returnSets, nsRuleSets...)
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
