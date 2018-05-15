@@ -35,6 +35,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
+
+	if len(targetSets) == 0 {
+		targetSets = append(targetSets, ns)
+	}
+
 	//TODO: handle IPBlock
 	for _, rule := range rules {
 		for _, portRule := range rule.Ports {
@@ -250,18 +255,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 	}
 
-	if len(targetSets) == 0 {
-		entry := &iptm.IptEntry{
-			Name:  util.KubeAllPodsFlag,
-			Chain: util.IptablesAzureIngressPortChain,
-			Specs: []string{
-				util.IptablesJumpFlag,
-				util.IptablesReject,
-			},
-		}
-		entries = append(entries, entry)
-	}
-
 	return podRuleSets, nsRuleLists, entries
 }
 
@@ -279,6 +272,10 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
+
+	if len(targetSets) == 0 {
+		targetSets = append(targetSets, ns)
+	}
 
 	//TODO: handle IPBlock
 	for _, rule := range rules {
@@ -493,18 +490,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 			entries = append(entries, entry)
 		}
-	}
-
-	if len(targetSets) == 0 {
-		entry := &iptm.IptEntry{
-			Name:  util.KubeAllPodsFlag,
-			Chain: util.IptablesAzureEgressPortChain,
-			Specs: []string{
-				util.IptablesJumpFlag,
-				util.IptablesReject,
-			},
-		}
-		entries = append(entries, entry)
 	}
 
 	return podRuleSets, nsRuleLists, entries
