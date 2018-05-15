@@ -117,6 +117,11 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	ipsMgr := ns.ipsMgr
 	delete(ns.npMap, npName)
 	if len(ns.npMap) == 0 {
+		if err := npMgr.UninitAllNsList(ns); err != nil {
+			fmt.Printf("Error uninitializing all-namespace ipset list.\n")
+			return err
+		}
+
 		if err := ipsMgr.Clean(); err != nil {
 			fmt.Printf("Error cleaning ipset\n")
 			return err
@@ -127,11 +132,6 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 			return err
 		}
 		isAzureNpmChainCreated = false
-
-		if err := npMgr.UninitAllNsList(ns); err != nil {
-			fmt.Printf("Error uninitializing all-namespace ipset list.\n")
-			return err
-		}
 	}
 
 	return nil
