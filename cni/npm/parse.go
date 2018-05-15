@@ -434,42 +434,43 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 // ParsePolicy parses network policy.
 func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry) {
 	var (
-		sets    []string
-		entries []*iptm.IptEntry
+		resultSets   []string
+		affectedSets []string
+		entries      []*iptm.IptEntry
 	)
 
 	// Get affected pods.
 	npNs, selector := npObj.ObjectMeta.Namespace, npObj.Spec.PodSelector.MatchLabels
 	for podLabelKey, podLabelVal := range selector {
-		set := npNs + "-" + podLabelKey + ":" + podLabelVal
-		sets = append(sets, set)
+		affectedSet := npNs + "-" + podLabelKey + ":" + podLabelVal
+		affectedSets = append(affectedSets, affectedSet)
 	}
 
 	if len(npObj.Spec.PolicyTypes) == 0 {
-		ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
-		sets = append(sets, ingressSets...)
+		ingressSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
+		resultSets = append(resultSets, ingressSets...)
 		entries = append(entries, ingressEntries...)
 
-		egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
-		sets = append(sets, egressSets...)
+		egressSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
+		resultSets = append(resultSets, egressSets...)
 		entries = append(entries, egressEntries...)
 
-		return util.UniqueStrSlice(sets), entries
+		return util.UniqueStrSlice(resultSets), entries
 	}
 
 	for _, ptype := range npObj.Spec.PolicyTypes {
 		if ptype == networkingv1.PolicyTypeIngress {
-			ingressSets, ingressEntries := parseIngress(npNs, sets, npObj.Spec.Ingress)
-			sets = append(sets, ingressSets...)
+			ingressSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
+			resultSets = append(resultSets, ingressSets...)
 			entries = append(entries, ingressEntries...)
 		}
 
 		if ptype == networkingv1.PolicyTypeEgress {
-			egressSets, egressEntries := parseEgress(npNs, sets, npObj.Spec.Egress)
-			sets = append(sets, egressSets...)
+			egressSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
+			resultSets = append(resultSets, egressSets...)
 			entries = append(entries, egressEntries...)
 		}
 	}
 
-	return util.UniqueStrSlice(sets), entries
+	return util.UniqueStrSlice(resultSets), entries
 }
