@@ -193,7 +193,8 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 
 	errCode, err := ipsMgr.Run(entry)
 	if errCode == 1 && err != nil {
-		fmt.Printf("Cannot delete list %s as it's being referred.\n", listName)
+		fmt.Printf("Cannot delete list %s as it's being referred or doesn't exist.\n", listName)
+		return nil
 	}
 
 	if err != nil {
