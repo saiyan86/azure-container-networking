@@ -48,8 +48,9 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		for _, fromRule := range rule.From {
-			fmt.Printf("---------------------------------\n%+v------------------------\n", fromRule.PodSelector)
+			fmt.Printf("---------------------------------\n%+v\n------------------------\n", fromRule.PodSelector)
 			if fromRule.PodSelector != nil {
+				fmt.Printf("it's NULL!\n")
 				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
 					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
 				}
