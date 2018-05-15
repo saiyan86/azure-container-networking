@@ -314,10 +314,6 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 // Clean removes all the empty sets under the namespace.
 func (ipsMgr *IpsetManager) Clean() error {
 	for setName := range ipsMgr.setMap {
-		if isNsSet(setName) {
-			continue
-		}
-
 		if err := ipsMgr.DeleteSet(setName); err != nil {
 			fmt.Printf("Error cleaning ipset\n")
 			return err
