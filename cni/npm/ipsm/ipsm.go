@@ -166,7 +166,8 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		set:           hashedListName,
 		spec:          hashedSetName,
 	}
-	if _, err := ipsMgr.Run(entry); err != nil {
+	errCode, err := ipsMgr.Run(entry)
+	if errCode > 1 && err != nil {
 		fmt.Printf("Error deleting ipset entry.\n")
 		fmt.Printf("%+v\n", entry)
 		return err
