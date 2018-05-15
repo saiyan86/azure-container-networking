@@ -138,6 +138,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					entry := &iptm.IptEntry{
 						Chain: util.IptablesAzureIngressFromChain,
 						Specs: []string{
+							util.IptablesMatchFlag,
+							util.IptablesSetFlag,
+							util.IptablesMatchSetFlag,
+							hashedTargetSetName,
+							util.IptablesDstFlag,
 							util.IptablesSFlag,
 							except,
 							util.IptablesJumpFlag,
@@ -152,6 +157,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				cidrEntry := &iptm.IptEntry{
 					Chain: util.IptablesAzureIngressFromChain,
 					Specs: []string{
+						util.IptablesMatchFlag,
+						util.IptablesSetFlag,
+						util.IptablesMatchSetFlag,
+						hashedTargetSetName,
+						util.IptablesDstFlag,
 						util.IptablesSFlag,
 						ipblock.CIDR,
 						util.IptablesJumpFlag,
@@ -333,6 +343,11 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					entry := &iptm.IptEntry{
 						Chain: util.IptablesAzureEgressToChain,
 						Specs: []string{
+							util.IptablesMatchFlag,
+							util.IptablesSetFlag,
+							util.IptablesMatchSetFlag,
+							hashedTargetSetName,
+							util.IptablesSrcFlag,
 							util.IptablesDFlag,
 							except,
 							util.IptablesJumpFlag,
@@ -347,6 +362,11 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				cidrEntry := &iptm.IptEntry{
 					Chain: util.IptablesAzureEgressToChain,
 					Specs: []string{
+						util.IptablesMatchFlag,
+						util.IptablesSetFlag,
+						util.IptablesMatchSetFlag,
+						hashedTargetSetName,
+						util.IptablesSrcFlag,
 						util.IptablesDFlag,
 						ipblock.CIDR,
 						util.IptablesJumpFlag,
