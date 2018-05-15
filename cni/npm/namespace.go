@@ -43,6 +43,28 @@ func getNsIpsetName(k, v string) string {
 	return "ns-" + k + ":" + v
 }
 
+// InitAllNsList syncs all-namespace ipset list.
+func (npMgr *NetworkPolicyManager) InitAllNsList(ns *namespace) error {
+	for nsName := range npMgr.nsMap {
+		if err := ns.ipsMgr.AddToList(util.KubeAllNamespacesFlag, nsName); err != nil {
+			fmt.Printf("Error adding namespace set %s to list %s", nsName, util.KubeAllNamespacesFlag)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// UninitAllNsList cleans all-namespace ipset list.
+func (npMgr *NetworkPolicyManager) UninitAllNsList(ns *namespace) error {
+	if err := ns.ipsMgr.DeleteList(ns.name); err != nil {
+		fmt.Printf("Error deleting all-namespace list.\n")
+		return err
+	}
+
+	return nil
+}
+
 // AddNamespace handles add namespace.
 func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
@@ -64,6 +86,11 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 		}
 		npMgr.nsMap[nsName] = newns
 		ns = newns
+	}
+
+	if err := npMgr.InitAllNsList(ns); err != nil {
+		fmt.Printf("Error initializing all-namespace ipset list.\n")
+		return err
 	}
 
 	// Create ipset for the namespace.
@@ -133,6 +160,12 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
+	}
+
+	// Delete the namespace from all-namespace ipset list.
+	if err := ipsMgr.DeleteFromList(util.KubeAllNamespacesFlag, nsName); err != nil {
+		fmt.Printf("Error deleting namespace %s from ipset list %s\n", nsName, util.KubeAllNamespacesFlag)
+		return err
 	}
 
 	// Delete ipset for the namespace.

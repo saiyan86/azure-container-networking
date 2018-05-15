@@ -48,15 +48,21 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		for _, fromRule := range rule.From {
-			fmt.Printf("---------------------------------\n%+v\n------------------------\n", fromRule.PodSelector)
 			if fromRule.PodSelector != nil {
-				fmt.Printf("it's NULL!\n")
+				if len(fromRule.PodSelector.MatchLabels) == 0 {
+					podRuleSets = append(podRuleSets, ns)
+				}
+
 				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
 					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
 			if fromRule.NamespaceSelector != nil {
+				if len(fromRule.NamespaceSelector.MatchLabels) == 0 {
+					nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
+				}
+
 				for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
 					nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}
@@ -288,12 +294,20 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 		for _, toRule := range rule.To {
 			if toRule.PodSelector != nil {
+				if len(toRule.PodSelector.MatchLabels) == 0 {
+					podRuleSets = append(podRuleSets, ns)
+				}
+
 				for podLabelKey, podLabelVal := range toRule.PodSelector.MatchLabels {
 					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
 			if toRule.NamespaceSelector != nil {
+				if len(toRule.NamespaceSelector.MatchLabels) == 0 {
+					nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
+				}
+
 				for nsLabelKey, nsLabelVal := range toRule.NamespaceSelector.MatchLabels {
 					nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}

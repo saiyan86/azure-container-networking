@@ -98,7 +98,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		ns = newns
 	}
 
-	podsSets, nsLists, iptEntries := parsePolicy(npObj)
+	_, _, iptEntries := parsePolicy(npObj)
 
 	iptMgr := ns.iptMgr
 	for _, iptEntry := range iptEntries {
@@ -110,20 +110,6 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	}
 
 	ipsMgr := ns.ipsMgr
-	for _, set := range podsSets {
-		if err := ipsMgr.DeleteSet(set); err != nil {
-			fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
-			return err
-		}
-	}
-
-	for _, list := range nsLists {
-		if err := ipsMgr.DeleteList(list); err != nil {
-			fmt.Printf("Error deleting ipset list %s-%s\n", npNs, list)
-			return err
-		}
-	}
-
 	delete(ns.npMap, npName)
 	if len(ns.npMap) == 0 {
 		if err := ipsMgr.Clean(); err != nil {
@@ -136,6 +122,11 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 			return err
 		}
 		isAzureNpmChainCreated = false
+
+		if err := npMgr.UninitAllNsList(ns); err != nil {
+			fmt.Printf("Error uninitializing all-namespace ipset list.\n")
+			return err
+		}
 	}
 
 	return nil

@@ -5,6 +5,7 @@ const (
 	KubeSystemFlag          string = "kube-system"
 	KubePodTemplateHashFlag string = "pod-template-hash"
 	KubeAllPodsFlag         string = "all-pod"
+	KubeAllNamespacesFlag   string = "all-namespace"
 )
 
 //iptables related constants.
