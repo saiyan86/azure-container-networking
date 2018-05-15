@@ -455,6 +455,8 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 		resultSets = append(resultSets, egressSets...)
 		entries = append(entries, egressEntries...)
 
+		resultSets = append(resultSets, affectedSets...)
+
 		return util.UniqueStrSlice(resultSets), entries
 	}
 
@@ -471,6 +473,8 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 			entries = append(entries, egressEntries...)
 		}
 	}
+
+	resultSets = append(resultSets, affectedSets...)
 
 	return util.UniqueStrSlice(resultSets), entries
 }
