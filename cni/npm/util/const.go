@@ -4,6 +4,7 @@ package util
 const (
 	KubeSystemFlag          string = "kube-system"
 	KubePodTemplateHashFlag string = "pod-template-hash"
+	KubeAllPodsFlag         string = "all-pod"
 )
 
 //iptables related constants.

@@ -48,6 +48,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		for _, fromRule := range rule.From {
+			fmt.Printf("---------------------------------\n%+v------------------------\n", fromRule.PodSelector)
 			if fromRule.PodSelector != nil {
 				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
 					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
@@ -71,6 +72,25 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+
+		if !portRuleExists && !fromRuleExists {
+			entry := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureIngressPortChain,
+				Specs: []string{
+					util.IptablesMatchFlag,
+					util.IptablesSetFlag,
+					util.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					util.IptablesDstFlag,
+					util.IptablesJumpFlag,
+					util.IptablesReject,
+				},
+			}
+			entries = append(entries, entry)
+			continue
+		}
 
 		if !portRuleExists {
 			entry := &iptm.IptEntry{
@@ -222,6 +242,19 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entries = append(entries, entry)
 		}
 	}
+
+	if len(targetSets) == 0 {
+		entry := &iptm.IptEntry{
+			Name:  util.KubeAllPodsFlag,
+			Chain: util.IptablesAzureIngressPortChain,
+			Specs: []string{
+				util.IptablesJumpFlag,
+				util.IptablesReject,
+			},
+		}
+		entries = append(entries, entry)
+	}
+
 	return podRuleSets, nsRuleLists, entries
 }
 
@@ -276,6 +309,25 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+
+		if !portRuleExists && !toRuleExists {
+			entry := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureEgressPortChain,
+				Specs: []string{
+					util.IptablesMatchFlag,
+					util.IptablesSetFlag,
+					util.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					util.IptablesSrcFlag,
+					util.IptablesJumpFlag,
+					util.IptablesReject,
+				},
+			}
+			entries = append(entries, entry)
+			continue
+		}
 
 		if !portRuleExists {
 			entry := &iptm.IptEntry{
@@ -426,6 +478,18 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 			entries = append(entries, entry)
 		}
+	}
+
+	if len(targetSets) == 0 {
+		entry := &iptm.IptEntry{
+			Name:  util.KubeAllPodsFlag,
+			Chain: util.IptablesAzureEgressPortChain,
+			Specs: []string{
+				util.IptablesJumpFlag,
+				util.IptablesReject,
+			},
+		}
+		entries = append(entries, entry)
 	}
 
 	return podRuleSets, nsRuleLists, entries
