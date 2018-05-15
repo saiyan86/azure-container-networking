@@ -21,18 +21,17 @@ type portsInfo struct {
 	port     string
 }
 
-func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []*iptm.IptEntry) {
+func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []string, []*iptm.IptEntry) {
 	if len(rules) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var (
 		portRuleExists    = false
 		fromRuleExists    = false
 		protPortPairSlice []*portsInfo
-		returnSets        []string
 		podRuleSets       []string // pod sets listed in Ingress rules.
-		nsRuleSets        []string // namespace sets listed in Ingress rules
+		nsRuleLists       []string // namespace sets listed in Ingress rules
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
@@ -57,7 +56,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 			if fromRule.NamespaceSelector != nil {
 				for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
-					nsRuleSets = append(nsRuleSets, "ns-"+nsLabelKey+":"+nsLabelVal)
+					nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}
 			}
 
@@ -68,9 +67,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			fromRuleExists = true
 		}
 	}
-
-	returnSets = append(returnSets, podRuleSets...)
-	returnSets = append(returnSets, nsRuleSets...)
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
@@ -202,7 +198,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		// Handle NamespaceSelector field of NetworkPolicyPeer
-		for _, nsRuleSet := range nsRuleSets {
+		for _, nsRuleSet := range nsRuleLists {
 			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
@@ -226,21 +222,20 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			entries = append(entries, entry)
 		}
 	}
-	return podRuleSets, entries
+	return podRuleSets, nsRuleLists, entries
 }
 
-func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []*iptm.IptEntry) {
+func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []string, []*iptm.IptEntry) {
 	if len(rules) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var (
 		portRuleExists    = false
 		toRuleExists      = false
 		protPortPairSlice []*portsInfo
-		returnSets        []string
 		podRuleSets       []string // pod sets listed in Egress rules.
-		nsRuleSets        []string // namespace sets listed in Egress rules
+		nsRuleLists       []string // namespace sets listed in Egress rules
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
 	)
@@ -266,7 +261,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 			if toRule.NamespaceSelector != nil {
 				for nsLabelKey, nsLabelVal := range toRule.NamespaceSelector.MatchLabels {
-					nsRuleSets = append(nsRuleSets, "ns-"+nsLabelKey+":"+nsLabelVal)
+					nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
 				}
 			}
 
@@ -277,9 +272,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			toRuleExists = true
 		}
 	}
-
-	returnSets = append(returnSets, podRuleSets...)
-	returnSets = append(returnSets, nsRuleSets...)
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
@@ -411,7 +403,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 
 		// Handle NamespaceSelector field of NetworkPolicyPeer
-		for _, nsRuleSet := range nsRuleSets {
+		for _, nsRuleSet := range nsRuleLists {
 			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
@@ -436,15 +428,16 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 	}
 
-	return podRuleSets, entries
+	return podRuleSets, nsRuleLists, entries
 }
 
 // ParsePolicy parses network policy.
-func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry) {
+func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm.IptEntry) {
 	var (
-		resultSets   []string
-		affectedSets []string
-		entries      []*iptm.IptEntry
+		resultPodSets []string
+		resultNsLists []string
+		affectedSets  []string
+		entries       []*iptm.IptEntry
 	)
 
 	// Get affected pods.
@@ -455,34 +448,38 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []*iptm.IptEntry)
 	}
 
 	if len(npObj.Spec.PolicyTypes) == 0 {
-		ingressSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
-		resultSets = append(resultSets, ingressSets...)
+		ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
+		resultPodSets = append(resultPodSets, ingressPodSets...)
+		resultNsLists = append(resultNsLists, ingressNsSets...)
 		entries = append(entries, ingressEntries...)
 
-		egressSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
-		resultSets = append(resultSets, egressSets...)
+		egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
+		resultPodSets = append(resultPodSets, egressPodSets...)
+		resultNsLists = append(resultNsLists, egressNsSets...)
 		entries = append(entries, egressEntries...)
 
-		resultSets = append(resultSets, affectedSets...)
+		resultPodSets = append(resultPodSets, affectedSets...)
 
-		return util.UniqueStrSlice(resultSets), entries
+		return util.UniqueStrSlice(resultPodSets), util.UniqueStrSlice(resultNsLists), entries
 	}
 
 	for _, ptype := range npObj.Spec.PolicyTypes {
 		if ptype == networkingv1.PolicyTypeIngress {
-			ingressSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
-			resultSets = append(resultSets, ingressSets...)
+			ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
+			resultPodSets = append(resultPodSets, ingressPodSets...)
+			resultNsLists = append(resultNsLists, ingressNsSets...)
 			entries = append(entries, ingressEntries...)
 		}
 
 		if ptype == networkingv1.PolicyTypeEgress {
-			egressSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
-			resultSets = append(resultSets, egressSets...)
+			egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
+			resultPodSets = append(resultPodSets, egressPodSets...)
+			resultNsLists = append(resultNsLists, egressNsSets...)
 			entries = append(entries, egressEntries...)
 		}
 	}
 
-	resultSets = append(resultSets, affectedSets...)
+	resultPodSets = append(resultPodSets, affectedSets...)
 
-	return util.UniqueStrSlice(resultSets), entries
+	return util.UniqueStrSlice(resultPodSets), util.UniqueStrSlice(resultNsLists), entries
 }

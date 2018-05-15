@@ -34,12 +34,19 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		isAzureNpmChainCreated = true
 	}
 
-	sets, iptEntries := parsePolicy(npObj)
+	podSets, nsLists, iptEntries := parsePolicy(npObj)
 
 	ipsMgr := ns.ipsMgr
-	for _, set := range sets {
+	for _, set := range podSets {
 		if err := ipsMgr.CreateSet(set); err != nil {
 			fmt.Printf("Error creating ipset %s-%s\n", npNs, set)
+			return err
+		}
+	}
+
+	for _, list := range nsLists {
+		if err := ipsMgr.CreateList(list); err != nil {
+			fmt.Printf("Error creating ipset list %s-%s\n", npNs, list)
 			return err
 		}
 	}
@@ -91,7 +98,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		ns = newns
 	}
 
-	sets, iptEntries := parsePolicy(npObj)
+	podsSets, nsLists, iptEntries := parsePolicy(npObj)
 
 	iptMgr := ns.iptMgr
 	for _, iptEntry := range iptEntries {
@@ -103,9 +110,16 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	}
 
 	ipsMgr := ns.ipsMgr
-	for _, set := range sets {
+	for _, set := range podsSets {
 		if err := ipsMgr.DeleteSet(set); err != nil {
 			fmt.Printf("Error deleting ipset %s-%s\n", npNs, set)
+			return err
+		}
+	}
+
+	for _, list := range nsLists {
+		if err := ipsMgr.DeleteList(list); err != nil {
+			fmt.Printf("Error deleting ipset list %s-%s\n", npNs, list)
 			return err
 		}
 	}
