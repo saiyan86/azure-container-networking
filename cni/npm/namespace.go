@@ -47,7 +47,7 @@ func getNsIpsetName(k, v string) string {
 func (npMgr *NetworkPolicyManager) InitAllNsList(ns *namespace) error {
 	for nsName := range npMgr.nsMap {
 		if err := ns.ipsMgr.AddToList(util.KubeAllNamespacesFlag, nsName); err != nil {
-			fmt.Printf("Error adding namespace set %s to list %s", nsName, util.KubeAllNamespacesFlag)
+			fmt.Printf("Error adding namespace set %s to list %s\n", nsName, util.KubeAllNamespacesFlag)
 			return err
 		}
 	}
@@ -57,9 +57,11 @@ func (npMgr *NetworkPolicyManager) InitAllNsList(ns *namespace) error {
 
 // UninitAllNsList cleans all-namespace ipset list.
 func (npMgr *NetworkPolicyManager) UninitAllNsList(ns *namespace) error {
-	if err := ns.ipsMgr.DeleteList(ns.name); err != nil {
-		fmt.Printf("Error deleting all-namespace list.\n")
-		return err
+	for nsName := range npMgr.nsMap {
+		if err := ns.ipsMgr.DeleteFromList(util.KubeAllNamespacesFlag, nsName); err != nil {
+			fmt.Printf("Error deleting namespace set %s from list %s\n", nsName, util.KubeAllNamespacesFlag)
+			return err
+		}
 	}
 
 	return nil
