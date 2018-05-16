@@ -116,11 +116,18 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 
 	delete(ns.npMap, npName)
 	if len(ns.npMap) == 0 {
-		if err := ns.iptMgr.UninitNpmChains(); err != nil {
+		if err := iptMgr.UninitNpmChains(); err != nil {
 			fmt.Printf("Error uninitialize azure-npm chains.\n")
 			return err
 		}
 		isAzureNpmChainCreated = false
+	}
+
+	// Clean empty ipsets.
+	ipsMgr := ns.ipsMgr
+	if err := ipsMgr.Clean(); err != nil {
+		fmt.Printf("Error cleaning empty ipset while deleting network policy.\n")
+		return err
 	}
 
 	return nil
