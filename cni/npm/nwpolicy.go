@@ -123,11 +123,12 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		isAzureNpmChainCreated = false
 	}
 
-	// Clean empty ipsets.
-	ipsMgr := ns.ipsMgr
-	if err := ipsMgr.Clean(); err != nil {
-		fmt.Printf("Error cleaning empty ipset while deleting network policy.\n")
-		return err
+	// Clean empty ipsets for all namespaces.
+	for k, v := range npMgr.nsMap {
+		if err := v.ipsMgr.Clean(); err != nil {
+			fmt.Printf("Error cleaning empty ipset while deleting network policy for namespace %s.\n", k)
+			return err
+		}
 	}
 
 	return nil
