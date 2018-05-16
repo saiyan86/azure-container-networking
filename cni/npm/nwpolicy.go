@@ -6,8 +6,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
-var isAzureNpmChainCreated = false
-
 // AddNetworkPolicy adds network policy.
 func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkPolicy) error {
 	npMgr.Lock()
@@ -26,12 +24,12 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		ns = newns
 	}
 
-	if !isAzureNpmChainCreated {
+	if !npMgr.isAzureNpmChainCreated {
 		if err := ns.iptMgr.InitNpmChains(); err != nil {
 			fmt.Printf("Error initialize azure-npm chains.\n")
 			return err
 		}
-		isAzureNpmChainCreated = true
+		npMgr.isAzureNpmChainCreated = true
 	}
 
 	podSets, nsLists, iptEntries := parsePolicy(npObj)
@@ -130,7 +128,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 			fmt.Printf("Error uninitialize azure-npm chains.\n")
 			return err
 		}
-		isAzureNpmChainCreated = false
+		npMgr.isAzureNpmChainCreated = false
 	}
 
 	return nil
