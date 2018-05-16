@@ -3,32 +3,35 @@ package npm
 import (
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"fmt"
+	"time"
 
-	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
-func TestAddPod(t *testing.T) {
+func TestRun(t *testing.T) {
 
-	npMgr := &NetworkPolicyManager{
-		nsMap:  make(map[string]*namespace),
-		ipsMgr: ipsm.NewIpsetManager(),
-		iptMgr: iptm.NewIptablesManager(),
+	// Creates the in-cluster config
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
 	}
 
-	testPodIP := "1.2.3.4"
-	testPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			UID:       "test",
-			Namespace: "default",
-			Name:      "test",
-			Labels:    map[string]string{"app": "test"}},
-		Status: corev1.PodStatus{PodIP: testPodIP},
+	// Creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Printf("[cni-npm] clientset creation failed with error %v.\n", err)
+		panic(err.Error())
 	}
 
-	if err := npMgr.AddPod(testPod); err != nil {
-		t.Errorf("TestAddPod failed")
+	factory := informers.NewSharedInformerFactory(clientset, time.Hour*24)
+	npMgr := NewNetworkPolicyManager(clientset, factory)
+	err = npMgr.Run(wait.NeverStop)
+	if err != nil {
+		fmt.Printf("[cni-npm] npm failed with error %v.\n", err)
+		panic(err.Error)
 	}
 }
