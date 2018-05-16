@@ -298,6 +298,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	errCode, err := ipsMgr.Run(entry)
 	if errCode == 1 && err != nil {
 		fmt.Printf("Cannot delete set %s as it's being referred.\n", setName)
+		return nil
 	}
 
 	if err != nil {
