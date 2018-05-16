@@ -80,7 +80,9 @@ func (npMgr *NetworkPolicyManager) UpdateNetworkPolicy(oldNpObj *networkingv1.Ne
 	npMgr.Unlock()
 	npMgr.DeleteNetworkPolicy(oldNpObj)
 
-	npMgr.AddNetworkPolicy(newNpObj)
+	if newNpObj.ObjectMeta.DeletionTimestamp == nil && newNpObj.ObjectMeta.DeletionGracePeriodSeconds == nil {
+		npMgr.AddNetworkPolicy(newNpObj)
+	}
 
 	return nil
 }
