@@ -110,11 +110,12 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 	}
 
 	ipsMgr.entryMap[listName] = &ipsEntry{
+		name:          listName,
 		operationFlag: util.IpsetCreationFlag,
 		set:           hashedName,
 		spec:          util.IpsetSetListFlag,
 	}
-	fmt.Printf("%Creating List: %+v\n", ipsMgr.entryMap[listName])
+	fmt.Printf("Creating List: %+v\n", ipsMgr.entryMap[listName])
 	if _, err := ipsMgr.Run(ipsMgr.entryMap[listName]); err != nil {
 		fmt.Printf("Error creating ipset list %s.\n", listName)
 		return err
@@ -218,6 +219,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 	}
 
 	ipsMgr.entryMap[setName] = &ipsEntry{
+		name:          setName,
 		operationFlag: util.IpsetCreationFlag,
 		set:           hashedName,
 		spec:          util.IpsetNetHashFlag,
