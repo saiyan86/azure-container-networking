@@ -325,6 +325,9 @@ func (ipsMgr *IpsetManager) Clean() error {
 		fmt.Printf("Error destroying ipset.\n")
 	}
 
+	ipsMgr.setMap = make(map[string]*Ipset)
+	ipsMgr.listMap = make(map[string]*Ipset)
+
 	return nil
 }
 
