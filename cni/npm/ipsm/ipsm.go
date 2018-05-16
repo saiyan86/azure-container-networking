@@ -313,20 +313,16 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 
 // Clean removes all the empty sets under the namespace.
 func (ipsMgr *IpsetManager) Clean() error {
-	for listName := range ipsMgr.listMap {
-		fmt.Printf("%s\n", listName)
-		if err := ipsMgr.DeleteList(listName); err != nil {
-			fmt.Printf("Error cleaning ipset\n")
-			return err
-		}
+	entry := &ipsEntry{
+		operationFlag: util.IpsetFlushFlag,
+	}
+	if _, err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error flushing ipset.\n")
 	}
 
-	for setName := range ipsMgr.setMap {
-		fmt.Printf("%s\n", setName)
-		if err := ipsMgr.DeleteSet(setName); err != nil {
-			fmt.Printf("Error cleaning ipset\n")
-			return err
-		}
+	entry.operationFlag = util.IpsetDestroyFlag
+	if _, err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error destroying ipset.\n")
 	}
 
 	return nil

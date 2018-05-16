@@ -49,6 +49,7 @@ const (
 	IpsetCreationFlag string = "-N"
 	IpsetAppendFlag   string = "-A"
 	IpsetDeletionFlag string = "-D"
+	IpsetFlushFlag    string = "-F"
 	IpsetDestroyFlag  string = "-X"
 
 	IpsetExistFlag string = "-exist"
