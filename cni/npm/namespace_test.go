@@ -32,7 +32,9 @@ func TestAllNsList(t *testing.T) {
 }
 
 func TestAddNamespace(t *testing.T) {
-	npMgr := &NetworkPolicyManager{}
+	npMgr := &NetworkPolicyManager{
+		nsMap: make(map[string]*namespace),
+	}
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
