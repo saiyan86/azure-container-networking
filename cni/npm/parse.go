@@ -59,7 +59,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				}
 
 				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
-					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
+					podRuleSets = append(podRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
@@ -296,7 +296,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				}
 
 				for podLabelKey, podLabelVal := range toRule.PodSelector.MatchLabels {
-					podRuleSets = append(podRuleSets, ns+"-"+podLabelKey+":"+podLabelVal)
+					podRuleSets = append(podRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
