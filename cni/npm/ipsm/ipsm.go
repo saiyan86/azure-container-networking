@@ -343,6 +343,25 @@ func (ipsMgr *IpsetManager) Clean() error {
 	return nil
 }
 
+// Destroy completely cleans ipset.
+func (ipsMgr *IpsetManager) Destroy() error {
+	entry := &ipsEntry{
+		operationFlag: util.IpsetFlushFlag,
+	}
+	if _, err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error flushing ipset\n")
+		return err
+	}
+
+	entry.operationFlag = util.IpsetDestroyFlag
+	if _, err := ipsMgr.Run(entry); err != nil {
+		fmt.Printf("Error destroying ipset\n")
+		return err
+	}
+
+	return nil
+}
+
 // Run execute an ipset command to update ipset.
 func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 	cmdName := util.Ipset

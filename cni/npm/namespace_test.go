@@ -48,4 +48,13 @@ func TestAddNamespace(t *testing.T) {
 	if err := npMgr.AddNamespace(nsObj); err != nil {
 		fmt.Errorf("TestAddNamespace @ AddNamespace")
 	}
+
+	ns, err := newNs("test")
+	if err != nil {
+		t.Errorf("TestAddNamespace failed @ newNs")
+	}
+
+	if err := ns.ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
+	}
 }
