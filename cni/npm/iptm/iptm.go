@@ -2,6 +2,7 @@ package iptm
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"syscall"
 
@@ -352,13 +353,15 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 // Save saves current iptables configuration to /var/log/iptables.conf
 func (iptMgr *IptablesManager) Save() error {
 	cmdName := util.IptablesSave
-	cmdArgs := append([]string{">", util.IptablesConfigFile})
 
-	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
-	fmt.Printf("%s\n", string(cmdOut))
-
+	cmdOut, err := exec.Command(cmdName).Output()
 	if err != nil {
-		fmt.Printf("Error saving iptables to file.\n")
+		fmt.Printf("Error running iptables-save.\n")
+		return err
+	}
+
+	if err := ioutil.WriteFile(util.IptablesConfigFile, cmdOut, 0644); err != nil {
+		fmt.Printf("Error writing iptables to file.\n")
 		return err
 	}
 
