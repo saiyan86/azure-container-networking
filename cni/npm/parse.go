@@ -507,7 +507,7 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm
 	// Get affected pods.
 	npNs, selector := npObj.ObjectMeta.Namespace, npObj.Spec.PodSelector.MatchLabels
 	for podLabelKey, podLabelVal := range selector {
-		affectedSet := npNs + "-" + podLabelKey + ":" + podLabelVal
+		affectedSet := util.KubeAllNamespacesFlag + "-" + podLabelKey + ":" + podLabelVal
 		affectedSets = append(affectedSets, affectedSet)
 	}
 
