@@ -356,16 +356,17 @@ func (iptMgr *IptablesManager) Save() error {
 	cmd := exec.Command(util.IptablesSave)
 
 	// open the out file for writing
-	outfile, err := os.Create(util.IptablesConfigFile)
+	f, err := os.Create(util.IptablesConfigFile)
 	if err != nil {
 		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
 		return err
 	}
-	defer outfile.Close()
-	cmd.Stdout = outfile
+	defer f.Close()
+	cmd.Stdout = f
 
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error running iptables-save.\n")
+		return err
 	}
 	cmd.Wait()
 
