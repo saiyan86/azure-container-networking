@@ -377,17 +377,16 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 		errCode int
 	)
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
+	fmt.Printf("%s\n", string(cmdOut))
+
 	if msg, failed := err.(*exec.ExitError); failed {
 		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
 		if errCode > 1 {
 			fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		}
 
-		fmt.Printf("%s\n", string(cmdOut))
 		return errCode, err
 	}
-
-	fmt.Printf("%s\n", string(cmdOut))
 
 	return 0, nil
 }

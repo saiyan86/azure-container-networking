@@ -335,16 +335,32 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 		errCode int
 	)
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
+	fmt.Printf("%s\n", string(cmdOut))
+
 	if msg, failed := err.(*exec.ExitError); failed {
 		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
 		if errCode > 1 {
 			fmt.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		}
 
-		fmt.Printf("%s\n", string(cmdOut))
 		return errCode, err
 	}
 
-	fmt.Printf("%s\n", string(cmdOut))
 	return 0, nil
+}
+
+// Save saves current iptables configuration to /var/log/iptables.conf
+func (iptMgr *IptablesManager) Save() error {
+	cmdName := util.IptablesSave
+	cmdArgs := append([]string{">", util.IptablesConfigFile})
+
+	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
+	fmt.Printf("%s\n", string(cmdOut))
+
+	if err != nil {
+		fmt.Printf("Error saving iptables to file.\n")
+		return err
+	}
+
+	return nil
 }

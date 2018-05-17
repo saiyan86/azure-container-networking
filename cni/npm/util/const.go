@@ -11,6 +11,8 @@ const (
 //iptables related constants.
 const (
 	Iptables                      string = "iptables"
+	IptablesSave                  string = "iptables-save"
+	IptablesConfigFile            string = "/var/log/iptables.conf"
 	IptablesChainCreationFlag     string = "-N"
 	IptablesInsertionFlag         string = "-I"
 	IptablesAppendFlag            string = "-A"
