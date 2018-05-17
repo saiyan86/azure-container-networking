@@ -110,3 +110,38 @@ func TestUpdatePod(t *testing.T) {
 		t.Errorf("TestUpdatePod failed @ ns.ipsMgr.Destroy")
 	}
 }
+
+func TestDeletePod(t *testing.T) {
+	npMgr := &NetworkPolicyManager{
+		nsMap: make(map[string]*namespace),
+	}
+
+	podObj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "test-pod",
+			Labels: map[string]string{
+				"app": "test-pod",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: "Running",
+			PodIP: "1.2.3.4",
+		},
+	}
+	if err := npMgr.AddPod(podObj); err != nil {
+		t.Errorf("TestDeletePod failed @ AddPod")
+	}
+
+	if err := npMgr.DeletePod(podObj); err != nil {
+		t.Errorf("TestDeletePod failed @ DeletePod")
+	}
+
+	ns, err := newNs("test-pod")
+	if err != nil {
+		t.Errorf("TestDeletePod failed @ newNs")
+	}
+
+	if err := ns.ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestDeletePod failed @ ns.ipsMgr.Destroy")
+	}
+}
