@@ -74,13 +74,15 @@ func TestUpdateNamespace(t *testing.T) {
 	}
 
 	now := metav1.Now()
+	gracePeriod := int64(1)
 	newNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "new-test",
 			Labels: map[string]string{
 				"app": "new-test",
 			},
-			DeletionTimestamp: &now,
+			DeletionTimestamp:          &now,
+			DeletionGracePeriodSeconds: &gracePeriod,
 		},
 	}
 
@@ -99,5 +101,37 @@ func TestUpdateNamespace(t *testing.T) {
 
 	if err := ns.ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
+	}
+}
+
+func TestDeleteNamespace(t *testing.T) {
+	npMgr := &NetworkPolicyManager{
+		nsMap: make(map[string]*namespace),
+	}
+
+	nsObj := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+			Labels: map[string]string{
+				"app": "test",
+			},
+		},
+	}
+
+	if err := npMgr.AddNamespace(nsObj); err != nil {
+		fmt.Errorf("TestDeleteNamespace @ npMgr.AddNamespace")
+	}
+
+	ns, err := newNs("test")
+	if err != nil {
+		t.Errorf("TestDeleteNamespace failed @ newNs")
+	}
+
+	if err := npMgr.DeleteNamespace(nsObj); err != nil {
+		fmt.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
+	}
+
+	if err := ns.ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestDeleteNamespace failed @ ns.ipsMgr.Destroy")
 	}
 }
