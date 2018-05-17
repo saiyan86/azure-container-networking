@@ -3,7 +3,9 @@ package npm
 import (
 	"testing"
 
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestisValidPod(t *testing.T) {
@@ -13,7 +15,18 @@ func TestisValidPod(t *testing.T) {
 			PodIP: "1.2.3.4",
 		},
 	}
-	if valid := isValidPod(podObj); !valid {
+	if ok := isValidPod(podObj); !ok {
 		t.Errorf("TestisValidPod failed @ isValidPod")
+	}
+}
+
+func TestisSystemPod(t *testing.T) {
+	podObj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: util.KubeSystemFlag,
+		},
+	}
+	if ok := isSystemPod(podObj); !ok {
+		t.Errorf("TestisSystemPod failed @ isSystemPod")
 	}
 }
