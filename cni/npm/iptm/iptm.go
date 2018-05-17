@@ -353,7 +353,8 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 // Save saves current iptables configuration to /var/log/iptables.conf
 func (iptMgr *IptablesManager) Save() error {
 
-	cmd := exec.Command(util.IptablesSave)
+	//cmd := exec.Command(util.IptablesSave)
+	cmd := exec.Command("echo", "'WHAT THE HECK IS UP'")
 
 	// open the out file for writing
 	f, err := os.Create(util.IptablesConfigFile)
