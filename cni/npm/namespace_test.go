@@ -66,23 +66,19 @@ func TestUpdateNamespace(t *testing.T) {
 
 	oldNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-namespace",
+			Name: "old-test-namespace",
 			Labels: map[string]string{
 				"app": "old-test-namespace",
 			},
 		},
 	}
 
-	now := metav1.Now()
-	gracePeriod := int64(1)
 	newNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-namespace",
+			Name: "new-test-namespace",
 			Labels: map[string]string{
 				"app": "new-test-namespace",
 			},
-			DeletionTimestamp:          &now,
-			DeletionGracePeriodSeconds: &gracePeriod,
 		},
 	}
 

@@ -61,3 +61,52 @@ func TestAddPod(t *testing.T) {
 		t.Errorf("TestAddPod failed @ ns.ipsMgr.Destroy")
 	}
 }
+
+func TestUpdatePod(t *testing.T) {
+	npMgr := &NetworkPolicyManager{
+		nsMap: make(map[string]*namespace),
+	}
+
+	oldPodObj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "old-test-pod",
+			Labels: map[string]string{
+				"app": "old-test-pod",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: "Running",
+			PodIP: "1.2.3.4",
+		},
+	}
+
+	newPodObj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "new-test-pod",
+			Labels: map[string]string{
+				"app": "new-test-pod",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: "Running",
+			PodIP: "4.3.2.1",
+		},
+	}
+
+	if err := npMgr.AddPod(oldPodObj); err != nil {
+		t.Errorf("TestUpdatePod failed @ AddPod")
+	}
+
+	if err := npMgr.UpdatePod(oldPodObj, newPodObj); err != nil {
+		t.Errorf("TestUpdatePod failed @ UpdatePod")
+	}
+
+	ns, err := newNs("test-pod")
+	if err != nil {
+		t.Errorf("TestUpdatePod failed @ newNs")
+	}
+
+	if err := ns.ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestUpdatePod failed @ ns.ipsMgr.Destroy")
+	}
+}
