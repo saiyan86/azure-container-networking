@@ -30,3 +30,31 @@ func TestisSystemPod(t *testing.T) {
 		t.Errorf("TestisSystemPod failed @ isSystemPod")
 	}
 }
+
+func TestAddPod(t *testing.T) {
+	npMgr := &NetworkPolicyManager{
+		nsMap: make(map[string]*namespace),
+	}
+
+	podObj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "test",
+		},
+		Status: corev1.PodStatus{
+			Phase: "Running",
+			PodIP: "1.2.3.4",
+		},
+	}
+	if err := npMgr.AddPod(podObj); err != nil {
+		t.Errorf("TestAddPod failed @ AddPod")
+	}
+
+	ns, err := newNs("test")
+	if err != nil {
+		t.Errorf("TestAddPod failed @ newNs")
+	}
+
+	if err := ns.ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestAddPod failed @ ns.ipsMgr.Destroy")
+	}
+}
