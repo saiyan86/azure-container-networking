@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -11,6 +12,9 @@ func TestnewNs(t *testing.T) {
 }
 
 func TestAllNsList(t *testing.T) {
+
+	fmt.Printf("hit")
+
 	ns, err := newNs("test")
 	if err != nil {
 		t.Errorf("TestAllNsList failed @ newNs")
