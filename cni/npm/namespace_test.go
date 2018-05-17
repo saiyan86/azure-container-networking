@@ -38,9 +38,9 @@ func TestAddNamespace(t *testing.T) {
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
+			Name: "test-namespace",
 			Labels: map[string]string{
-				"app": "test",
+				"app": "test-namespace",
 			},
 		},
 	}
@@ -66,9 +66,9 @@ func TestUpdateNamespace(t *testing.T) {
 
 	oldNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "old-test",
+			Name: "test-namespace",
 			Labels: map[string]string{
-				"app": "old-test",
+				"app": "old-test-namespace",
 			},
 		},
 	}
@@ -77,9 +77,9 @@ func TestUpdateNamespace(t *testing.T) {
 	gracePeriod := int64(1)
 	newNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "new-test",
+			Name: "test-namespace",
 			Labels: map[string]string{
-				"app": "new-test",
+				"app": "new-test-namespace",
 			},
 			DeletionTimestamp:          &now,
 			DeletionGracePeriodSeconds: &gracePeriod,
@@ -94,7 +94,7 @@ func TestUpdateNamespace(t *testing.T) {
 		t.Errorf("TestUpdateNamespace failed @ npMgr.UpdateNamespace")
 	}
 
-	ns, err := newNs("test")
+	ns, err := newNs("test-namespace")
 	if err != nil {
 		t.Errorf("TestAddNamespace failed @ newNs")
 	}
@@ -111,9 +111,9 @@ func TestDeleteNamespace(t *testing.T) {
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
+			Name: "test-namespace",
 			Labels: map[string]string{
-				"app": "test",
+				"app": "test-namespace",
 			},
 		},
 	}
@@ -122,7 +122,7 @@ func TestDeleteNamespace(t *testing.T) {
 		fmt.Errorf("TestDeleteNamespace @ npMgr.AddNamespace")
 	}
 
-	ns, err := newNs("test")
+	ns, err := newNs("test-namespace")
 	if err != nil {
 		t.Errorf("TestDeleteNamespace failed @ newNs")
 	}

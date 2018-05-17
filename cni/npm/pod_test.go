@@ -38,7 +38,10 @@ func TestAddPod(t *testing.T) {
 
 	podObj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "test",
+			Namespace: "test-pod",
+			Labels: map[string]string{
+				"app": "test-pod",
+			},
 		},
 		Status: corev1.PodStatus{
 			Phase: "Running",
@@ -49,7 +52,7 @@ func TestAddPod(t *testing.T) {
 		t.Errorf("TestAddPod failed @ AddPod")
 	}
 
-	ns, err := newNs("test")
+	ns, err := newNs("test-pod")
 	if err != nil {
 		t.Errorf("TestAddPod failed @ newNs")
 	}
