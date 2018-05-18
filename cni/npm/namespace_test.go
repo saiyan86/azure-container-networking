@@ -16,11 +16,6 @@ func TestnewNs(t *testing.T) {
 }
 
 func TestAllNsList(t *testing.T) {
-	ns, err := newNs("test")
-	if err != nil {
-		t.Errorf("TestAllNsList failed @ newNs")
-	}
-
 	npMgr := &NetworkPolicyManager{}
 
 	if err := npMgr.InitAllNsList(); err != nil {
