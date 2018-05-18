@@ -11,11 +11,6 @@ import (
 // azureNpmPrefix defines prefix for ipset.
 const azureNpmPrefix string = "azure-npm-"
 
-type policyInfo struct {
-	name  string
-	ports []networkingv1.NetworkPolicyPort
-}
-
 type portsInfo struct {
 	protocol string
 	port     string
