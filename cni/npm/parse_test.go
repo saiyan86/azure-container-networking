@@ -1,15 +1,15 @@
+package npm
+
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestParseIngress(t *testing.T) {
-	iptMgr := &IptablesManager{
-		entryMap: make(map[string][]*iptEntry),
-	}
-
 	tcp, udp := corev1.ProtocolTCP, corev1.ProtocolUDP
 	ruleOne := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{{
@@ -45,7 +45,5 @@ func TestParseIngress(t *testing.T) {
 
 	ipsetName := "testIpsetName"
 
-	if err := iptMgr.parseIngress(ipsetName, rules); err != nil {
-		t.Errorf("TestParseIngress failed")
-	}
+	parseIngress("test-ingress", []string{ipsetName}, rules)
 }

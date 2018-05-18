@@ -3,6 +3,8 @@ package npm
 import (
 	"testing"
 
+	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
+
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,12 +54,8 @@ func TestAddPod(t *testing.T) {
 		t.Errorf("TestAddPod failed @ AddPod")
 	}
 
-	ns, err := newNs("test-pod")
-	if err != nil {
-		t.Errorf("TestAddPod failed @ newNs")
-	}
-
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestAddPod failed @ ns.ipsMgr.Destroy")
 	}
 }
@@ -101,12 +99,8 @@ func TestUpdatePod(t *testing.T) {
 		t.Errorf("TestUpdatePod failed @ UpdatePod")
 	}
 
-	ns, err := newNs("test-pod")
-	if err != nil {
-		t.Errorf("TestUpdatePod failed @ newNs")
-	}
-
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestUpdatePod failed @ ns.ipsMgr.Destroy")
 	}
 }
@@ -136,12 +130,8 @@ func TestDeletePod(t *testing.T) {
 		t.Errorf("TestDeletePod failed @ DeletePod")
 	}
 
-	ns, err := newNs("test-pod")
-	if err != nil {
-		t.Errorf("TestDeletePod failed @ newNs")
-	}
-
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestDeletePod failed @ ns.ipsMgr.Destroy")
 	}
 }

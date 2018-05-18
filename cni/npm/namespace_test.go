@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -49,12 +50,8 @@ func TestAddNamespace(t *testing.T) {
 		fmt.Errorf("TestAddNamespace @ npMgr.AddNamespace")
 	}
 
-	ns, err := newNs("test")
-	if err != nil {
-		t.Errorf("TestAddNamespace failed @ newNs")
-	}
-
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
 	}
 }
@@ -90,12 +87,8 @@ func TestUpdateNamespace(t *testing.T) {
 		t.Errorf("TestUpdateNamespace failed @ npMgr.UpdateNamespace")
 	}
 
-	ns, err := newNs("test-namespace")
-	if err != nil {
-		t.Errorf("TestAddNamespace failed @ newNs")
-	}
-
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
 	}
 }
@@ -118,16 +111,12 @@ func TestDeleteNamespace(t *testing.T) {
 		fmt.Errorf("TestDeleteNamespace @ npMgr.AddNamespace")
 	}
 
-	ns, err := newNs("test-namespace")
-	if err != nil {
-		t.Errorf("TestDeleteNamespace failed @ newNs")
-	}
-
 	if err := npMgr.DeleteNamespace(nsObj); err != nil {
 		fmt.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
 	}
 
-	if err := ns.ipsMgr.Destroy(); err != nil {
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestDeleteNamespace failed @ ns.ipsMgr.Destroy")
 	}
 }
