@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 
 	corev1 "k8s.io/api/core/v1"
@@ -64,14 +65,13 @@ func TestAddNetworkPolicy(t *testing.T) {
 		t.Errorf("TestAddNetworkPolicy failed @ AddNetworkPolicy")
 	}
 
-	/*
-			if err := iptMgr.Restore(); err != nil {
-				t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
-			}
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
+	}
 
-				ipsMgr := &ipsm.IpsetManager{}
-		if err := ipsMgr.Destroy(); err != nil {
-			t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
-		}
-	*/
+	ipsMgr := &ipsm.IpsetManager{}
+	if err := ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
+	}
+
 }
