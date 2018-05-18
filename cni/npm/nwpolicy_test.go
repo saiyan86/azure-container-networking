@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
@@ -14,6 +15,19 @@ import (
 func TestAddNetworkPolicy(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
+	}
+
+	nsObj := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-nwpolicy",
+			Labels: map[string]string{
+				"app": "test-namespace",
+			},
+		},
+	}
+
+	if err := npMgr.AddNamespace(nsObj); err != nil {
+		fmt.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
 	}
 
 	tcp := corev1.ProtocolTCP
@@ -51,8 +65,13 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	/*
-		if err := iptMgr.Restore(); err != nil {
-			t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
+			if err := iptMgr.Restore(); err != nil {
+				t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
+			}
+
+				ipsMgr := &ipsm.IpsetManager{}
+		if err := ipsMgr.Destroy(); err != nil {
+			t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
 		}
 	*/
 }
