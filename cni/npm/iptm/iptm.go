@@ -352,10 +352,9 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 
 // Save saves current iptables configuration to /var/log/iptables.conf
 func (iptMgr *IptablesManager) Save() error {
-
 	cmd := exec.Command(util.IptablesSave)
 
-	// open the out file for writing
+	// create the config file for writing
 	f, err := os.Create(util.IptablesConfigFile)
 	if err != nil {
 		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
@@ -366,6 +365,28 @@ func (iptMgr *IptablesManager) Save() error {
 
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error running iptables-save.\n")
+		return err
+	}
+	cmd.Wait()
+
+	return nil
+}
+
+// Restore restores iptables configuration from /var/log/iptables.conf
+func (iptMgr *IptablesManager) Restore() error {
+	cmd := exec.Command(util.IptablesRestore)
+
+	// open the config file for reading
+	f, err := os.Open(util.IptablesConfigFile)
+	if err != nil {
+		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
+		return err
+	}
+	defer f.Close()
+	cmd.Stdin = f
+
+	if err := cmd.Start(); err != nil {
+		fmt.Printf("Error running iptables-restore.\n")
 		return err
 	}
 	cmd.Wait()
