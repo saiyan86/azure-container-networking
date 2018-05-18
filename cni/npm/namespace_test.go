@@ -23,11 +23,11 @@ func TestAllNsList(t *testing.T) {
 
 	npMgr := &NetworkPolicyManager{}
 
-	if err := npMgr.InitAllNsList(ns); err != nil {
+	if err := npMgr.InitAllNsList(); err != nil {
 		t.Errorf("TestAllNsList failed @ InitAllNsList")
 	}
 
-	if err := npMgr.UninitAllNsList(ns); err != nil {
+	if err := npMgr.UninitAllNsList(); err != nil {
 		t.Errorf("TestAllNsList failed @ UninitAllNsList")
 	}
 }

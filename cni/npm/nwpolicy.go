@@ -49,7 +49,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		}
 	}
 
-	if err := npMgr.InitAllNsList(ns); err != nil {
+	if err := npMgr.InitAllNsList(); err != nil {
 		fmt.Printf("Error initializing all-namespace ipset list.\n")
 		return err
 	}
