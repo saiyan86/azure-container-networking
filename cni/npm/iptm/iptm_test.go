@@ -66,6 +66,10 @@ func TestExists(t *testing.T) {
 	iptMgr.OperationFlag = util.IptablesCheckFlag
 	entry := &IptEntry{
 		Chain: util.IptablesForwardChain,
+		Specs: []string{
+			util.IptablesJumpFlag,
+			util.IptablesAccept,
+		},
 	}
 	if _, err := iptMgr.Exists(entry); err != nil {
 		t.Errorf("TestExists failed @ iptMgr.Exists")
