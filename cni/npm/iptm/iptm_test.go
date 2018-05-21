@@ -89,9 +89,26 @@ func TestAddChain(t *testing.T) {
 		t.Errorf("TestAddChain failed @ iptMgr.AddChain")
 	}
 
-	/*
-		if err := iptMgr.Restore(); err != nil {
-			t.Errorf("TestAddChain failed @ iptMgr.Restore")
-		}
-	*/
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestAddChain failed @ iptMgr.Restore")
+	}
+}
+
+func TestDeleteChain(t *testing.T) {
+	iptMgr := &IptablesManager{}
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestDeleteChain failed @ iptMgr.Save")
+	}
+
+	if err := iptMgr.AddChain("TEST-CHAIN"); err != nil {
+		t.Errorf("TestDeleteChain failed @ iptMgr.AddChain")
+	}
+
+	if err := iptMgr.DeleteChain("TEST-CHAIN"); err != nil {
+		t.Errorf("TestDeleteChain failed @ iptMgr.DeleteChain")
+	}
+
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestDeleteChain failed @ iptMgr.Restore")
+	}
 }
