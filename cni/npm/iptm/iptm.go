@@ -231,7 +231,7 @@ func (iptMgr *IptablesManager) Exists(entry *IptEntry) (bool, error) {
 	iptMgr.OperationFlag = util.IptablesCheckFlag
 	returnCode, err := iptMgr.Run(entry)
 	if err == nil {
-		fmt.Printf("Duplicate rule. %+v\n", entry)
+		fmt.Printf("Rule exists. %+v\n", entry)
 		return true, nil
 	}
 
