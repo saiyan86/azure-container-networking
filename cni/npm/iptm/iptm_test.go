@@ -116,10 +116,23 @@ func TestDeleteChain(t *testing.T) {
 func TestAdd(t *testing.T) {
 	iptMgr := &IptablesManager{}
 	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestAdd failed @ iptMgr.Save")
+	}
+
+	entry := &IptEntry{
+		Chain: util.IptablesForwardChain,
+		Specs: []string{
+			util.IptablesJumpFlag,
+			util.IptablesReject,
+		},
+	}
+	if err := iptMgr.Add(entry); err != nil {
 		t.Errorf("TestAdd failed @ iptMgr.Add")
 	}
 
-	if err := iptMgr.Restore(); err != nil {
-		t.Errorf("TestAdd failed @ iptMgr.Restore")
-	}
+	/*
+		if err := iptMgr.Restore(); err != nil {
+			t.Errorf("TestAdd failed @ iptMgr.Restore")
+		}
+	*/
 }
