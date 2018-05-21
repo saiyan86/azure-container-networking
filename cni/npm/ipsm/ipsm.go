@@ -2,7 +2,6 @@ package ipsm
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -397,16 +396,7 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 
 // Save saves ipset to file.
 func (ipsMgr *IpsetManager) Save() error {
-	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag)
-
-	// create the config file for writing
-	f, err := os.Create(util.IptablesConfigFile)
-	if err != nil {
-		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
-		return err
-	}
-	defer f.Close()
-	cmd.Stdout = f
+	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag, util.IpsetFileFlag, util.IpsetConfigFile)
 
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error saving ipset to file.\n")
