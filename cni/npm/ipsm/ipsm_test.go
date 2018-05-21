@@ -33,4 +33,8 @@ func TestCreateList(t *testing.T) {
 			t.Errorf("TestCreateList failed @ ipsMgr.Restore")
 		}
 	}()
+
+	if err := ipsMgr.CreateList("test-list"); err != nil {
+		t.Errorf("TestCreateList failed @ ipsMgr.CreateList")
+	}
 }
