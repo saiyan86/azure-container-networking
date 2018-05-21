@@ -28,11 +28,13 @@ func TestCreateList(t *testing.T) {
 		t.Errorf("TestCreateList failed @ ipsMgr.Save")
 	}
 
-	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
-			t.Errorf("TestCreateList failed @ ipsMgr.Restore")
-		}
-	}()
+	/*
+		defer func() {
+			if err := ipsMgr.Restore(); err != nil {
+				t.Errorf("TestCreateList failed @ ipsMgr.Restore")
+			}
+		}()
+	*/
 
 	if err := ipsMgr.CreateList("test-list"); err != nil {
 		t.Errorf("TestCreateList failed @ ipsMgr.CreateList")
