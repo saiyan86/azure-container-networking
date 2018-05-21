@@ -406,3 +406,16 @@ func (ipsMgr *IpsetManager) Save() error {
 
 	return nil
 }
+
+// Restore restores ipset from file.
+func (ipsMgr *IpsetManager) Restore() error {
+	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, util.IpsetConfigFile)
+
+	if err := cmd.Start(); err != nil {
+		fmt.Printf("Error restoring ipset from file.\n")
+		return err
+	}
+	cmd.Wait()
+
+	return nil
+}
