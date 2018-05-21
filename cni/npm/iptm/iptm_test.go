@@ -58,7 +58,6 @@ func TestUninitNpmChains(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	iptMgr := &IptablesManager{}
-
 	if err := iptMgr.Save(); err != nil {
 		t.Errorf("TestExists failed @ iptMgr.Save")
 	}
@@ -78,4 +77,21 @@ func TestExists(t *testing.T) {
 	if err := iptMgr.Restore(); err != nil {
 		t.Errorf("TestExists failed @ iptMgr.Restore")
 	}
+}
+
+func TestAddChain(t *testing.T) {
+	iptMgr := &IptablesManager{}
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestAddChain failed @ iptMgr.Save")
+	}
+
+	if err := iptMgr.AddChain("TEST-CHAIN"); err != nil {
+		t.Errorf("TestAddChain failed @ iptMgr.AddChain")
+	}
+
+	/*
+		if err := iptMgr.Restore(); err != nil {
+			t.Errorf("TestAddChain failed @ iptMgr.Restore")
+		}
+	*/
 }
