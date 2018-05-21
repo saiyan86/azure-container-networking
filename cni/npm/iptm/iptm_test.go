@@ -1,6 +1,10 @@
 package iptm
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Azure/azure-container-networking/cni/npm/util"
+)
 
 func TestSave(t *testing.T) {
 	iptMgr := &IptablesManager{}
@@ -49,5 +53,25 @@ func TestUninitNpmChains(t *testing.T) {
 
 	if err := iptMgr.Restore(); err != nil {
 		t.Errorf("TestUninitNpmChains failed @ iptMgr.Restore")
+	}
+}
+
+func TestExists(t *testing.T) {
+	iptMgr := &IptablesManager{}
+
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestExists failed @ iptMgr.Save")
+	}
+
+	iptMgr.OperationFlag = util.IptablesCheckFlag
+	entry := &IptEntry{
+		Chain: util.IptablesForwardChain,
+	}
+	if _, err := iptMgr.Exists(entry); err != nil {
+		t.Errorf("TestExists failed @ iptMgr.Exists")
+	}
+
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestExists failed @ iptMgr.Restore")
 	}
 }
