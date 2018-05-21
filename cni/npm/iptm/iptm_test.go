@@ -15,3 +15,19 @@ func TestRestore(t *testing.T) {
 		t.Errorf("TestRestore failed @ iptMgr.Restore")
 	}
 }
+
+func TestInitNpmChains(t *testing.T) {
+	iptMgr := &IptablesManager{}
+
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestInitNpmChains failed @ iptMgr.Save")
+	}
+
+	if err := iptMgr.InitNpmChains(); err != nil {
+		t.Errorf("TestInitNpmChains @ iptMgr.InitNpmChains")
+	}
+
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestInitNpmChains failed @ iptMgr.Restore")
+	}
+}
