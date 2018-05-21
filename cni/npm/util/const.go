@@ -49,6 +49,9 @@ const (
 //ipset related constants.
 const (
 	Ipset             string = "ipset"
+	IpsetSaveFlag     string = "save"
+	IpsetRestoreFlag  string = "restore"
+	IpsetConfigFile   string = "/var/log/ipset.conf"
 	IpsetCreationFlag string = "-N"
 	IpsetAppendFlag   string = "-A"
 	IpsetDeletionFlag string = "-D"
@@ -56,6 +59,7 @@ const (
 	IpsetDestroyFlag  string = "-X"
 
 	IpsetExistFlag string = "-exist"
+	IpsetFileFlag  string = "-file"
 
 	IpsetSetListFlag string = "setlist"
 	IpsetNetHashFlag string = "nethash"
