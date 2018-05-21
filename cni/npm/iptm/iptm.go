@@ -20,14 +20,13 @@ type IptEntry struct {
 
 // IptablesManager stores iptables entries.
 type IptablesManager struct {
-	entryMap      map[string][]*IptEntry
 	OperationFlag string
 }
 
 // NewIptablesManager creates a new instance for IptablesManager object.
 func NewIptablesManager() *IptablesManager {
 	iptMgr := &IptablesManager{
-		entryMap: make(map[string][]*IptEntry),
+		OperationFlag: "",
 	}
 
 	return iptMgr
@@ -283,7 +282,7 @@ func (iptMgr *IptablesManager) DeleteChain(chain string) error {
 	return nil
 }
 
-// Add creates an entry in entryMap, and add corresponding rule in iptables.
+// Add adds a rule in iptables.
 func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 	fmt.Printf("%+v\n", entry)
 
@@ -296,7 +295,6 @@ func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 		return nil
 	}
 
-	// Create iptables rules for every entry in the entryMap.
 	iptMgr.OperationFlag = util.IptablesAppendFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error creating iptables rules.\n")
@@ -306,7 +304,7 @@ func (iptMgr *IptablesManager) Add(entry *IptEntry) error {
 	return nil
 }
 
-// Delete removes an entry from entryMap, and deletes the corresponding iptables rule.
+// Delete removes a rule in iptables.
 func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 	fmt.Printf("%+v\n", entry)
 
@@ -318,7 +316,7 @@ func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 	if !exists {
 		return nil
 	}
-	// Create iptables rules for every entry in the entryMap.
+
 	iptMgr.OperationFlag = util.IptablesDeletionFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		fmt.Printf("Error deleting iptables rules.\n")
