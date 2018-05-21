@@ -1,7 +1,6 @@
 package npm
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
@@ -18,6 +17,26 @@ func TestAddNetworkPolicy(t *testing.T) {
 		nsMap: make(map[string]*namespace),
 	}
 
+	iptMgr := iptm.NewIptablesManager()
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
+	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := iptMgr.Restore(); err != nil {
+			t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
+		}
+
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Restore")
+		}
+	}()
+
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-nwpolicy",
@@ -28,7 +47,7 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	if err := npMgr.AddNamespace(nsObj); err != nil {
-		fmt.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
+		t.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
 	}
 
 	tcp := corev1.ProtocolTCP
@@ -56,30 +75,35 @@ func TestAddNetworkPolicy(t *testing.T) {
 		},
 	}
 
-	iptMgr := iptm.IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
-		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
-	}
-
 	if err := npMgr.AddNetworkPolicy(allow); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ AddNetworkPolicy")
 	}
-
-	if err := iptMgr.Restore(); err != nil {
-		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
-	}
-
 }
 
 func TestUpdateNetworkPolicy(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	iptMgr := iptm.NewIptablesManager()
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Save")
+	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := iptMgr.Restore(); err != nil {
+			t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Restore")
+		}
+
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Restore")
+		}
+	}()
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -91,7 +115,7 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	}
 
 	if err := npMgr.AddNamespace(nsObj); err != nil {
-		fmt.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
+		t.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
 	}
 
 	tcp, udp := corev1.ProtocolTCP, corev1.ProtocolUDP
@@ -143,11 +167,6 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 		},
 	}
 
-	iptMgr := iptm.IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
-		t.Errorf("TestUpdateNetworkPolicy failed @ iptMgr.Save")
-	}
-
 	if err := npMgr.AddNetworkPolicy(allowIngress); err != nil {
 		t.Errorf("TestUpdateNetworkPolicy failed @ AddNetworkPolicy")
 	}
@@ -155,22 +174,32 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	if err := npMgr.UpdateNetworkPolicy(allowIngress, allowEgress); err != nil {
 		t.Errorf("TestUpdateNetworkPolicy failed @ UpdateNetworkPolicy")
 	}
-
-	if err := iptMgr.Restore(); err != nil {
-		t.Errorf("TestUpdateNetworkPolicy failed @ iptMgr.Restore")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestUpdateNetworkPolicy failed @ ns.ipsMgr.Destroy")
-	}
-
 }
 
 func TestDeleteNetworkPolicy(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	iptMgr := iptm.NewIptablesManager()
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Save")
+	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := iptMgr.Restore(); err != nil {
+			t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Restore")
+		}
+
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Restore")
+		}
+	}()
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -182,7 +211,7 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	}
 
 	if err := npMgr.AddNamespace(nsObj); err != nil {
-		fmt.Errorf("TestAddNetworkPolicy @ npMgr.AddNamespace")
+		t.Errorf("TestDeleteNetworkPolicy @ npMgr.AddNamespace")
 	}
 
 	tcp := corev1.ProtocolTCP
@@ -210,11 +239,6 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 		},
 	}
 
-	iptMgr := iptm.IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
-		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
-	}
-
 	if err := npMgr.AddNetworkPolicy(allow); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ AddNetworkPolicy")
 	}
@@ -222,14 +246,4 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	if err := npMgr.DeleteNetworkPolicy(allow); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ DeleteNetworkPolicy")
 	}
-
-	if err := iptMgr.Restore(); err != nil {
-		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
-	}
-
 }

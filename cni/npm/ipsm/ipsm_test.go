@@ -21,3 +21,16 @@ func TestRestore(t *testing.T) {
 		t.Errorf("TestRestore failed @ ipsMgr.Restore")
 	}
 }
+
+func TestCreateList(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestCreateList failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestCreateList failed @ ipsMgr.Restore")
+		}
+	}()
+}

@@ -18,6 +18,17 @@ func TestnewNs(t *testing.T) {
 func TestAllNsList(t *testing.T) {
 	npMgr := &NetworkPolicyManager{}
 
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestAllNsList failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestAllNsList failed @ ipsMgr.Restore")
+		}
+	}()
+
 	if err := npMgr.InitAllNsList(); err != nil {
 		t.Errorf("TestAllNsList failed @ InitAllNsList")
 	}
@@ -32,6 +43,17 @@ func TestAddNamespace(t *testing.T) {
 		nsMap: make(map[string]*namespace),
 	}
 
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestAddNamespace failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestAddNamespace failed @ ipsMgr.Restore")
+		}
+	}()
+
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-namespace",
@@ -42,12 +64,7 @@ func TestAddNamespace(t *testing.T) {
 	}
 
 	if err := npMgr.AddNamespace(nsObj); err != nil {
-		fmt.Errorf("TestAddNamespace @ npMgr.AddNamespace")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
+		t.Errorf("TestAddNamespace @ npMgr.AddNamespace")
 	}
 }
 
@@ -55,6 +72,17 @@ func TestUpdateNamespace(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestUpdateNamespace failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestUpdateNamespace failed @ ipsMgr.Restore")
+		}
+	}()
 
 	oldNsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,17 +109,23 @@ func TestUpdateNamespace(t *testing.T) {
 	if err := npMgr.UpdateNamespace(oldNsObj, newNsObj); err != nil {
 		t.Errorf("TestUpdateNamespace failed @ npMgr.UpdateNamespace")
 	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestAddNamespace failed @ ns.ipsMgr.Destroy")
-	}
 }
 
 func TestDeleteNamespace(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestDeleteNamespace failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestDeleteNamespace failed @ ipsMgr.Restore")
+		}
+	}()
 
 	nsObj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -108,10 +142,5 @@ func TestDeleteNamespace(t *testing.T) {
 
 	if err := npMgr.DeleteNamespace(nsObj); err != nil {
 		fmt.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestDeleteNamespace failed @ ns.ipsMgr.Destroy")
 	}
 }

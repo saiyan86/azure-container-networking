@@ -38,6 +38,17 @@ func TestAddPod(t *testing.T) {
 		nsMap: make(map[string]*namespace),
 	}
 
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestAddPod failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestAddPod failed @ ipsMgr.Restore")
+		}
+	}()
+
 	podObj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "test-pod",
@@ -53,17 +64,23 @@ func TestAddPod(t *testing.T) {
 	if err := npMgr.AddPod(podObj); err != nil {
 		t.Errorf("TestAddPod failed @ AddPod")
 	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestAddPod failed @ ns.ipsMgr.Destroy")
-	}
 }
 
 func TestUpdatePod(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestUpdatePod failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestUpdatePod failed @ ipsMgr.Restore")
+		}
+	}()
 
 	oldPodObj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -98,17 +115,23 @@ func TestUpdatePod(t *testing.T) {
 	if err := npMgr.UpdatePod(oldPodObj, newPodObj); err != nil {
 		t.Errorf("TestUpdatePod failed @ UpdatePod")
 	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestUpdatePod failed @ ns.ipsMgr.Destroy")
-	}
 }
 
 func TestDeletePod(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	ipsMgr := ipsm.NewIpsetManager()
+	if err := ipsMgr.Save(); err != nil {
+		t.Errorf("TestDeletePod failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(); err != nil {
+			t.Errorf("TestDeletePod failed @ ipsMgr.Restore")
+		}
+	}()
 
 	podObj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -128,10 +151,5 @@ func TestDeletePod(t *testing.T) {
 
 	if err := npMgr.DeletePod(podObj); err != nil {
 		t.Errorf("TestDeletePod failed @ DeletePod")
-	}
-
-	ipsMgr := &ipsm.IpsetManager{}
-	if err := ipsMgr.Destroy(); err != nil {
-		t.Errorf("TestDeletePod failed @ ns.ipsMgr.Destroy")
 	}
 }
