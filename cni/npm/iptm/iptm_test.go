@@ -156,9 +156,26 @@ func TestDelete(t *testing.T) {
 		t.Errorf("TestDelete failed @ iptMgr.Delete")
 	}
 
-	/*
-		if err := iptMgr.Restore(); err != nil {
-			t.Errorf("TestDelete failed @ iptMgr.Restore")
-		}
-	*/
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestDelete failed @ iptMgr.Restore")
+	}
+}
+
+func TestRun(t *testing.T) {
+	iptMgr := &IptablesManager{}
+	if err := iptMgr.Save(); err != nil {
+		t.Errorf("TestRun failed @ iptMgr.Save")
+	}
+
+	iptMgr.OperationFlag = util.IptablesChainCreationFlag
+	entry := &IptEntry{
+		Chain: "TEST-CHAIN",
+	}
+	if _, err := iptMgr.Run(entry); err != nil {
+		t.Errorf("TestRun failed @ iptMgr.Run")
+	}
+
+	if err := iptMgr.Restore(); err != nil {
+		t.Errorf("TestRun failed @ iptMgr.Restore")
+	}
 }
