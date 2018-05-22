@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+
 	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/util"
 	corev1 "k8s.io/api/core/v1"
@@ -144,4 +146,17 @@ func TestDeleteNamespace(t *testing.T) {
 	if err := npMgr.DeleteNamespace(nsObj); err != nil {
 		fmt.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
 	}
+}
+
+func TestMain(m *testing.M) {
+	iptMgr := iptm.NewIptablesManager()
+	iptMgr.Save(util.IptablesConfigFile)
+
+	ipsMgr := ipsm.NewIpsetManager()
+	ipsMgr.Save(util.IpsetConfigFile)
+
+	m.Run()
+
+	iptMgr.Restore(util.IptablesConfigFile)
+	ipsMgr.Restore(util.IpsetConfigFile)
 }
