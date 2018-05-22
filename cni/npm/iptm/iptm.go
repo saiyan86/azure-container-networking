@@ -349,13 +349,17 @@ func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 }
 
 // Save saves current iptables configuration to /var/log/iptables.conf
-func (iptMgr *IptablesManager) Save() error {
+func (iptMgr *IptablesManager) Save(configFile string) error {
+	if len(configFile) == 0 {
+		configFile = util.IptablesConfigFile
+	}
+
 	cmd := exec.Command(util.IptablesSave)
 
 	// create the config file for writing
-	f, err := os.Create(util.IptablesConfigFile)
+	f, err := os.Create(configFile)
 	if err != nil {
-		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
+		fmt.Printf("Error opening file: %s.", configFile)
 		return err
 	}
 	defer f.Close()
@@ -371,13 +375,17 @@ func (iptMgr *IptablesManager) Save() error {
 }
 
 // Restore restores iptables configuration from /var/log/iptables.conf
-func (iptMgr *IptablesManager) Restore() error {
+func (iptMgr *IptablesManager) Restore(configFile string) error {
+	if len(configFile) == 0 {
+		configFile = util.IptablesConfigFile
+	}
+
 	cmd := exec.Command(util.IptablesRestore)
 
 	// open the config file for reading
-	f, err := os.Open(util.IptablesConfigFile)
+	f, err := os.Open(configFile)
 	if err != nil {
-		fmt.Printf("Error opening file: %s.", util.IptablesConfigFile)
+		fmt.Printf("Error opening file: %s.", configFile)
 		return err
 	}
 	defer f.Close()

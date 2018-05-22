@@ -8,18 +8,18 @@ import (
 
 func TestSave(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestSave failed @ iptMgr.Save")
 	}
 }
 
 func TestRestore(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestRestore failed @ iptMgr.Save")
 	}
 
-	if err := iptMgr.Restore(); err != nil {
+	if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestRestore failed @ iptMgr.Restore")
 	}
 }
@@ -27,12 +27,12 @@ func TestRestore(t *testing.T) {
 func TestInitNpmChains(t *testing.T) {
 	iptMgr := &IptablesManager{}
 
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestInitNpmChains failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestInitNpmChains failed @ iptMgr.Restore")
 		}
 	}()
@@ -45,12 +45,12 @@ func TestInitNpmChains(t *testing.T) {
 func TestUninitNpmChains(t *testing.T) {
 	iptMgr := &IptablesManager{}
 
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestUninitNpmChains failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestUninitNpmChains failed @ iptMgr.Restore")
 		}
 	}()
@@ -66,12 +66,12 @@ func TestUninitNpmChains(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestExists failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestExists failed @ iptMgr.Restore")
 		}
 	}()
@@ -91,12 +91,12 @@ func TestExists(t *testing.T) {
 
 func TestAddChain(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestAddChain failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestAddChain failed @ iptMgr.Restore")
 		}
 	}()
@@ -108,12 +108,12 @@ func TestAddChain(t *testing.T) {
 
 func TestDeleteChain(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestDeleteChain failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestDeleteChain failed @ iptMgr.Restore")
 		}
 	}()
@@ -129,12 +129,12 @@ func TestDeleteChain(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestAdd failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestAdd failed @ iptMgr.Restore")
 		}
 	}()
@@ -153,12 +153,12 @@ func TestAdd(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestDelete failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestDelete failed @ iptMgr.Restore")
 		}
 	}()
@@ -181,12 +181,12 @@ func TestDelete(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	iptMgr := &IptablesManager{}
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestRun failed @ iptMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestRun failed @ iptMgr.Restore")
 		}
 	}()
@@ -198,4 +198,13 @@ func TestRun(t *testing.T) {
 	if _, err := iptMgr.Run(entry); err != nil {
 		t.Errorf("TestRun failed @ iptMgr.Run")
 	}
+}
+
+func TestMain(m *testing.M) {
+	iptMgr := NewIptablesManager()
+	iptMgr.Save(util.IptablesConfigFile)
+
+	m.Run()
+
+	iptMgr.Restore(util.IptablesConfigFile)
 }

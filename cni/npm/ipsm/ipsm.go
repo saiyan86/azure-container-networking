@@ -395,8 +395,12 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 }
 
 // Save saves ipset to file.
-func (ipsMgr *IpsetManager) Save() error {
-	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag, util.IpsetFileFlag, util.IpsetConfigFile)
+func (ipsMgr *IpsetManager) Save(configFile string) error {
+	if len(configFile) == 0 {
+		configFile = util.IpsetConfigFile
+	}
+
+	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag, util.IpsetFileFlag, configFile)
 
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error saving ipset to file.\n")
@@ -408,8 +412,12 @@ func (ipsMgr *IpsetManager) Save() error {
 }
 
 // Restore restores ipset from file.
-func (ipsMgr *IpsetManager) Restore() error {
-	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, util.IpsetConfigFile)
+func (ipsMgr *IpsetManager) Restore(configFile string) error {
+	if len(configFile) == 0 {
+		configFile = util.IpsetConfigFile
+	}
+
+	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, configFile)
 
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error restoring ipset from file.\n")

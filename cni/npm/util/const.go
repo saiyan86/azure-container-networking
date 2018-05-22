@@ -14,6 +14,7 @@ const (
 	IptablesSave                  string = "iptables-save"
 	IptablesRestore               string = "iptables-restore"
 	IptablesConfigFile            string = "/var/log/iptables.conf"
+	IptablesTestConfigFile        string = "/var/log/iptables-test.conf"
 	IptablesChainCreationFlag     string = "-N"
 	IptablesInsertionFlag         string = "-I"
 	IptablesAppendFlag            string = "-A"
@@ -48,15 +49,16 @@ const (
 
 //ipset related constants.
 const (
-	Ipset             string = "ipset"
-	IpsetSaveFlag     string = "save"
-	IpsetRestoreFlag  string = "restore"
-	IpsetConfigFile   string = "/var/log/ipset.conf"
-	IpsetCreationFlag string = "-N"
-	IpsetAppendFlag   string = "-A"
-	IpsetDeletionFlag string = "-D"
-	IpsetFlushFlag    string = "-F"
-	IpsetDestroyFlag  string = "-X"
+	Ipset               string = "ipset"
+	IpsetSaveFlag       string = "save"
+	IpsetRestoreFlag    string = "restore"
+	IpsetConfigFile     string = "/var/log/ipset.conf"
+	IpsetTestConfigFile string = "/var/log/ipset-test.conf"
+	IpsetCreationFlag   string = "-N"
+	IpsetAppendFlag     string = "-A"
+	IpsetDeletionFlag   string = "-D"
+	IpsetFlushFlag      string = "-F"
+	IpsetDestroyFlag    string = "-X"
 
 	IpsetExistFlag string = "-exist"
 	IpsetFileFlag  string = "-file"

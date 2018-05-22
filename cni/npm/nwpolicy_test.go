@@ -18,21 +18,21 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(""); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(""); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(""); err != nil {
 			t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(""); err != nil {
 			t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
@@ -86,21 +86,21 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(""); err != nil {
 		t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(""); err != nil {
 		t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(""); err != nil {
 			t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(""); err != nil {
 			t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
@@ -182,21 +182,21 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(); err != nil {
+	if err := iptMgr.Save(""); err != nil {
 		t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(""); err != nil {
 		t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(); err != nil {
+		if err := iptMgr.Restore(""); err != nil {
 			t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(""); err != nil {
 			t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
