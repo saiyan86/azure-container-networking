@@ -1,6 +1,7 @@
 package ipsm
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -79,5 +80,6 @@ func TestMain(m *testing.M) {
 
 	m.Run()
 
+	fmt.Printf("about to restore!")
 	ipsMgr.Restore()
 }
