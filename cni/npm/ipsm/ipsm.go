@@ -2,6 +2,7 @@ package ipsm
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -415,6 +416,18 @@ func (ipsMgr *IpsetManager) Save(configFile string) error {
 func (ipsMgr *IpsetManager) Restore(configFile string) error {
 	if len(configFile) == 0 {
 		configFile = util.IpsetConfigFile
+	}
+
+	f, err := os.Stat(configFile)
+	if err != nil {
+		fmt.Printf("Error getting file %s stat from ipsm.Restore", configFile)
+		return err
+	}
+
+	if f.Size() == 0 {
+		if err := ipsMgr.Destroy(); err != nil {
+			return err
+		}
 	}
 
 	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, configFile)
