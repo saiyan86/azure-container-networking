@@ -64,6 +64,10 @@ func TestAddToList(t *testing.T) {
 		}
 	}()
 
+	if err := ipsMgr.CreateSet("test-set"); err != nil {
+		t.Errorf("TestAddToList failed @ ipsMgr.CreateSet")
+	}
+
 	if err := ipsMgr.AddToList("test-list", "test-set"); err != nil {
 		t.Errorf("TestAddToList failed @ ipsMgr.AddToList")
 	}
