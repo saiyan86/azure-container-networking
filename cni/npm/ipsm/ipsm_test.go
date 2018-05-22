@@ -42,29 +42,17 @@ func TestCreateList(t *testing.T) {
 
 func TestDeleteList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
-		t.Errorf("TestDeleteList failed @ ipsMgr.Save")
+	if err := ipsMgr.CreateList("test-list"); err != nil {
+		t.Errorf("TestCreateList failed @ ipsMgr.DeleteList")
 	}
 
-	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
-			t.Errorf("TestDeleteList failed @ ipsMgr.Restore")
-		}
-	}()
+	if err := ipsMgr.DeleteList("test-list"); err != nil {
+		t.Errorf("TestDeleteList failed @ ipsMgr.DeleteList")
+	}
 }
 
 func TestAddToList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
-		t.Errorf("TestAddToList failed @ ipsMgr.Save")
-	}
-
-	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
-			t.Errorf("TestAddToList failed @ ipsMgr.Restore")
-		}
-	}()
-
 	if err := ipsMgr.CreateSet("test-set"); err != nil {
 		t.Errorf("TestAddToList failed @ ipsMgr.CreateSet")
 	}
