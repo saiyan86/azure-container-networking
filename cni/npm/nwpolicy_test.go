@@ -19,7 +19,7 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
@@ -87,7 +87,7 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
@@ -183,7 +183,7 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
+	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Save")
 	}
 
