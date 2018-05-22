@@ -5,6 +5,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -18,12 +19,12 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(""); err != nil {
+	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(""); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Save")
 	}
 
@@ -86,12 +87,12 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(""); err != nil {
+	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(""); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Save")
 	}
 
@@ -182,12 +183,12 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	}
 
 	iptMgr := iptm.NewIptablesManager()
-	if err := iptMgr.Save(""); err != nil {
+	if err := iptMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Save")
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(""); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Save")
 	}
 
