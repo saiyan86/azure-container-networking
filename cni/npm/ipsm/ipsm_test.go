@@ -72,3 +72,12 @@ func TestAddToList(t *testing.T) {
 		t.Errorf("TestAddToList failed @ ipsMgr.AddToList")
 	}
 }
+
+func TestMain(m *testing.M) {
+	ipsMgr := NewIpsetManager()
+	ipsMgr.Save()
+
+	m.Run()
+
+	ipsMgr.Restore()
+}
