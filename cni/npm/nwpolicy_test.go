@@ -29,11 +29,11 @@ func TestAddNetworkPolicy(t *testing.T) {
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(""); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(""); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestAddNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
@@ -97,11 +97,11 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(""); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("UpdateAddNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(""); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("UpdateAddNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
@@ -193,11 +193,11 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	}
 
 	defer func() {
-		if err := iptMgr.Restore(""); err != nil {
+		if err := iptMgr.Restore(util.IptablesTestConfigFile); err != nil {
 			t.Errorf("TestDeleteNetworkPolicy failed @ iptMgr.Restore")
 		}
 
-		if err := ipsMgr.Restore(""); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestDeleteNetworkPolicy failed @ ipsMgr.Restore")
 		}
 	}()
