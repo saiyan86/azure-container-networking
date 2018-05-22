@@ -39,12 +39,12 @@ func TestAddPod(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddPod failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestAddPod failed @ ipsMgr.Restore")
 		}
 	}()
@@ -72,12 +72,12 @@ func TestUpdatePod(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestUpdatePod failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestUpdatePod failed @ ipsMgr.Restore")
 		}
 	}()
@@ -123,12 +123,12 @@ func TestDeletePod(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestDeletePod failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestDeletePod failed @ ipsMgr.Restore")
 		}
 	}()

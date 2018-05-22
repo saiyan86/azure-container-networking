@@ -19,12 +19,12 @@ func TestAllNsList(t *testing.T) {
 	npMgr := &NetworkPolicyManager{}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAllNsList failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestAllNsList failed @ ipsMgr.Restore")
 		}
 	}()
@@ -44,12 +44,12 @@ func TestAddNamespace(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddNamespace failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestAddNamespace failed @ ipsMgr.Restore")
 		}
 	}()
@@ -74,12 +74,12 @@ func TestUpdateNamespace(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestUpdateNamespace failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestUpdateNamespace failed @ ipsMgr.Restore")
 		}
 	}()
@@ -117,12 +117,12 @@ func TestDeleteNamespace(t *testing.T) {
 	}
 
 	ipsMgr := ipsm.NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestDeleteNamespace failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestDeleteNamespace failed @ ipsMgr.Restore")
 		}
 	}()

@@ -2,34 +2,36 @@ package ipsm
 
 import (
 	"testing"
+
+	"github.com/Azure/azure-container-networking/cni/npm/util"
 )
 
 func TestSave(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestSave failed @ ipsMgr.Save")
 	}
 }
 
 func TestRestore(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestRestore failed @ ipsMgr.Save")
 	}
 
-	if err := ipsMgr.Restore(); err != nil {
+	if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestRestore failed @ ipsMgr.Restore")
 	}
 }
 
 func TestCreateList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestCreateList failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestCreateList failed @ ipsMgr.Restore")
 		}
 	}()
@@ -41,12 +43,12 @@ func TestCreateList(t *testing.T) {
 
 func TestDeleteList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestDeleteList failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestDeleteList failed @ ipsMgr.Restore")
 		}
 	}()
@@ -62,12 +64,12 @@ func TestDeleteList(t *testing.T) {
 
 func TestAddToList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
-	if err := ipsMgr.Save(); err != nil {
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddToList failed @ ipsMgr.Save")
 	}
 
 	defer func() {
-		if err := ipsMgr.Restore(); err != nil {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
 			t.Errorf("TestAddToList failed @ ipsMgr.Restore")
 		}
 	}()
@@ -83,9 +85,9 @@ func TestAddToList(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	ipsMgr := NewIpsetManager()
-	ipsMgr.Save()
+	ipsMgr.Save(util.IpsetConfigFile)
 
 	m.Run()
 
-	ipsMgr.Restore()
+	ipsMgr.Restore(util.IpsetConfigFile)
 }
