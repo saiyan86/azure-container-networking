@@ -155,6 +155,27 @@ func TestAddToSet(t *testing.T) {
 	}
 }
 
+func TestDeleteFromSet(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestDeleteFromSet failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestDeleteFromSet failed @ ipsMgr.Restore")
+		}
+	}()
+
+	if err := ipsMgr.AddToSet("test-set", "1.2.3.4"); err != nil {
+		t.Errorf("TestDeleteFromSet failed @ ipsMgr.AddToSet")
+	}
+
+	if err := ipsMgr.DeleteFromSet("test-set", "1.2.3.4"); err != nil {
+		t.Errorf("TestDeleteFromSet failed @ ipsMgr.DeleteFromSet")
+	}
+}
+
 func TestMain(m *testing.M) {
 	ipsMgr := NewIpsetManager()
 	ipsMgr.Save(util.IpsetConfigFile)
