@@ -54,7 +54,7 @@ func TestDeleteList(t *testing.T) {
 	}()
 
 	if err := ipsMgr.CreateList("test-list"); err != nil {
-		t.Errorf("TestDeleteList failed @ ipsMgr.DeleteList")
+		t.Errorf("TestDeleteList failed @ ipsMgr.CreateList")
 	}
 
 	if err := ipsMgr.DeleteList("test-list"); err != nil {
@@ -82,7 +82,7 @@ func TestAddToList(t *testing.T) {
 func TestDeleteFromList(t *testing.T) {
 	ipsMgr := NewIpsetManager()
 	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
-		t.Errorf("TestAddToList failed @ ipsMgr.Save")
+		t.Errorf("TestDeleteFromList failed @ ipsMgr.Save")
 	}
 
 	defer func() {
@@ -92,11 +92,11 @@ func TestDeleteFromList(t *testing.T) {
 	}()
 
 	if err := ipsMgr.AddToList("test-list", "test-set"); err != nil {
-		t.Errorf("TestAddToList failed @ ipsMgr.AddToList")
+		t.Errorf("TestDeleteFromList failed @ ipsMgr.AddToList")
 	}
 
 	if err := ipsMgr.DeleteFromList("test-list", "test-set"); err != nil {
-		t.Errorf("TestDeleteFromList failed @ ipsMgr.AddToList")
+		t.Errorf("TestDeleteFromList failed @ ipsMgr.DeleteFromList")
 	}
 }
 
@@ -130,7 +130,7 @@ func TestDeleteSet(t *testing.T) {
 	}()
 
 	if err := ipsMgr.CreateSet("test-set"); err != nil {
-		t.Errorf("TestDeleteSet failed @ ipsMgr.DeleteSet")
+		t.Errorf("TestDeleteSet failed @ ipsMgr.CreateSet")
 	}
 
 	if err := ipsMgr.DeleteSet("test-set"); err != nil {
@@ -173,6 +173,27 @@ func TestDeleteFromSet(t *testing.T) {
 
 	if err := ipsMgr.DeleteFromSet("test-set", "1.2.3.4"); err != nil {
 		t.Errorf("TestDeleteFromSet failed @ ipsMgr.DeleteFromSet")
+	}
+}
+
+func TestClean(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestClean failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestClean failed @ ipsMgr.Restore")
+		}
+	}()
+
+	if err := ipsMgr.CreateSet("test-set"); err != nil {
+		t.Errorf("TestClean failed @ ipsMgr.CreateSet")
+	}
+
+	if err := ipsMgr.Clean(); err != nil {
+		t.Errorf("TestClean failed @ ipsMgr.Clean")
 	}
 }
 
