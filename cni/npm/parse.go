@@ -35,7 +35,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		targetSets = append(targetSets, ns)
 	}
 
-	//TODO: handle IPBlock
 	for _, rule := range rules {
 		for _, portRule := range rule.Ports {
 			protPortPairSlice = append(protPortPairSlice,
@@ -80,8 +79,27 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
+		if len(rules) == 0 {
+			allow := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureIngressPortChain,
+				Specs: []string{
+					util.IptablesMatchFlag,
+					util.IptablesSetFlag,
+					util.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					util.IptablesDstFlag,
+					util.IptablesJumpFlag,
+					util.IptablesAccept,
+				},
+			}
+			entries = append(entries, allow)
+			continue
+		}
+
 		if !portRuleExists && !fromRuleExists {
-			entry := &iptm.IptEntry{
+			reject := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
 				Chain:      util.IptablesAzureIngressPortChain,
@@ -95,7 +113,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					util.IptablesReject,
 				},
 			}
-			entries = append(entries, entry)
+			entries = append(entries, reject)
 			continue
 		}
 
@@ -317,8 +335,27 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
+		if len(rules) == 0 {
+			allow := &iptm.IptEntry{
+				Name:       targetSet,
+				HashedName: hashedTargetSetName,
+				Chain:      util.IptablesAzureIngressPortChain,
+				Specs: []string{
+					util.IptablesMatchFlag,
+					util.IptablesSetFlag,
+					util.IptablesMatchSetFlag,
+					hashedTargetSetName,
+					util.IptablesSrcFlag,
+					util.IptablesJumpFlag,
+					util.IptablesAccept,
+				},
+			}
+			entries = append(entries, allow)
+			continue
+		}
+
 		if !portRuleExists && !toRuleExists {
-			entry := &iptm.IptEntry{
+			reject := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
 				Chain:      util.IptablesAzureEgressPortChain,
@@ -332,7 +369,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					util.IptablesReject,
 				},
 			}
-			entries = append(entries, entry)
+			entries = append(entries, reject)
 			continue
 		}
 
