@@ -83,6 +83,33 @@ func TestAddToList(t *testing.T) {
 	}
 }
 
+func TestDeleteFromList(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestAddToList failed @ ipsMgr.Save")
+	}
+
+	/*
+		defer func() {
+			if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+				t.Errorf("TestDeleteFromList failed @ ipsMgr.Restore")
+			}
+		}()
+	*/
+
+	if err := ipsMgr.CreateSet("test-set"); err != nil {
+		t.Errorf("TestDeleteFromList failed @ ipsMgr.CreateSet")
+	}
+
+	if err := ipsMgr.AddToList("test-list", "test-set"); err != nil {
+		t.Errorf("TestAddToList failed @ ipsMgr.AddToList")
+	}
+
+	if err := ipsMgr.DeleteFromList("test-list", "test-set"); err != nil {
+		t.Errorf("TestDeleteFromList failed @ ipsMgr.AddToList")
+	}
+}
+
 func TestMain(m *testing.M) {
 	ipsMgr := NewIpsetManager()
 	ipsMgr.Save(util.IpsetConfigFile)
