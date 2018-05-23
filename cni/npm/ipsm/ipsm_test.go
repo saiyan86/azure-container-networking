@@ -197,6 +197,27 @@ func TestClean(t *testing.T) {
 	}
 }
 
+func TestDestroy(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestDestroy failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestDestroy failed @ ipsMgr.Restore")
+		}
+	}()
+
+	if err := ipsMgr.AddToSet("test-set", "1.2.3.4.5"); err != nil {
+		t.Errorf("TestDestroy failed @ ipsMgr.AddToSet")
+	}
+
+	if err := ipsMgr.Destroy(); err != nil {
+		t.Errorf("TestDestroy failed @ ipsMgr.Destroy")
+	}
+}
+
 func TestMain(m *testing.M) {
 	ipsMgr := NewIpsetManager()
 	ipsMgr.Save(util.IpsetConfigFile)
