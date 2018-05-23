@@ -209,12 +209,33 @@ func TestDestroy(t *testing.T) {
 		}
 	}()
 
-	if err := ipsMgr.AddToSet("test-set", "1.2.3.4.5"); err != nil {
+	if err := ipsMgr.AddToSet("test-set", "1.2.3.4"); err != nil {
 		t.Errorf("TestDestroy failed @ ipsMgr.AddToSet")
 	}
 
 	if err := ipsMgr.Destroy(); err != nil {
 		t.Errorf("TestDestroy failed @ ipsMgr.Destroy")
+	}
+}
+
+func TestRun(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestRun failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestRun failed @ ipsMgr.Restore")
+		}
+	}()
+
+	entry := &ipsEntry{
+		operationFlag: util.IpsetCreationFlag,
+		set:           "test-set",
+	}
+	if _, err := ipsMgr.Run(entry); err != nil {
+		t.Errorf("TestRun failed @ ipsMgr.Run")
 	}
 }
 
