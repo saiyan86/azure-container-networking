@@ -26,3 +26,8 @@ func UniqueStrSlice(s []string) []string {
 
 	return unique
 }
+
+// GetHashedName returns hashed ipset name.
+func GetHashedName(name string) string {
+	return AzureNpmPrefix + Hash(name)
+}

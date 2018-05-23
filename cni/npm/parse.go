@@ -25,7 +25,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		portRuleExists    = false
 		fromRuleExists    = false
 		protPortPairSlice []*portsInfo
-		podRuleSets       []string // pod sets listed in Ingress rules.
+		PodNsRuleSets     []string // pod sets listed in Ingress rules.
 		nsRuleLists       []string // namespace sets listed in Ingress rules
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
@@ -50,11 +50,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		for _, fromRule := range rule.From {
 			if fromRule.PodSelector != nil {
 				if len(fromRule.PodSelector.MatchLabels) == 0 {
-					podRuleSets = append(podRuleSets, ns)
+					PodNsRuleSets = append(PodNsRuleSets, ns)
 				}
 
 				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
-					podRuleSets = append(podRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
+					PodNsRuleSets = append(PodNsRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
@@ -78,7 +78,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+		hashedTargetSetName := util.GetHashedName(targetSet)
 
 		if !portRuleExists && !fromRuleExists {
 			entry := &iptm.IptEntry{
@@ -122,7 +122,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					HashedName: hashedTargetSetName,
 					Chain:      util.IptablesAzureIngressPortChain,
 					Specs: []string{
-						util.IptablesPortFlag,
+						util.IptablesProtFlag,
 						protPortPair.protocol,
 						util.IptablesDstPortFlag,
 						protPortPair.port,
@@ -200,8 +200,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		// Handle PodSelector field of NetworkPolicyPeer.
-		for _, podRuleSet := range podRuleSets {
-			hashedRuleSetName := azureNpmPrefix + util.Hash(podRuleSet)
+		for _, podRuleSet := range PodNsRuleSets {
+			hashedRuleSetName := util.GetHashedName(podRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       podRuleSet,
 				HashedName: hashedRuleSetName,
@@ -226,7 +226,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 		// Handle NamespaceSelector field of NetworkPolicyPeer
 		for _, nsRuleSet := range nsRuleLists {
-			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
+			hashedRuleSetName := util.GetHashedName(nsRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
 				HashedName: hashedRuleSetName,
@@ -250,7 +250,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 	}
 
-	return podRuleSets, nsRuleLists, entries
+	return PodNsRuleSets, nsRuleLists, entries
 }
 
 func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []string, []*iptm.IptEntry) {
@@ -262,7 +262,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		portRuleExists    = false
 		toRuleExists      = false
 		protPortPairSlice []*portsInfo
-		podRuleSets       []string // pod sets listed in Egress rules.
+		PodNsRuleSets     []string // pod sets listed in Egress rules.
 		nsRuleLists       []string // namespace sets listed in Egress rules
 		entries           []*iptm.IptEntry
 		ipblock           *networkingv1.IPBlock
@@ -287,11 +287,11 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		for _, toRule := range rule.To {
 			if toRule.PodSelector != nil {
 				if len(toRule.PodSelector.MatchLabels) == 0 {
-					podRuleSets = append(podRuleSets, ns)
+					PodNsRuleSets = append(PodNsRuleSets, ns)
 				}
 
 				for podLabelKey, podLabelVal := range toRule.PodSelector.MatchLabels {
-					podRuleSets = append(podRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
+					PodNsRuleSets = append(PodNsRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
 				}
 			}
 
@@ -315,7 +315,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		hashedTargetSetName := azureNpmPrefix + util.Hash(targetSet)
+		hashedTargetSetName := util.GetHashedName(targetSet)
 
 		if !portRuleExists && !toRuleExists {
 			entry := &iptm.IptEntry{
@@ -359,7 +359,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					HashedName: hashedTargetSetName,
 					Chain:      util.IptablesAzureEgressPortChain,
 					Specs: []string{
-						util.IptablesPortFlag,
+						util.IptablesProtFlag,
 						protPortPair.protocol,
 						util.IptablesDstPortFlag,
 						protPortPair.port,
@@ -437,8 +437,8 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 
 		// Handle PodSelector field of NetworkPolicyPeer.
-		for _, podRuleSet := range podRuleSets {
-			hashedRuleSetName := azureNpmPrefix + util.Hash(podRuleSet)
+		for _, podRuleSet := range PodNsRuleSets {
+			hashedRuleSetName := util.GetHashedName(podRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       podRuleSet,
 				HashedName: hashedRuleSetName,
@@ -463,7 +463,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 		// Handle NamespaceSelector field of NetworkPolicyPeer
 		for _, nsRuleSet := range nsRuleLists {
-			hashedRuleSetName := azureNpmPrefix + util.Hash(nsRuleSet)
+			hashedRuleSetName := util.GetHashedName(nsRuleSet)
 			entry := &iptm.IptEntry{
 				Name:       nsRuleSet,
 				HashedName: hashedRuleSetName,
@@ -487,7 +487,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 	}
 
-	return podRuleSets, nsRuleLists, entries
+	return PodNsRuleSets, nsRuleLists, entries
 }
 
 // ParsePolicy parses network policy.

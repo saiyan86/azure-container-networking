@@ -65,10 +65,6 @@ func (ipsMgr *IpsetManager) Exists(key string, val string, kind string) bool {
 	return false
 }
 
-func getHashedName(name string) string {
-	return util.AzureNpmPrefix + util.Hash(name)
-}
-
 func isNsSet(setName string) bool {
 	return !strings.Contains(setName, "-") && !strings.Contains(setName, ":")
 }
@@ -114,7 +110,7 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 	entry := &ipsEntry{
 		name:          listName,
 		operationFlag: util.IpsetCreationFlag,
-		set:           getHashedName(listName),
+		set:           util.GetHashedName(listName),
 		spec:          util.IpsetSetListFlag,
 	}
 	fmt.Printf("Creating List: %+v\n", entry)
@@ -132,7 +128,7 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 	entry := &ipsEntry{
 		operationFlag: util.IpsetDestroyFlag,
-		set:           getHashedName(listName),
+		set:           util.GetHashedName(listName),
 	}
 
 	errCode, err := ipsMgr.Run(entry)
@@ -164,8 +160,8 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 
 	entry := &ipsEntry{
 		operationFlag: util.IpsetAppendFlag,
-		set:           getHashedName(listName),
-		spec:          getHashedName(setName),
+		set:           util.GetHashedName(listName),
+		spec:          util.GetHashedName(setName),
 	}
 
 	if _, err := ipsMgr.Run(entry); err != nil {
@@ -191,7 +187,7 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 		}
 	}
 
-	hashedListName, hashedSetName := getHashedName(listName), getHashedName(setName)
+	hashedListName, hashedSetName := util.GetHashedName(listName), util.GetHashedName(setName)
 	entry := &ipsEntry{
 		operationFlag: util.IpsetDeletionFlag,
 		set:           hashedListName,
@@ -224,7 +220,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 		name:          setName,
 		operationFlag: util.IpsetCreationFlag,
 		// Use hashed string for set name to avoid string length limit of ipset.
-		set:  getHashedName(setName),
+		set:  util.GetHashedName(setName),
 		spec: util.IpsetNetHashFlag,
 	}
 	fmt.Printf("Creating Set: %+v\n", entry)
@@ -249,7 +245,7 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 
 	entry := &ipsEntry{
 		operationFlag: util.IpsetDestroyFlag,
-		set:           getHashedName(setName),
+		set:           util.GetHashedName(setName),
 	}
 	errCode, err := ipsMgr.Run(entry)
 	if errCode == 1 && err != nil {
@@ -280,7 +276,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 
 	entry := &ipsEntry{
 		operationFlag: util.IpsetAppendFlag,
-		set:           getHashedName(setName),
+		set:           util.GetHashedName(setName),
 		spec:          ip,
 	}
 
@@ -308,7 +304,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 
 	entry := &ipsEntry{
 		operationFlag: util.IpsetDeletionFlag,
-		set:           getHashedName(setName),
+		set:           util.GetHashedName(setName),
 		spec:          ip,
 	}
 	if _, err := ipsMgr.Run(entry); err != nil {
