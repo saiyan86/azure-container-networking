@@ -89,13 +89,11 @@ func TestDeleteFromList(t *testing.T) {
 		t.Errorf("TestAddToList failed @ ipsMgr.Save")
 	}
 
-	/*
-		defer func() {
-			if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
-				t.Errorf("TestDeleteFromList failed @ ipsMgr.Restore")
-			}
-		}()
-	*/
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestDeleteFromList failed @ ipsMgr.Restore")
+		}
+	}()
 
 	if err := ipsMgr.CreateSet("test-set"); err != nil {
 		t.Errorf("TestDeleteFromList failed @ ipsMgr.CreateSet")
@@ -107,6 +105,23 @@ func TestDeleteFromList(t *testing.T) {
 
 	if err := ipsMgr.DeleteFromList("test-list", "test-set"); err != nil {
 		t.Errorf("TestDeleteFromList failed @ ipsMgr.AddToList")
+	}
+}
+
+func TestCreateSet(t *testing.T) {
+	ipsMgr := NewIpsetManager()
+	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
+		t.Errorf("TestCreateSet failed @ ipsMgr.Save")
+	}
+
+	defer func() {
+		if err := ipsMgr.Restore(util.IpsetTestConfigFile); err != nil {
+			t.Errorf("TestCreateSet failed @ ipsMgr.Restore")
+		}
+	}()
+
+	if err := ipsMgr.CreateSet("test-set"); err != nil {
+		t.Errorf("TestCreateSet failed @ ipsMgr.CreateSet")
 	}
 }
 
