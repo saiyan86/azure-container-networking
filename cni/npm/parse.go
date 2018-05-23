@@ -17,11 +17,6 @@ type portsInfo struct {
 }
 
 func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []string, []*iptm.IptEntry) {
-	fmt.Printf("-----------------------------\n%+v\n-------------------------------\n", rules)
-	if len(rules) == 0 {
-		return nil, nil, nil
-	}
-
 	var (
 		portRuleExists    = false
 		fromRuleExists    = false
