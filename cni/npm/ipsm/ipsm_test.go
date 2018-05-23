@@ -233,6 +233,7 @@ func TestRun(t *testing.T) {
 	entry := &ipsEntry{
 		operationFlag: util.IpsetCreationFlag,
 		set:           "test-set",
+		spec:          util.IpsetNetHashFlag,
 	}
 	if _, err := ipsMgr.Run(entry); err != nil {
 		t.Errorf("TestRun failed @ ipsMgr.Run")
