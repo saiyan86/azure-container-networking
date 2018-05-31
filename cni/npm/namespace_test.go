@@ -1,7 +1,6 @@
 package npm
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
@@ -140,11 +139,11 @@ func TestDeleteNamespace(t *testing.T) {
 	}
 
 	if err := npMgr.AddNamespace(nsObj); err != nil {
-		fmt.Errorf("TestDeleteNamespace @ npMgr.AddNamespace")
+		t.Errorf("TestDeleteNamespace @ npMgr.AddNamespace")
 	}
 
 	if err := npMgr.DeleteNamespace(nsObj); err != nil {
-		fmt.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
+		t.Errorf("TestDeleteNamespace @ npMgr.DeleteNamespace")
 	}
 }
 

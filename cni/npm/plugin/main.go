@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Azure/azure-container-networking/cni/npm"
+	"github.com/Azure/azure-container-networking/log"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -12,18 +12,23 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-/*
-func init() {
-	log.SetName("NetworkPolicyManager")
+func initLogging() error {
+	log.SetName("Azure-npm")
 	log.SetLevel(log.LevelInfo)
 	err := log.SetTarget(log.TargetLogfile)
 	if err != nil {
 		log.Printf("[cni-npm] Failed to configure logging, err:%v.\n", err)
 		return err
 	}
+
+	return nil
 }
-*/
+
 func main() {
+	if err := initLogging(); err != nil {
+		panic(err.Error())
+	}
+
 	// Creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -33,7 +38,7 @@ func main() {
 	// Creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("[cni-npm] clientset creation failed with error %v.\n", err)
+		log.Printf("[cni-npm] clientset creation failed with error %v.\n", err)
 		panic(err.Error())
 	}
 
@@ -41,8 +46,9 @@ func main() {
 	npMgr := npm.NewNetworkPolicyManager(clientset, factory)
 	err = npMgr.Run(wait.NeverStop)
 	if err != nil {
-		fmt.Printf("[cni-npm] npm failed with error %v.\n", err)
+		log.Printf("[cni-npm] npm failed with error %v.\n", err)
 		panic(err.Error)
 	}
+
 	select {}
 }
