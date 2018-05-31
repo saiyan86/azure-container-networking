@@ -15,7 +15,7 @@ import (
 func initLogging() error {
 	log.SetName("azure-npm")
 	log.SetLevel(log.LevelInfo)
-	err := log.SetTarget(log.TargetLogfile)
+	err := log.SetTarget(log.TargetStderr)
 	if err != nil {
 		log.Printf("[cni-npm] Failed to configure logging, err:%v.\n", err)
 		return err
