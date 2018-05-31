@@ -13,7 +13,7 @@ import (
 )
 
 func initLogging() error {
-	log.SetName("Azure-npm")
+	log.SetName("azure-npm")
 	log.SetLevel(log.LevelInfo)
 	err := log.SetTarget(log.TargetLogfile)
 	if err != nil {
