@@ -5,6 +5,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/npm/iptm"
 	"github.com/Azure/azure-container-networking/cni/npm/util"
+	"github.com/Azure/azure-container-networking/log"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
@@ -73,6 +74,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
+		log.Printf("Parsing iptables for label %s", targetSet)
+
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
 		if len(rules) == 0 {
