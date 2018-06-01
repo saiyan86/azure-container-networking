@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/Azure/azure-container-networking/cni/npm/util"
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm/util"
 )
 
 // IptEntry represents an iptables rule.

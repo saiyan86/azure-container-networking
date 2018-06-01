@@ -3,9 +3,9 @@ package npm
 import (
 	"testing"
 
-	"github.com/Azure/azure-container-networking/cni/npm/ipsm"
-	"github.com/Azure/azure-container-networking/cni/npm/iptm"
-	"github.com/Azure/azure-container-networking/cni/npm/util"
+	"github.com/Azure/azure-container-networking/npm/ipsm"
+	"github.com/Azure/azure-container-networking/npm/iptm"
+	"github.com/Azure/azure-container-networking/npm/util"
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"

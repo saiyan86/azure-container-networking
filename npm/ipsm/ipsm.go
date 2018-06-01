@@ -7,8 +7,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/Azure/azure-container-networking/cni/npm/util"
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm/util"
 )
 
 type ipsEntry struct {

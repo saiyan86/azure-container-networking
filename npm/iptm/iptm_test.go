@@ -3,7 +3,7 @@ package iptm
 import (
 	"testing"
 
-	"github.com/Azure/azure-container-networking/cni/npm/util"
+	"github.com/Azure/azure-container-networking/npm/util"
 )
 
 func TestSave(t *testing.T) {

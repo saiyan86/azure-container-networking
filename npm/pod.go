@@ -3,8 +3,8 @@ package npm
 import (
 	"strings"
 
-	"github.com/Azure/azure-container-networking/cni/npm/util"
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm/util"
 
 	corev1 "k8s.io/api/core/v1"
 )

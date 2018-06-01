@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/Azure/azure-container-networking/cni/npm"
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
