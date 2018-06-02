@@ -1,17 +1,14 @@
 # Use a minimal image as a parent image
-FROM golang
+FROM ubuntu:16.04
+ARG NPM_BUILD_DIR
 
-# Set the working directory to /npm
-WORKDIR /npm
+# Install dependencies.
+RUN apt-get update
+RUN apt-get install -y iptables
 
-# Copy the current directory contents into the container at /npm
-ADD informer.go npm /npm/
-
-# Make port 80 available to the world outside this container
-#EXPOSE 80
-
-# Define environment variable
-ENV NAME npm
+# Install plugin.
+COPY $NPM_BUILD_DIR/azure-npm /usr/bin
+WORKDIR /usr/bin
 
 # Run the npm command by default when the container starts.
-ENTRYPOINT /npm/npm
+ENTRYPOINT ["/usr/bin/azure-npm"]

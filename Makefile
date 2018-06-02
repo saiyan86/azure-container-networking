@@ -38,6 +38,14 @@ CNSFILES = \
 	$(COREFILES) \
 	$(CNMFILES)
 
+NPMFILES = \
+	$(wildcard npm/*.go) \
+	$(wildcard npm/ipsm/*.go) \
+	$(wildcard npm/iptm/*.go) \
+	$(wildcard npm/util/*.go) \
+	$(wildcard npm/plugin/*.go) \
+	$(COREFILES)
+
 # Build defaults.
 GOOS ?= linux
 GOARCH ?= amd64
@@ -47,11 +55,13 @@ CNM_DIR = cnm/plugin
 CNI_NET_DIR = cni/network/plugin
 CNI_IPAM_DIR = cni/ipam/plugin
 CNS_DIR = cns/service
+NPM_DIR = npm/plugin
 OUTPUT_DIR = output
 BUILD_DIR = $(OUTPUT_DIR)/$(GOOS)_$(GOARCH)
 CNM_BUILD_DIR = $(BUILD_DIR)/cnm
 CNI_BUILD_DIR = $(BUILD_DIR)/cni
 CNS_BUILD_DIR = $(BUILD_DIR)/cns
+NPM_BUILD_DIR = $(BUILD_DIR)/npm
 
 # Containerized build parameters.
 BUILD_CONTAINER_IMAGE = acn-build
@@ -89,8 +99,10 @@ azure-cnm-plugin: $(CNM_BUILD_DIR)/azure-vnet-plugin$(EXE_EXT) cnm-archive
 azure-vnet: $(CNI_BUILD_DIR)/azure-vnet$(EXE_EXT)
 azure-vnet-ipam: $(CNI_BUILD_DIR)/azure-vnet-ipam$(EXE_EXT)
 azure-cni-plugin: azure-vnet azure-vnet-ipam cni-archive
-azure-cns:	$(CNS_BUILD_DIR)/azure-cns$(EXE_EXT) cns-archive 
-all-binaries: azure-cnm-plugin azure-cni-plugin azure-cns
+azure-cns: $(CNS_BUILD_DIR)/azure-cns$(EXE_EXT) cns-archive
+azure-npm: $(NPM_BUILD_DIR)/azure-npm
+
+all-binaries: azure-cnm-plugin azure-cni-plugin azure-cns azure-npm
 
 # Clean all build artifacts.
 .PHONY: clean
@@ -112,6 +124,10 @@ $(CNI_BUILD_DIR)/azure-vnet-ipam$(EXE_EXT): $(CNIFILES)
 # Build the Azure CNS Service.
 $(CNS_BUILD_DIR)/azure-cns$(EXE_EXT): $(CNSFILES)
 	go build -v -o $(CNS_BUILD_DIR)/azure-cns$(EXE_EXT) -ldflags "-X main.version=$(VERSION) -s -w" $(CNS_DIR)/*.go
+
+# Build the Azure NPM plugin.
+$(NPM_BUILD_DIR)/azure-npm: $(NPMFILES)
+	go build -v -o $(NPM_BUILD_DIR)/azure-npm -ldflags "-X main.version=$(VERSION) -s -w" $(NPM_DIR)/*.go
 
 # Build all binaries in a container.
 .PHONY: all-binaries-containerized
@@ -168,6 +184,15 @@ azure-vnet-plugin-image: azure-cnm-plugin
 publish-azure-vnet-plugin-image:
 	docker plugin push $(CNM_PLUGIN_IMAGE):$(VERSION)
 
+# Build the Azure NPM image.
+.PHONY: azure-npm-image
+	# Build the plugin image.
+	docker build \
+	-f npm/Dockerfile \
+	-t yonglichenms/npm:v0.0.0 \
+	--build-arg NPM_BUILD_DIR=$(NPM_BUILD_DIR) \
+	.
+	
 # Create a CNI archive for the target platform.
 .PHONY: cni-archive
 cni-archive:
