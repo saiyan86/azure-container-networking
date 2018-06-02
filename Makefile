@@ -186,6 +186,7 @@ publish-azure-vnet-plugin-image:
 
 # Build the Azure NPM image.
 .PHONY: azure-npm-image
+azure-npm-image: azure-npm
 	# Build the plugin image.
 	docker build \
 	-f npm/Dockerfile \
