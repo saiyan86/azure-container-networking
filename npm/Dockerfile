@@ -5,6 +5,7 @@ ARG NPM_BUILD_DIR
 # Install dependencies.
 RUN apt-get update
 RUN apt-get install -y iptables
+RUN apt-get install -y ipset
 
 # Install plugin.
 COPY $NPM_BUILD_DIR/azure-npm /usr/bin
