@@ -190,7 +190,7 @@ azure-npm-image: azure-npm
 	# Build the plugin image.
 	docker build \
 	-f npm/Dockerfile \
-	-t yonglichenms/npm:v0.0.0 \
+	-t yonglichenms/azure-npm:v0.0.0 \
 	--build-arg NPM_BUILD_DIR=$(NPM_BUILD_DIR) \
 	.
 	
