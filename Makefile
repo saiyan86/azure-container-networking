@@ -90,6 +90,10 @@ CNS_ARCHIVE_NAME = azure-cns-$(GOOS)-$(GOARCH)-$(VERSION).$(ARCHIVE_EXT)
 CNM_PLUGIN_IMAGE ?= microsoft/azure-vnet-plugin
 CNM_PLUGIN_ROOTFS = azure-vnet-plugin-rootfs
 
+# Azure network policy manager parameters.
+AZURE_NPM_IMAGE = containernetworking/azure-npm
+AZURE_NPM_VERSION = v0.0.1
+
 VERSION ?= $(shell git describe --tags --always --dirty)
 
 ENSURE_OUTPUT_DIR_EXISTS := $(shell mkdir -p $(OUTPUT_DIR))
@@ -190,10 +194,15 @@ azure-npm-image: azure-npm
 	# Build the plugin image.
 	docker build \
 	-f npm/Dockerfile \
-	-t containernetworking/azure-npm:v0.0.1 \
+	-t $(AZURE_NPM_IMAGE):$(AZURE_NPM_VERSION) \
 	--build-arg NPM_BUILD_DIR=$(NPM_BUILD_DIR) \
 	.
 	
+# Publish the Azure NPM image to a Docker registry
+.PHONY: publish-azure-npm-image
+publish-azure-npm-image:
+	docker push $(AZURE_NPM_IMAGE):$(AZURE_NPM_VERSION)
+
 # Create a CNI archive for the target platform.
 .PHONY: cni-archive
 cni-archive:
