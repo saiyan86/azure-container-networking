@@ -65,6 +65,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	ns.npMap[npName] = npObj //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
 	npMgr.numPolicies++
+	log.Printf("numPolicies: %d", npMgr.numPolicies)
 
 	return nil
 }
@@ -119,6 +120,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 
 	npMgr.numPolicies--
 
+	log.Printf("numPolicies: %d", npMgr.numPolicies)
 	if npMgr.numPolicies == 0 {
 		if err := iptMgr.UninitNpmChains(); err != nil {
 			log.Printf("Error uninitialize azure-npm chains.\n")
