@@ -64,6 +64,8 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 
 	ns.npMap[npName] = npObj //No check for duplicate yet. Assuming duplicate is handled by k8s.
 
+	npMgr.numPolicies++
+
 	return nil
 }
 
@@ -113,18 +115,11 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		}
 	}
 
-	// Clean empty ipsets for all namespaces.
-	/*
-	for k, v := range npMgr.nsMap {
-		if err := v.ipsMgr.Clean(); err != nil {
-			log.Printf("Error cleaning empty ipset while deleting network policy for namespace %s.\n", k)
-			return err
-		}
-	}
-	*/
-
 	delete(ns.npMap, npName)
-	if len(ns.npMap) == 0 {
+
+	npMgr.numPolicies--
+
+	if npMgr.numPolicies == 0 {
 		if err := iptMgr.UninitNpmChains(); err != nil {
 			log.Printf("Error uninitialize azure-npm chains.\n")
 			return err
