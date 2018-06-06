@@ -27,6 +27,7 @@ type NetworkPolicyManager struct {
 	nodeName               string
 	nsMap                  map[string]*namespace
 	isAzureNpmChainCreated bool
+	numPolicies            int
 }
 
 // Run starts shared informers and waits for the shared informer cache to sync.
@@ -66,6 +67,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 		nodeName:        os.Getenv("HOSTNAME"),
 		nsMap:           make(map[string]*namespace),
 		isAzureNpmChainCreated: false,
+		numPolicies:            0,
 	}
 
 	podInformer.Informer().AddEventHandler(
