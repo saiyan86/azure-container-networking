@@ -115,6 +115,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesSetFlag,
 		util.IptablesMatchSetFlag,
 		util.GetHashedName(util.KubeSystemFlag),
+		util.IptablesDstFlag,
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
