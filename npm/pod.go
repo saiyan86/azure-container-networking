@@ -25,11 +25,6 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	// Don't deal with system pods.
-	if isSystemPod(podObj) {
-		return nil
-	}
-
 	if !isValidPod(podObj) {
 		return nil
 	}

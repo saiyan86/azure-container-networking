@@ -101,11 +101,6 @@ func (ipsMgr *IpsetManager) NotReferredByNwPolicy(setName string) bool {
 
 // CreateList creates an ipset list. npm maintains one setlist per namespace label.
 func (ipsMgr *IpsetManager) CreateList(listName string) error {
-	// Ignore system pods.
-	if listName == util.KubeSystemFlag {
-		return nil
-	}
-
 	if _, exists := ipsMgr.listMap[listName]; exists {
 		return nil
 	}

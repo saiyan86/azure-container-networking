@@ -2,6 +2,7 @@ package npm
 
 import (
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm/util"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
@@ -24,10 +25,16 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	}
 
 	if !npMgr.isAzureNpmChainCreated {
+		if err := ns.ipsMgr.CreateSet(util.KubeSystemFlag); err != nil {
+			log.Printf("Error initialize kube-system ipset.\n")
+			return err
+		}
+
 		if err := ns.iptMgr.InitNpmChains(); err != nil {
 			log.Printf("Error initialize azure-npm chains.\n")
 			return err
 		}
+
 		npMgr.isAzureNpmChainCreated = true
 	}
 

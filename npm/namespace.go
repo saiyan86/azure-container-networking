@@ -71,11 +71,6 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	npMgr.Lock()
 	defer npMgr.Unlock()
 
-	// Don't deal with kube-system namespace
-	if isSystemNs(nsObj) {
-		return nil
-	}
-
 	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	log.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
 
