@@ -27,6 +27,15 @@ func UniqueStrSlice(s []string) []string {
 	return unique
 }
 
+// AppendMap appends new to base.
+func AppendMap(base, new map[string]string) map[string]string {
+	for k, v := range new {
+		base[k] = v
+	}
+
+	return base
+}
+
 // GetHashedName returns hashed ipset name.
 func GetHashedName(name string) string {
 	return AzureNpmPrefix + Hash(name)

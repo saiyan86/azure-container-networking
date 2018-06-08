@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/Azure/azure-container-networking/npm/util"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/client-go/informers"
@@ -27,7 +28,6 @@ type NetworkPolicyManager struct {
 	nodeName               string
 	nsMap                  map[string]*namespace
 	isAzureNpmChainCreated bool
-	numPolicies            int
 }
 
 // Run starts shared informers and waits for the shared informer cache to sync.
@@ -67,8 +67,13 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 		nodeName:        os.Getenv("HOSTNAME"),
 		nsMap:           make(map[string]*namespace),
 		isAzureNpmChainCreated: false,
-		numPolicies:            0,
 	}
+
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
 
 	podInformer.Informer().AddEventHandler(
 		// Pod event handlers

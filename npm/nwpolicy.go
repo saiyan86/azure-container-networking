@@ -14,23 +14,15 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	log.Printf("NETWORK POLICY CREATED: %s/%s\n", npNs, npName)
 
-	ns, exists := npMgr.nsMap[npNs]
-	if !exists {
-		newns, err := newNs(npNs)
-		if err != nil {
-			return err
-		}
-		npMgr.nsMap[npNs] = newns
-		ns = newns
-	}
+	allNs := npMgr.nsMap[util.KubeAllNamespacesFlag]
 
 	if !npMgr.isAzureNpmChainCreated {
-		if err := ns.ipsMgr.CreateSet(util.KubeSystemFlag); err != nil {
+		if err := allNs.ipsMgr.CreateSet(util.KubeSystemFlag); err != nil {
 			log.Printf("Error initialize kube-system ipset.\n")
 			return err
 		}
 
-		if err := ns.iptMgr.InitNpmChains(); err != nil {
+		if err := allNs.iptMgr.InitNpmChains(); err != nil {
 			log.Printf("Error initialize azure-npm chains.\n")
 			return err
 		}
@@ -40,7 +32,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 
 	podSets, nsLists, iptEntries := parsePolicy(npObj)
 
-	ipsMgr := ns.ipsMgr
+	ipsMgr := allNs.ipsMgr
 	for _, set := range podSets {
 		if err := ipsMgr.CreateSet(set); err != nil {
 			log.Printf("Error creating ipset %s-%s\n", npNs, set)
@@ -60,7 +52,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		return err
 	}
 
-	iptMgr := ns.iptMgr
+	iptMgr := allNs.iptMgr
 	for _, iptEntry := range iptEntries {
 		if err := iptMgr.Add(iptEntry); err != nil {
 			log.Printf("Error applying iptables rule\n")
@@ -69,22 +61,22 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		}
 	}
 
-	ns.npMap[npName] = npObj //No check for duplicate yet. Assuming duplicate is handled by k8s.
+	allNs.npMap[npName] = npObj
 
-	npMgr.numPolicies++
-	log.Printf("numPolicies: %d", npMgr.numPolicies)
+	ns, err := newNs(npNs)
+	if err != nil {
+		log.Printf("Error creating namespace %s\n", npNs)
+	}
+	npMgr.nsMap[npNs] = ns
 
 	return nil
 }
 
 // UpdateNetworkPolicy updates network policy.
 func (npMgr *NetworkPolicyManager) UpdateNetworkPolicy(oldNpObj *networkingv1.NetworkPolicy, newNpObj *networkingv1.NetworkPolicy) error {
-	npMgr.Lock()
-
 	oldNpNs, oldNpName := oldNpObj.ObjectMeta.Namespace, oldNpObj.ObjectMeta.Name
 	log.Printf("NETWORK POLICY UPDATED: %s/%s\n", oldNpNs, oldNpName)
 
-	npMgr.Unlock()
 	npMgr.DeleteNetworkPolicy(oldNpObj)
 
 	if newNpObj.ObjectMeta.DeletionTimestamp == nil && newNpObj.ObjectMeta.DeletionGracePeriodSeconds == nil {
@@ -102,19 +94,11 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	npNs, npName := npObj.ObjectMeta.Namespace, npObj.ObjectMeta.Name
 	log.Printf("NETWORK POLICY DELETED: %s/%s\n", npNs, npName)
 
-	ns, exists := npMgr.nsMap[npNs]
-	if !exists {
-		newns, err := newNs(npNs)
-		if err != nil {
-			return err
-		}
-		npMgr.nsMap[npNs] = newns
-		ns = newns
-	}
+	allNs := npMgr.nsMap[util.KubeAllNamespacesFlag]
 
 	_, _, iptEntries := parsePolicy(npObj)
 
-	iptMgr := ns.iptMgr
+	iptMgr := allNs.iptMgr
 	for _, iptEntry := range iptEntries {
 		if err := iptMgr.Delete(iptEntry); err != nil {
 			log.Printf("Error applying iptables rule\n")
@@ -123,12 +107,9 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 		}
 	}
 
-	delete(ns.npMap, npName)
+	delete(allNs.npMap, npName)
 
-	npMgr.numPolicies--
-
-	log.Printf("numPolicies: %d", npMgr.numPolicies)
-	if npMgr.numPolicies == 0 {
+	if len(allNs.npMap) == 0 {
 		if err := iptMgr.UninitNpmChains(); err != nil {
 			log.Printf("Error uninitialize azure-npm chains.\n")
 			return err
