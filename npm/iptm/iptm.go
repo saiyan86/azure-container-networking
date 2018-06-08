@@ -109,7 +109,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Add default allow kube-system rule to AZURE-NPM chain.
+	// Add default allow kube-system rules to AZURE-NPM chain.
 	entry.Specs = []string{
 		util.IptablesMatchFlag,
 		util.IptablesSetFlag,
@@ -129,6 +129,29 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	iptMgr.OperationFlag = util.IptablesAppendFlag
+	if _, err := iptMgr.Run(entry); err != nil {
+		log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
+		return err
+	}
+
+	entry.Specs = []string{
+		util.IptablesMatchFlag,
+		util.IptablesSetFlag,
+		util.IptablesMatchSetFlag,
+		util.GetHashedName(util.KubeSystemFlag),
+		util.IptablesSrcFlag,
+		util.IptablesJumpFlag,
+		util.IptablesAccept,
+	}
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
 	if _, err := iptMgr.Run(entry); err != nil {
 		log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
 		return err
