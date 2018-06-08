@@ -46,13 +46,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 			util.IptablesReject,
 		},
 	}
-	exists, err := iptMgr.Exists(defaultBlock)
-	if err != nil {
+	if _, err := iptMgr.Exists(defaultBlock); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesInsertionFlag
@@ -69,13 +64,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 			util.IptablesAzureChain,
 		},
 	}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesInsertionFlag
@@ -94,13 +84,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesInsertionFlag
@@ -119,13 +104,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesAppendFlag
@@ -143,13 +123,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	if _, err := iptMgr.Run(entry); err != nil {
@@ -165,13 +140,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain.
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesAppendFlag
@@ -193,13 +163,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain.
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
+	if _, err := iptMgr.Exists(entry); err != nil {
 		return err
-	}
-
-	if exists {
-		return nil
 	}
 
 	iptMgr.OperationFlag = util.IptablesAppendFlag
@@ -209,7 +174,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Create AZURE-NPM-EGRESS-FROM chain.
-	err = iptMgr.AddChain(util.IptablesAzureEgressToChain)
+	err := iptMgr.AddChain(util.IptablesAzureEgressToChain)
 
 	return err
 }
