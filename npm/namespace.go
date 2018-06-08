@@ -92,8 +92,8 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 		return err
 	}
 
-	if err := npMgr.InitAllNsList(); err != nil {
-		log.Printf("Error initializing all-namespace ipset list.\n")
+	if err := ipsMgr.AddToList(util.KubeAllNamespacesFlag, nsName); err != nil {
+		log.Printf("Error adding %s to all-namespace ipset list.\n", nsName)
 		return err
 	}
 
