@@ -18,6 +18,12 @@ func TestAddNetworkPolicy(t *testing.T) {
 		nsMap: make(map[string]*namespace),
 	}
 
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
+
 	iptMgr := iptm.NewIptablesManager()
 	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
 		t.Errorf("TestAddNetworkPolicy failed @ iptMgr.Save")
@@ -85,6 +91,12 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
 
 	iptMgr := iptm.NewIptablesManager()
 	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {
@@ -181,6 +193,12 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
 
 	iptMgr := iptm.NewIptablesManager()
 	if err := iptMgr.Save(util.IptablesTestConfigFile); err != nil {

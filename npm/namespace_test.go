@@ -45,6 +45,12 @@ func TestAddNamespace(t *testing.T) {
 		nsMap: make(map[string]*namespace),
 	}
 
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
+
 	ipsMgr := ipsm.NewIpsetManager()
 	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
 		t.Errorf("TestAddNamespace failed @ ipsMgr.Save")
@@ -74,6 +80,12 @@ func TestUpdateNamespace(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
 
 	ipsMgr := ipsm.NewIpsetManager()
 	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
@@ -117,6 +129,12 @@ func TestDeleteNamespace(t *testing.T) {
 	npMgr := &NetworkPolicyManager{
 		nsMap: make(map[string]*namespace),
 	}
+
+	allNs, err := newNs(util.KubeAllNamespacesFlag)
+	if err != nil {
+		panic(err.Error)
+	}
+	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
 
 	ipsMgr := ipsm.NewIpsetManager()
 	if err := ipsMgr.Save(util.IpsetTestConfigFile); err != nil {
