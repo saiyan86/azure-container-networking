@@ -127,6 +127,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
+	iptMgr.OperationFlag = util.IptablesAppendFlag
 	if _, err := iptMgr.Run(entry); err != nil {
 		log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
 		return err
