@@ -542,6 +542,8 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm
 		affectedSets = append(affectedSets, affectedSet)
 	}
 
+	affectedSets = append(affectedSets, npNs)
+
 	if len(npObj.Spec.PolicyTypes) == 0 {
 		ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
 		resultPodSets = append(resultPodSets, ingressPodSets...)
