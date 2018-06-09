@@ -69,6 +69,20 @@ var args = common.ArgumentList{
 		},
 	},
 	{
+		Name:         common.OptLogLocation,
+		Shorthand:    common.OptLogLocationAlias,
+		Description:  "Set the logging directory",
+		Type:         "string",
+		DefaultValue: "",
+	},
+	{
+		Name:         common.OptIpamQueryUrl,
+		Shorthand:    common.OptIpamQueryUrlAlias,
+		Description:  "Set the IPAM query URL",
+		Type:         "string",
+		DefaultValue: "",
+	},
+	{
 		Name:         common.OptIpamQueryInterval,
 		Shorthand:    common.OptIpamQueryIntervalAlias,
 		Description:  "Set the IPAM plugin query interval",
@@ -99,6 +113,7 @@ func main() {
 	url := common.GetArg(common.OptAPIServerURL).(string)
 	logLevel := common.GetArg(common.OptLogLevel).(int)
 	logTarget := common.GetArg(common.OptLogTarget).(int)
+	ipamQueryUrl, _ := common.GetArg(common.OptIpamQueryUrl).(string)
 	ipamQueryInterval, _ := common.GetArg(common.OptIpamQueryInterval).(int)
 	vers := common.GetArg(common.OptVersion).(bool)
 
@@ -128,8 +143,14 @@ func main() {
 		return
 	}
 
+	err = common.CreateDirectory(platform.CNMRuntimePath)
+	if err != nil {
+		fmt.Printf("Failed to create File Store directory Error:%v", err.Error())
+		return
+	}
+
 	// Create the key value store.
-	config.Store, err = store.NewJsonFileStore(platform.RuntimePath + name + ".json")
+	config.Store, err = store.NewJsonFileStore(platform.CNMRuntimePath + name + ".json")
 	if err != nil {
 		fmt.Printf("Failed to create store: %v\n", err)
 		return
@@ -153,6 +174,7 @@ func main() {
 
 	ipamPlugin.SetOption(common.OptEnvironment, environment)
 	ipamPlugin.SetOption(common.OptAPIServerURL, url)
+	ipamPlugin.SetOption(common.OptIpamQueryUrl, ipamQueryUrl)
 	ipamPlugin.SetOption(common.OptIpamQueryInterval, ipamQueryInterval)
 
 	// Start plugins.

@@ -8,8 +8,8 @@ import (
 	"io"
 	"log"
 	"os"
-
-	"github.com/Azure/azure-container-networking/platform"
+	"path"
+	"sync"
 )
 
 // Log level
@@ -50,6 +50,8 @@ type Logger struct {
 	maxFileSize  int
 	maxFileCount int
 	callCount    int
+	directory    string
+	mutex        *sync.Mutex
 }
 
 // NewLogger creates a new Logger.
@@ -62,6 +64,8 @@ func NewLogger(name string, level int, target int) *Logger {
 	logger.SetTarget(target)
 	logger.maxFileSize = maxLogFileSize
 	logger.maxFileCount = maxLogFileCount
+	logger.directory = ""
+	logger.mutex = &sync.Mutex{}
 
 	return &logger
 }
@@ -89,9 +93,31 @@ func (logger *Logger) Close() {
 	}
 }
 
+// SetLogDirectory sets the directory location where logs should be stored.
+func (logger *Logger) SetLogDirectory(logDirectory string) {
+	logger.directory = logDirectory
+}
+
+// GetLogDirectory gets the directory location where logs should be stored.
+func (logger *Logger) GetLogDirectory() string {
+	if logger.directory != "" {
+		return logger.directory
+	}
+
+	return LogPath
+}
+
 // GetLogFileName returns the full log file name.
 func (logger *Logger) getLogFileName() string {
-	return platform.LogPath + logger.name + logFileExtension
+	var logFileName string
+
+	if logger.directory != "" {
+		logFileName = path.Join(logger.directory, logger.name+logFileExtension)
+	} else {
+		logFileName = LogPath + logger.name + logFileExtension
+	}
+
+	return logFileName
 }
 
 // Rotate checks the active log file size and rotates log files if necessary.
@@ -162,13 +188,17 @@ func (logger *Logger) logf(format string, args ...interface{}) {
 // Printf logs a formatted string at info level.
 func (logger *Logger) Printf(format string, args ...interface{}) {
 	if logger.level >= LevelInfo {
+		logger.mutex.Lock()
 		logger.logf(format, args...)
+		logger.mutex.Unlock()
 	}
 }
 
 // Debugf logs a formatted string at debug level.
 func (logger *Logger) Debugf(format string, args ...interface{}) {
 	if logger.level >= LevelDebug {
+		logger.mutex.Lock()
 		logger.logf(format, args...)
+		logger.mutex.Unlock()
 	}
 }

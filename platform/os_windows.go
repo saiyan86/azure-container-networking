@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	// RuntimePath is the path where runtime files are stored.
-	RuntimePath = ""
 
-	// LogPath is the path where log files are stored.
-	LogPath = ""
+	// CNMRuntimePath is the path where CNM state files are stored.
+	CNMRuntimePath = ""
+
+	// CNIRuntimePath is the path where CNM state files are stored.
+	CNIRuntimePath = ""
 )
 
 // GetOSInfo returns OS version information.

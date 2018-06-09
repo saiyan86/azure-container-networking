@@ -4,7 +4,9 @@
 package network
 
 import (
+	"fmt"
 	"net"
+	"strings"
 
 	"github.com/Azure/azure-container-networking/cni"
 	"github.com/Azure/azure-container-networking/common"
@@ -14,12 +16,16 @@ import (
 	"github.com/Azure/azure-container-networking/telemetry"
 
 	cniSkel "github.com/containernetworking/cni/pkg/skel"
+	cniTypes "github.com/containernetworking/cni/pkg/types"
 	cniTypesCurr "github.com/containernetworking/cni/pkg/types/current"
 )
 
 const (
 	// Plugin name.
 	name = "azure-vnet"
+
+	// Supported IP version. Currently support only IPv4
+	ipVersion = "4"
 )
 
 // NetPlugin represents the CNI network plugin.
@@ -116,6 +122,12 @@ func (plugin *netPlugin) findMasterInterface(nwCfg *cni.NetworkConfig, subnetPre
 	return ""
 }
 
+// GetEndpointID returns a unique endpoint ID based on the CNI args.
+func GetEndpointID(args *cniSkel.CmdArgs) string {
+	infraEpId, _ := network.ConstructEndpointID(args.ContainerID, args.Netns, args.IfName)
+	return infraEpId
+}
+
 //
 // CNI implementation
 // https://github.com/containernetworking/cni/blob/master/SPEC.md
@@ -123,16 +135,59 @@ func (plugin *netPlugin) findMasterInterface(nwCfg *cni.NetworkConfig, subnetPre
 
 // Add handles CNI add commands.
 func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
-	var result *cniTypesCurr.Result
-	var err error
+	var (
+		result   *cniTypesCurr.Result
+		err      error
+		nwCfg    *cni.NetworkConfig
+		ipconfig *cniTypesCurr.IPConfig
+		epInfo   *network.EndpointInfo
+		iface    *cniTypesCurr.Interface
+	)
 
 	log.Printf("[cni-net] Processing ADD command with args {ContainerID:%v Netns:%v IfName:%v Args:%v Path:%v}.",
 		args.ContainerID, args.Netns, args.IfName, args.Args, args.Path)
 
-	defer func() { log.Printf("[cni-net] ADD command completed with result:%+v err:%v.", result, err) }()
+	defer func() {
+		// Add Interfaces to result.
+		iface = &cniTypesCurr.Interface{
+			Name: args.IfName,
+		}
+		result.Interfaces = append(result.Interfaces, iface)
+
+		// Convert result to the requested CNI version.
+		res, err := result.GetAsVersion(nwCfg.CNIVersion)
+		if err != nil {
+			err = plugin.Error(err)
+		}
+
+		// Output the result to stdout.
+		res.Print()
+		log.Printf("[cni-net] ADD command completed with result:%+v err:%v.", result, err)
+	}()
+
+	// Parse Pod arguments.
+	podCfg, err := cni.ParseCniArgs(args.Args)
+	if err != nil {
+		log.Printf("Error while parsing CNI Args %v", err)
+		return err
+	}
+
+	k8sNamespace := string(podCfg.K8S_POD_NAMESPACE)
+	if len(k8sNamespace) == 0 {
+		errMsg := "Pod Namespace not specified in CNI Args"
+		log.Printf(errMsg)
+		return plugin.Errorf(errMsg)
+	}
+
+	k8sPodName := string(podCfg.K8S_POD_NAME)
+	if len(k8sPodName) == 0 {
+		errMsg := "Pod Name not specified in CNI Args"
+		log.Printf(errMsg)
+		return plugin.Errorf(errMsg)
+	}
 
 	// Parse network configuration from stdin.
-	nwCfg, err := cni.ParseNetworkConfig(args.StdinData)
+	nwCfg, err = cni.ParseNetworkConfig(args.StdinData)
 	if err != nil {
 		err = plugin.Errorf("Failed to parse network configuration: %v.", err)
 		return err
@@ -142,11 +197,31 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	// Initialize values from network config.
 	networkId := nwCfg.Name
-	endpointId := plugin.GetEndpointID(args)
+	endpointId := GetEndpointID(args)
+
+	nwInfo, nwInfoErr := plugin.nm.GetNetworkInfo(networkId)
+
+	/* Handle consecutive ADD calls for infrastructure containers.
+	 * This is a temporary work around for issue #57253 of Kubernetes.
+	 * We can delete this if statement once they fix it.
+	 * Issue link: https://github.com/kubernetes/kubernetes/issues/57253
+	 */
+	epInfo, _ = plugin.nm.GetEndpointInfo(networkId, endpointId)
+	if epInfo != nil {
+		result, err = handleConsecutiveAdd(args.ContainerID, endpointId, nwInfo, nwCfg)
+		if err != nil {
+			return err
+		}
+
+		if result != nil {
+			return nil
+		}
+	}
+
+	policies := cni.GetPoliciesFromNwCfg(nwCfg.AdditionalArgs)
 
 	// Check whether the network already exists.
-	nwInfo, err := plugin.nm.GetNetworkInfo(networkId)
-	if err != nil {
+	if nwInfoErr != nil {
 		// Network does not exist.
 		log.Printf("[cni-net] Creating network %v.", networkId)
 
@@ -158,7 +233,7 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		// Derive the subnet prefix from allocated IP address.
-		ipconfig := result.IPs[0]
+		ipconfig = result.IPs[0]
 		subnetPrefix := ipconfig.Address
 		subnetPrefix.IP = subnetPrefix.IP.Mask(subnetPrefix.Mask)
 
@@ -201,6 +276,11 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 				},
 			},
 			BridgeName: nwCfg.Bridge,
+			DNS: network.DNSInfo{
+				Servers: nwCfg.DNS.Nameservers,
+				Suffix:  k8sNamespace + "." + strings.Join(nwCfg.DNS.Search, ","),
+			},
+			Policies: policies,
 		}
 
 		err = plugin.nm.CreateNetwork(&nwInfo)
@@ -223,7 +303,7 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 			return err
 		}
 
-		ipconfig := result.IPs[0]
+		ipconfig = result.IPs[0]
 
 		// On failure, call into IPAM plugin to release the address.
 		defer func() {
@@ -235,11 +315,31 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 	}
 
 	// Initialize endpoint info.
-	epInfo := &network.EndpointInfo{
+	var dns network.DNSInfo
+	if (len(nwCfg.DNS.Search) == 0) != (len(nwCfg.DNS.Nameservers) == 0) {
+		err = plugin.Errorf("Wrong DNS configuration: %+v", nwCfg.DNS)
+		return err
+	}
+
+	if len(nwCfg.DNS.Search) > 0 {
+		dns = network.DNSInfo{
+			Servers: nwCfg.DNS.Nameservers,
+			Suffix:  k8sNamespace + "." + strings.Join(nwCfg.DNS.Search, ","),
+		}
+	} else {
+		dns = network.DNSInfo{
+			Suffix:  result.DNS.Domain,
+			Servers: result.DNS.Nameservers,
+		}
+	}
+
+	epInfo = &network.EndpointInfo{
 		Id:          endpointId,
 		ContainerID: args.ContainerID,
 		NetNsPath:   args.Netns,
 		IfName:      args.IfName,
+		DNS:         dns,
+		Policies:    policies,
 	}
 
 	// Populate addresses.
@@ -252,9 +352,8 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 		epInfo.Routes = append(epInfo.Routes, network.RouteInfo{Dst: route.Dst, Gw: route.GW})
 	}
 
-	// Populate DNS info.
-	epInfo.DNS.Suffix = result.DNS.Domain
-	epInfo.DNS.Servers = result.DNS.Nameservers
+	epInfo.Data = make(map[string]interface{})
+	epInfo.Data[network.OptVethName] = fmt.Sprintf("%s.%s", k8sNamespace, k8sPodName)
 
 	// Create the endpoint.
 	log.Printf("[cni-net] Creating endpoint %v.", epInfo.Id)
@@ -264,21 +363,89 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 		return err
 	}
 
-	// Add Interfaces to result.
-	iface := &cniTypesCurr.Interface{
-		Name: epInfo.IfName,
-	}
-	result.Interfaces = append(result.Interfaces, iface)
+	return nil
+}
 
-	// Convert result to the requested CNI version.
-	res, err := result.GetAsVersion(nwCfg.CNIVersion)
+// Get handles CNI Get commands.
+func (plugin *netPlugin) Get(args *cniSkel.CmdArgs) error {
+	var (
+		result cniTypesCurr.Result
+		err    error
+		nwCfg  *cni.NetworkConfig
+		epInfo *network.EndpointInfo
+		iface  *cniTypesCurr.Interface
+	)
+
+	log.Printf("[cni-net] Processing GET command with args {ContainerID:%v Netns:%v IfName:%v Args:%v Path:%v}.",
+		args.ContainerID, args.Netns, args.IfName, args.Args, args.Path)
+
+	defer func() {
+		// Add Interfaces to result.
+		iface = &cniTypesCurr.Interface{
+			Name: args.IfName,
+		}
+		result.Interfaces = append(result.Interfaces, iface)
+
+		if err == nil {
+			// Convert result to the requested CNI version.
+			res, err := result.GetAsVersion(nwCfg.CNIVersion)
+			if err != nil {
+				err = plugin.Error(err)
+			}
+			// Output the result to stdout.
+			res.Print()
+		}
+
+		log.Printf("[cni-net] GET command completed with result:%+v err:%v.", result, err)
+	}()
+
+	// Parse network configuration from stdin.
+	nwCfg, err = cni.ParseNetworkConfig(args.StdinData)
 	if err != nil {
-		err = plugin.Error(err)
+		err = plugin.Errorf("Failed to parse network configuration: %v.", err)
 		return err
 	}
 
-	// Output the result to stdout.
-	res.Print()
+	log.Printf("[cni-net] Read network configuration %+v.", nwCfg)
+
+	// Initialize values from network config.
+	networkId := nwCfg.Name
+	endpointId := GetEndpointID(args)
+
+	// Query the network.
+	_, err = plugin.nm.GetNetworkInfo(networkId)
+	if err != nil {
+		plugin.Errorf("Failed to query network: %v", err)
+		return err
+	}
+
+	// Query the endpoint.
+	epInfo, err = plugin.nm.GetEndpointInfo(networkId, endpointId)
+	if err != nil {
+		plugin.Errorf("Failed to query endpoint: %v", err)
+		return err
+	}
+
+	for _, ipAddresses := range epInfo.IPAddresses {
+		ipConfig := &cniTypesCurr.IPConfig{
+			Version:   ipVersion,
+			Interface: &epInfo.IfIndex,
+			Address:   ipAddresses,
+		}
+
+		if epInfo.Gateways != nil {
+			ipConfig.Gateway = epInfo.Gateways[0]
+		}
+
+		result.IPs = append(result.IPs, ipConfig)
+	}
+
+	for _, route := range epInfo.Routes {
+		result.Routes = append(result.Routes, &cniTypes.Route{Dst: route.Dst, GW: route.Gw})
+	}
+
+	result.DNS.Nameservers = epInfo.DNS.Servers
+	result.DNS.Domain = epInfo.DNS.Suffix
 
 	return nil
 }
@@ -303,7 +470,7 @@ func (plugin *netPlugin) Delete(args *cniSkel.CmdArgs) error {
 
 	// Initialize values from network config.
 	networkId := nwCfg.Name
-	endpointId := plugin.GetEndpointID(args)
+	endpointId := GetEndpointID(args)
 
 	// Query the network.
 	nwInfo, err := plugin.nm.GetNetworkInfo(networkId)

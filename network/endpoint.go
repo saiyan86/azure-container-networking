@@ -5,8 +5,10 @@ package network
 
 import (
 	"net"
+	"strings"
 
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/network/policy"
 )
 
 // Endpoint represents a container network interface.
@@ -19,6 +21,8 @@ type endpoint struct {
 	MacAddress  net.HardwareAddr
 	IPAddresses []net.IPNet
 	Gateways    []net.IP
+	DNS         DNSInfo
+	Routes      []RouteInfo
 }
 
 // EndpointInfo contains read-only information about an endpoint.
@@ -27,9 +31,14 @@ type EndpointInfo struct {
 	ContainerID string
 	NetNsPath   string
 	IfName      string
+	SandboxKey  string
+	IfIndex     int
+	MacAddress  net.HardwareAddr
+	DNS         DNSInfo
 	IPAddresses []net.IPNet
 	Routes      []RouteInfo
-	DNS         DNSInfo
+	Policies    []policy.Policy
+	Gateways    []net.IP
 	Data        map[string]interface{}
 }
 
@@ -37,6 +46,31 @@ type EndpointInfo struct {
 type RouteInfo struct {
 	Dst net.IPNet
 	Gw  net.IP
+}
+
+// ConstructEndpointID constructs endpoint name from netNsPath.
+func ConstructEndpointID(containerID string, netNsPath string, ifName string) (string, string) {
+	infraEpName, workloadEpName := "", ""
+
+	if len(containerID) > 8 {
+		containerID = containerID[:8]
+	}
+
+	if netNsPath != "" {
+		splits := strings.Split(netNsPath, ":")
+		// For workload containers, we extract its linking infrastructure container ID.
+		if len(splits) == 2 {
+			if len(splits[1]) > 8 {
+				splits[1] = splits[1][:8]
+			}
+			infraEpName = splits[1] + "-" + ifName
+			workloadEpName = containerID + "-" + ifName
+		} else {
+			// For infrastructure containers, we just use its container ID.
+			infraEpName = containerID + "-" + ifName
+		}
+	}
+	return infraEpName, workloadEpName
 }
 
 // NewEndpoint creates a new endpoint in the network.
@@ -116,6 +150,18 @@ func (ep *endpoint) getInfo() *EndpointInfo {
 		Id:          ep.Id,
 		IPAddresses: ep.IPAddresses,
 		Data:        make(map[string]interface{}),
+		MacAddress:  ep.MacAddress,
+		SandboxKey:  ep.SandboxKey,
+		IfIndex:     0, // Azure CNI supports only one interface
+		DNS:         ep.DNS,
+	}
+
+	for _, route := range ep.Routes {
+		info.Routes = append(info.Routes, route)
+	}
+
+	for _, gw := range ep.Gateways {
+		info.Gateways = append(info.Gateways, gw)
 	}
 
 	// Call the platform implementation.

@@ -60,10 +60,11 @@ func main() {
 		Report:          &telemetry.Report{},
 	}
 
+	reportManager.GetReport(pluginName, config.Version)
+	reportManager.Report.Context = "AzureCNI"
+
 	if !reportManager.Report.GetReportState() {
 		log.Printf("GetReport state file didn't exist. Setting flag to true")
-		reportManager.GetReport(pluginName, config.Version)
-		reportManager.Report.Context = "AzureCNI"
 
 		err = reportManager.SendReport()
 		if err != nil {
@@ -82,15 +83,29 @@ func main() {
 
 	netPlugin.SetReportManager(reportManager)
 
-	err = netPlugin.Start(&config)
-	if err != nil {
-		log.Printf("Failed to start network plugin, err:%v.\n", err)
+	defer func() {
+		if errUninit := netPlugin.Plugin.UninitializeKeyValueStore(); errUninit != nil {
+			log.Printf("Failed to uninitialize key-value store of network plugin, err:%v.\n", err)
+		}
+
+		if recover() != nil {
+			os.Exit(1)
+		}
+	}()
+
+	if err = netPlugin.Plugin.InitializeKeyValueStore(&config); err != nil {
+		log.Printf("Failed to initialize key-value store of network plugin, err:%v.\n", err)
 		reportPluginError(reportManager, err)
-		os.Exit(1)
+		panic("network plugin fatal error")
 	}
 
-	err = netPlugin.Execute(cni.PluginApi(netPlugin))
-	if err != nil {
+	if err = netPlugin.Start(&config); err != nil {
+		log.Printf("Failed to start network plugin, err:%v.\n", err)
+		reportPluginError(reportManager, err)
+		panic("network plugin fatal error")
+	}
+
+	if err = netPlugin.Execute(cni.PluginApi(netPlugin)); err != nil {
 		log.Printf("Failed to execute network plugin, err:%v.\n", err)
 		reportPluginError(reportManager, err)
 	}
@@ -98,6 +113,14 @@ func main() {
 	netPlugin.Stop()
 
 	if err != nil {
-		os.Exit(1)
+		panic("network plugin fatal error")
+	}
+
+	// Report CNI successfully finished execution.
+	reportManager.Report.CniSucceeded = true
+	if err = reportManager.SendReport(); err != nil {
+		log.Printf("SendReport failed due to %v", err)
+	} else {
+		markSendReport(reportManager)
 	}
 }
