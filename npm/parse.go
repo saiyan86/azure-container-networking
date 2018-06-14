@@ -526,6 +526,48 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 	return PodNsRuleSets, nsRuleLists, entries
 }
 
+// Drop all non-whitelisted packets.
+func getDefaultDropEntries(targetSets []string) []*iptm.IptEntry {
+	var entries []*iptm.IptEntry
+
+	for _, targetSet := range targetSets {
+		hashedTargetSetName := util.GetHashedName(targetSet)
+		entry := &iptm.IptEntry{
+			Name:       targetSet,
+			HashedName: hashedTargetSetName,
+			Chain:      util.IptablesAzureTargetSetsChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesSrcFlag,
+				util.IptablesJumpFlag,
+				util.IptablesDrop,
+			},
+		}
+		entries = append(entries, entry)
+
+		entry = &iptm.IptEntry{
+			Name:       targetSet,
+			HashedName: hashedTargetSetName,
+			Chain:      util.IptablesAzureTargetSetsChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesDrop,
+			},
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries
+}
+
 // ParsePolicy parses network policy.
 func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm.IptEntry) {
 	var (
@@ -553,6 +595,8 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm
 		resultNsLists = append(resultNsLists, egressNsSets...)
 		entries = append(entries, egressEntries...)
 
+		entries = append(entries, getDefaultDropEntries(affectedSets)...)
+
 		resultPodSets = append(resultPodSets, affectedSets...)
 
 		return util.UniqueStrSlice(resultPodSets), util.UniqueStrSlice(resultNsLists), entries
@@ -572,6 +616,8 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm
 			resultNsLists = append(resultNsLists, egressNsSets...)
 			entries = append(entries, egressEntries...)
 		}
+
+		entries = append(entries, getDefaultDropEntries(affectedSets)...)
 	}
 
 	resultPodSets = append(resultPodSets, affectedSets...)

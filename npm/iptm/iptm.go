@@ -38,24 +38,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Add default block rule to FORWARD chain.
-	defaultBlock := &IptEntry{
-		Chain: util.IptablesForwardChain,
-		Specs: []string{
-			util.IptablesJumpFlag,
-			util.IptablesReject,
-		},
-	}
-	if _, err := iptMgr.Exists(defaultBlock); err != nil {
-		return err
-	}
-
-	iptMgr.OperationFlag = util.IptablesInsertionFlag
-	if _, err := iptMgr.Run(defaultBlock); err != nil {
-		log.Printf("Error adding default rule to FORWARD chain\n")
-		return err
-	}
-
 	// Insert AZURE-NPM chain to FORWARD chain.
 	entry := &IptEntry{
 		Chain: util.IptablesForwardChain,
@@ -175,9 +157,29 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	}
 
 	// Create AZURE-NPM-EGRESS-FROM chain.
-	err := iptMgr.AddChain(util.IptablesAzureEgressToChain)
+	if err := iptMgr.AddChain(util.IptablesAzureEgressToChain); err != nil {
+		return err
+	}
 
-	return err
+	// Create AZURE-NPM-TARGET-SETS chain.
+	if err := iptMgr.AddChain(util.IptablesAzureTargetSetsChain); err != nil {
+		return err
+	}
+
+	// Insert AZURE-NPM-TARGET-SETS chain to AZURE-NPM chain.
+	entry.Chain = util.IptablesAzureChain
+	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureTargetSetsChain}
+	if _, err := iptMgr.Exists(entry); err != nil {
+		return err
+	}
+
+	iptMgr.OperationFlag = util.IptablesAppendFlag
+	if _, err := iptMgr.Run(entry); err != nil {
+		log.Printf("Error adding AZURE-NPM-TARGET-SETS chain to AZURE-NPM chain\n")
+		return err
+	}
+
+	return nil
 }
 
 // UninitNpmChains uninitializes Azure NPM chains in iptables.

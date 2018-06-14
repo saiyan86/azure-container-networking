@@ -44,6 +44,7 @@ const (
 	IptablesAzureIngressFromChain string = "AZURE-NPM-INGRESS-FROM"
 	IptablesAzureEgressPortChain  string = "AZURE-NPM-EGRESS-PORT"
 	IptablesAzureEgressToChain    string = "AZURE-NPM-EGRESS-TO"
+	IptablesAzureTargetSetsChain  string = "AZURE-NPM-TARGET-SETS"
 	IptablesForwardChain          string = "FORWARD"
 )
 
