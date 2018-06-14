@@ -190,21 +190,7 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 		util.IptablesAzureIngressFromChain,
 		util.IptablesAzureEgressPortChain,
 		util.IptablesAzureEgressToChain,
-	}
-
-	// Remove default block rule from FORWARD chain.
-	defaultBlock := &IptEntry{
-		Chain: util.IptablesForwardChain,
-		Specs: []string{
-			util.IptablesJumpFlag,
-			util.IptablesReject,
-		},
-	}
-	iptMgr.OperationFlag = util.IptablesDeletionFlag
-	errCode, err := iptMgr.Run(defaultBlock)
-	if errCode != 1 && err != nil {
-		log.Printf("Error removing default rule from FORWARD chain\n")
-		return err
+		util.IptablesAzureTargetSetsChain,
 	}
 
 	// Remove AZURE-NPM chain from FORWARD chain.
@@ -216,7 +202,7 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 		},
 	}
 	iptMgr.OperationFlag = util.IptablesDeletionFlag
-	errCode, err = iptMgr.Run(entry)
+	errCode, err := iptMgr.Run(entry)
 	if errCode != 1 && err != nil {
 		log.Printf("Error removing default rule from FORWARD chain\n")
 		return err
