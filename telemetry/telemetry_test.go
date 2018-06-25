@@ -15,8 +15,8 @@ import (
 	"github.com/Azure/azure-container-networking/common"
 )
 
-var reportManager *ReportManager
-var report *Report
+var reportManager *CNIReportManager
+var report *CNIReport
 var ipamQueryUrl = "localhost:3501"
 var hostAgentUrl = "localhost:3500"
 
@@ -66,11 +66,11 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	reportManager = &ReportManager{}
+	reportManager = &CNIReportManager{}
 	reportManager.HostNetAgentURL = "http://" + hostAgentUrl
 	reportManager.IpamQueryURL = "http://" + ipamQueryUrl
 	reportManager.ReportType = "application/json"
-	reportManager.Report = &Report{}
+	reportManager.Report = &CNIReport{}
 	report = reportManager.Report
 	exitCode := m.Run()
 	os.Exit(exitCode)
@@ -83,7 +83,7 @@ func handleIpamQuery(w http.ResponseWriter, r *http.Request) {
 
 func handleCNIReport(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
-	var t Report
+	var t CNIReport
 	err := decoder.Decode(&t)
 	if err != nil {
 		panic(err)
@@ -138,7 +138,7 @@ func TestSetReportState(t *testing.T) {
 		t.Errorf("SetReportState failed due to %v", err)
 	}
 
-	err = os.Remove(TelemetryFile)
+	err = os.Remove(CNITelemetryFile)
 	if err != nil {
 		t.Errorf("Error removing telemetry file due to %v", err)
 	}
