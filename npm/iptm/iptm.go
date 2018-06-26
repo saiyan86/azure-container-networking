@@ -34,6 +34,8 @@ func NewIptablesManager() *IptablesManager {
 
 // InitNpmChains initializes Azure NPM chains in iptables.
 func (iptMgr *IptablesManager) InitNpmChains() error {
+	log.Printf("Initializing AZURE-NPM")
+
 	if err := iptMgr.AddChain(util.IptablesAzureChain); err != nil {
 		return err
 	}
