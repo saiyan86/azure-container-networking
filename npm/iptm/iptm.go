@@ -46,14 +46,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 			util.IptablesAzureChain,
 		},
 	}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err := iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesInsertionFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesInsertionFlag
+		if _, err = iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding AZURE-NPM chain to FORWARD chain\n")
+			return err
+		}
 	}
 
 	// Add default allow CONNECTED/RELATED rule to AZURE-NPM chain.
@@ -66,14 +69,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesInsertionFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding default allow CONNECTED/RELATED rule to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesInsertionFlag
+		if _, err = iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding default allow CONNECTED/RELATED rule to AZURE-NPM chain\n")
+			return err
+		}
 	}
 
 	// Add default allow kube-system rules to AZURE-NPM chain.
@@ -86,14 +92,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesAppendFlag
+		if _, err := iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
+			return err
+		}
 	}
 
 	entry.Specs = []string{
@@ -105,16 +114,18 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		util.IptablesJumpFlag,
 		util.IptablesAccept,
 	}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesAppendFlag
+		if _, err := iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding default allow kube-system rule to AZURE-NPM chain\n")
+			return err
+		}
 	}
-
 	// Create AZURE-NPM-INGRESS-PORT chain.
 	if err := iptMgr.AddChain(util.IptablesAzureIngressPortChain); err != nil {
 		return err
@@ -123,14 +134,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain.
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressPortChain}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesAppendFlag
+		if _, err := iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding AZURE-NPM-INGRESS-PORT chain to AZURE-NPM chain\n")
+			return err
+		}
 	}
 
 	// Create AZURE-NPM-INGRESS-FROM chain.
@@ -146,14 +160,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain.
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressPortChain}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesAppendFlag
+		if _, err := iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding AZURE-NPM-EGRESS-PORT chain to AZURE-NPM chain\n")
+			return err
+		}
 	}
 
 	// Create AZURE-NPM-EGRESS-FROM chain.
@@ -169,14 +186,17 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Insert AZURE-NPM-TARGET-SETS chain to AZURE-NPM chain.
 	entry.Chain = util.IptablesAzureChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureTargetSetsChain}
-	if _, err := iptMgr.Exists(entry); err != nil {
+	exists, err = iptMgr.Exists(entry)
+	if err != nil {
 		return err
 	}
 
-	iptMgr.OperationFlag = util.IptablesAppendFlag
-	if _, err := iptMgr.Run(entry); err != nil {
-		log.Printf("Error adding AZURE-NPM-TARGET-SETS chain to AZURE-NPM chain\n")
-		return err
+	if !exists {
+		iptMgr.OperationFlag = util.IptablesAppendFlag
+		if _, err := iptMgr.Run(entry); err != nil {
+			log.Printf("Error adding AZURE-NPM-TARGET-SETS chain to AZURE-NPM chain\n")
+			return err
+		}
 	}
 
 	return nil
