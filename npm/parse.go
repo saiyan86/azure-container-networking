@@ -90,7 +90,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					hashedTargetSetName,
 					util.IptablesDstFlag,
 					util.IptablesJumpFlag,
-					util.IptablesReject,
+					util.IptablesDrop,
 				},
 			}
 			entries = append(entries, reject)
@@ -190,7 +190,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 							util.IptablesSFlag,
 							except,
 							util.IptablesJumpFlag,
-							util.IptablesReject,
+							util.IptablesDrop,
 						},
 					}
 					entries = append(entries, entry)
@@ -342,7 +342,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					hashedTargetSetName,
 					util.IptablesSrcFlag,
 					util.IptablesJumpFlag,
-					util.IptablesReject,
+					util.IptablesDrop,
 				},
 			}
 			entries = append(entries, reject)
@@ -442,7 +442,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 							util.IptablesDFlag,
 							except,
 							util.IptablesJumpFlag,
-							util.IptablesReject,
+							util.IptablesDrop,
 						},
 					}
 					entries = append(entries, entry)
