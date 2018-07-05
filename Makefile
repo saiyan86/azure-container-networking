@@ -92,7 +92,7 @@ CNM_PLUGIN_ROOTFS = azure-vnet-plugin-rootfs
 
 # Azure network policy manager parameters.
 AZURE_NPM_IMAGE = containernetworking/azure-npm
-AZURE_NPM_VERSION = v0.0.3
+AZURE_NPM_VERSION = v0.0.4
 
 VERSION ?= $(shell git describe --tags --always --dirty)
 

@@ -21,6 +21,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	var (
 		portRuleExists    = false
 		fromRuleExists    = false
+		isAppliedToNs     = false
 		protPortPairSlice []*portsInfo
 		PodNsRuleSets     []string // pod sets listed in Ingress rules.
 		nsRuleLists       []string // namespace sets listed in Ingress rules
@@ -30,6 +31,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	if len(targetSets) == 0 {
 		targetSets = append(targetSets, ns)
+		isAppliedToNs = true
 	}
 
 	for _, rule := range rules {
@@ -72,6 +74,26 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 	}
 
+	if isAppliedToNs {
+		hashedTargetSetName := util.GetHashedName(ns)
+
+		nsDrop := &iptm.IptEntry{
+			Name:       ns,
+			HashedName: hashedTargetSetName,
+			Chain:      util.IptablesAzureTargetSetsChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesDrop,
+			},
+		}
+		entries = append(entries, nsDrop)
+	}
+
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
 		log.Printf("Parsing iptables for label %s", targetSet)
@@ -79,7 +101,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
 		if len(rules) == 0 {
-			reject := &iptm.IptEntry{
+			drop := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
 				Chain:      util.IptablesAzureIngressPortChain,
@@ -93,7 +115,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					util.IptablesDrop,
 				},
 			}
-			entries = append(entries, reject)
+			entries = append(entries, drop)
 			continue
 		}
 
@@ -274,6 +296,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 	var (
 		portRuleExists    = false
 		toRuleExists      = false
+		isAppliedToNs     = false
 		protPortPairSlice []*portsInfo
 		PodNsRuleSets     []string // pod sets listed in Egress rules.
 		nsRuleLists       []string // namespace sets listed in Egress rules
@@ -283,6 +306,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 	if len(targetSets) == 0 {
 		targetSets = append(targetSets, ns)
+		isAppliedToNs = true
 	}
 
 	//TODO: handle IPBlock
@@ -326,12 +350,32 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 	}
 
+	if isAppliedToNs {
+		hashedTargetSetName := util.GetHashedName(ns)
+
+		nsDrop := &iptm.IptEntry{
+			Name:       ns,
+			HashedName: hashedTargetSetName,
+			Chain:      util.IptablesAzureTargetSetsChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesSrcFlag,
+				util.IptablesJumpFlag,
+				util.IptablesDrop,
+			},
+		}
+		entries = append(entries, nsDrop)
+	}
+
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
 		if len(rules) == 0 {
-			reject := &iptm.IptEntry{
+			drop := &iptm.IptEntry{
 				Name:       targetSet,
 				HashedName: hashedTargetSetName,
 				Chain:      util.IptablesAzureEgressPortChain,
@@ -345,7 +389,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					util.IptablesDrop,
 				},
 			}
-			entries = append(entries, reject)
+			entries = append(entries, drop)
 			continue
 		}
 
