@@ -15,8 +15,28 @@ import (
 
 const (
 	// Network store key.
-	storeKey = "Network"
+	storeKey  = "Network"
+	VlanIDKey = "VlanID"
 )
+
+type NetworkClient interface {
+	CreateBridge() error
+	DeleteBridge() error
+	AddL2Rules(extIf *externalInterface) error
+	DeleteL2Rules(extIf *externalInterface)
+	SetBridgeMasterToHostInterface() error
+	SetHairpinOnHostInterface(bool) error
+}
+
+type EndpointClient interface {
+	AddEndpoints(epInfo *EndpointInfo) error
+	AddEndpointRules(epInfo *EndpointInfo) error
+	DeleteEndpointRules(ep *endpoint)
+	MoveEndpointsToContainerNS(epInfo *EndpointInfo, nsID uintptr) error
+	SetupContainerInterfaces(epInfo *EndpointInfo) error
+	ConfigureContainerInterfacesAndRoutes(epInfo *EndpointInfo) error
+	DeleteEndpoints(ep *endpoint) error
+}
 
 // NetworkManager manages the set of container networking resources.
 type networkManager struct {
@@ -72,6 +92,7 @@ func (nm *networkManager) Uninitialize() {
 func (nm *networkManager) restore() error {
 	// Skip if a store is not provided.
 	if nm.store == nil {
+		log.Printf("[net] network store is nil")
 		return nil
 	}
 
@@ -83,6 +104,7 @@ func (nm *networkManager) restore() error {
 	err := nm.store.Read(storeKey, nm)
 	if err != nil {
 		if err == store.ErrKeyNotFound {
+			log.Printf("[net] network store key not found")
 			// Considered successful.
 			return nil
 		} else {
@@ -226,7 +248,10 @@ func (nm *networkManager) GetNetworkInfo(networkId string) (*NetworkInfo, error)
 		Id:      networkId,
 		Subnets: nw.Subnets,
 		Mode:    nw.Mode,
+		Options: make(map[string]interface{}),
 	}
+
+	getNetworkInfoImpl(nwInfo, nw)
 
 	if nw.extIf != nil {
 		nwInfo.BridgeName = nw.extIf.BridgeName
@@ -243,6 +268,13 @@ func (nm *networkManager) CreateEndpoint(networkId string, epInfo *EndpointInfo)
 	nw, err := nm.getNetwork(networkId)
 	if err != nil {
 		return err
+	}
+
+	if nw.VlanId != 0 {
+		if epInfo.Data[VlanIDKey] == nil {
+			log.Printf("overriding endpoint vlanid with network vlanid")
+			epInfo.Data[VlanIDKey] = nw.VlanId
+		}
 	}
 
 	_, err = nw.newEndpoint(epInfo)

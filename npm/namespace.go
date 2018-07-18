@@ -84,9 +84,8 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	nsName, nsNs := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace
 	log.Printf("NAMESPACE CREATED: %s/%s\n", nsName, nsNs)
 
-	allNs := npMgr.nsMap[util.KubeAllNamespacesFlag]
+	ipsMgr := npMgr.nsMap[util.KubeAllNamespacesFlag].ipsMgr
 	// Create ipset for the namespace.
-	ipsMgr := allNs.ipsMgr
 	if err := ipsMgr.CreateSet(nsName); err != nil {
 		log.Printf("Error creating ipset for namespace %s.\n", nsName)
 		return err

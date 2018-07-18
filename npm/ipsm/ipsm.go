@@ -1,7 +1,6 @@
 package ipsm
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -70,30 +69,6 @@ func isNsSet(setName string) bool {
 	return !strings.Contains(setName, "-") && !strings.Contains(setName, ":")
 }
 
-// IncrementReferCount increases referCount of a specific ipset by one.
-func (ipsMgr *IpsetManager) IncrementReferCount(setName string) error {
-	if _, exists := ipsMgr.setMap[setName]; !exists {
-		log.Printf("set %s doesn't exist, can't increment", setName)
-		return fmt.Errorf("set %s doesn't exist, can't increment", setName)
-	}
-
-	ipsMgr.setMap[setName].referCount++
-
-	return nil
-}
-
-// DecrementReferCount decreases referCount of a specific ipset by one.
-func (ipsMgr *IpsetManager) DecrementReferCount(setName string) error {
-	if _, exists := ipsMgr.setMap[setName]; !exists {
-		log.Printf("set %s doesn't exist, can't increment", setName)
-		return fmt.Errorf("set %s doesn't exist, can't increment", setName)
-	}
-
-	ipsMgr.setMap[setName].referCount--
-
-	return nil
-}
-
 // NotReferredByNwPolicy checks if a specific ipset is referred by any network policy.
 func (ipsMgr *IpsetManager) NotReferredByNwPolicy(setName string) bool {
 	return ipsMgr.setMap[setName].referCount == 0
@@ -130,12 +105,12 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 	}
 
 	errCode, err := ipsMgr.Run(entry)
-	if errCode == 1 && err != nil {
-		log.Printf("Cannot delete list %s as it's being referred or doesn't exist.\n", listName)
-		return nil
-	}
-
 	if err != nil {
+		if errCode == 1 {
+			log.Printf("Cannot delete list %s as it's being referred or doesn't exist.\n", listName)
+			return nil
+		}
+
 		log.Printf("Error deleting ipset %s", listName)
 		log.Printf("%+v\n", entry)
 		return err
@@ -163,8 +138,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 	}
 
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Printf("Error creating ipset rules.\n")
-		log.Printf("rule: %+v\n", entry)
+		log.Printf("Error creating ipset rules. rule: %+v", entry)
 		return err
 	}
 
@@ -177,7 +151,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) error {
 	if _, exists := ipsMgr.listMap[listName]; !exists {
 		log.Printf("ipset list with name %s not found", listName)
-		return fmt.Errorf("ipset list with name %s not found", listName)
+		return nil
 	}
 
 	for i, val := range ipsMgr.listMap[listName].elements {
@@ -229,6 +203,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 	}
 
 	ipsMgr.setMap[setName] = NewIpset(setName)
+
 	return nil
 }
 
@@ -236,7 +211,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	if _, exists := ipsMgr.setMap[setName]; !exists {
 		log.Printf("ipset with name %s not found", setName)
-		return fmt.Errorf("ipset with name %s not found", setName)
+		return nil
 	}
 
 	if len(ipsMgr.setMap[setName].elements) > 0 {
@@ -248,14 +223,13 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 		set:           util.GetHashedName(setName),
 	}
 	errCode, err := ipsMgr.Run(entry)
-	if errCode == 1 && err != nil {
-		log.Printf("Cannot delete set %s as it's being referred.\n", setName)
-		return nil
-	}
-
 	if err != nil {
-		log.Printf("Error deleting ipset %s", setName)
-		log.Printf("%+v\n", entry)
+		if errCode == 1 {
+			log.Printf("Cannot delete set %s as it's being referred.\n", setName)
+			return nil
+		}
+
+		log.Printf("Error deleting ipset %s\n. Entry: %+v", setName, entry)
 		return err
 	}
 
@@ -285,6 +259,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 		log.Printf("rule: %+v\n", entry)
 		return err
 	}
+
 	ipsMgr.setMap[setName].elements = append(ipsMgr.setMap[setName].elements, ip)
 
 	return nil
@@ -294,7 +269,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 	if _, exists := ipsMgr.setMap[setName]; !exists {
 		log.Printf("ipset with name %s not found", setName)
-		return fmt.Errorf("ipset with name %s not found", setName)
+		return nil
 	}
 
 	for i, val := range ipsMgr.setMap[setName].elements {
@@ -309,8 +284,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		spec:          ip,
 	}
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Printf("Error deleting ipset entry.\n")
-		log.Printf("%+v\n", entry)
+		log.Printf("Error deleting ipset entry.\n Entry: %+v", entry)
 		return err
 	}
 
@@ -374,14 +348,11 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 		cmdArgs = append(cmdArgs, entry.spec)
 	}
 
-	var (
-		errCode int
-	)
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
 	log.Printf("%s\n", string(cmdOut))
 
 	if msg, failed := err.(*exec.ExitError); failed {
-		errCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
+		errCode := msg.Sys().(syscall.WaitStatus).ExitStatus()
 		if errCode > 1 {
 			log.Printf("There was an error running command: %s\nArguments:%+v", err, cmdArgs)
 		}
@@ -399,7 +370,6 @@ func (ipsMgr *IpsetManager) Save(configFile string) error {
 	}
 
 	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag, util.IpsetFileFlag, configFile)
-
 	if err := cmd.Start(); err != nil {
 		log.Printf("Error saving ipset to file.\n")
 		return err
@@ -428,7 +398,6 @@ func (ipsMgr *IpsetManager) Restore(configFile string) error {
 	}
 
 	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, configFile)
-
 	if err := cmd.Start(); err != nil {
 		log.Printf("Error restoring ipset from file.\n")
 		return err

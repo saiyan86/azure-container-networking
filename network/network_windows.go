@@ -8,6 +8,7 @@ package network
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-container-networking/log"
 	"github.com/Azure/azure-container-networking/network/policy"
@@ -25,10 +26,15 @@ type route interface{}
 
 // NewNetworkImpl creates a new container network.
 func (nm *networkManager) newNetworkImpl(nwInfo *NetworkInfo, extIf *externalInterface) (*network, error) {
+	networkAdapterName := extIf.Name
+	// FixMe: Find a better way to check if a nic that is selected is not part of a vSwitch
+	if strings.HasPrefix(networkAdapterName, "vEthernet") {
+		networkAdapterName = ""
+	}
 	// Initialize HNS network.
 	hnsNetwork := &hcsshim.HNSNetwork{
 		Name:               nwInfo.Id,
-		NetworkAdapterName: extIf.Name,
+		NetworkAdapterName: networkAdapterName,
 		DNSSuffix:          nwInfo.DNS.Suffix,
 		DNSServerList:      strings.Join(nwInfo.DNS.Servers, ","),
 		Policies:           policy.SerializePolicies(policy.NetworkPolicy, nwInfo.Policies),
@@ -78,6 +84,14 @@ func (nm *networkManager) newNetworkImpl(nwInfo *NetworkInfo, extIf *externalInt
 		extIf:     extIf,
 	}
 
+	globals, err := hcsshim.GetHNSGlobals()
+	if err != nil || globals.Version.Major <= hcsshim.HNSVersion1803.Major {
+		// err would be not nil for windows 1709 & below
+		// Sleep for 10 seconds as a workaround for windows 1803 & below
+		// This is done only when the network is created.
+		time.Sleep(time.Duration(10) * time.Second)
+	}
+
 	return nw, nil
 }
 
@@ -89,4 +103,7 @@ func (nm *networkManager) deleteNetworkImpl(nw *network) error {
 	log.Printf("[net] HNSNetworkRequest DELETE response:%+v err:%v.", hnsResponse, err)
 
 	return err
+}
+
+func getNetworkInfoImpl(nwInfo *NetworkInfo, nw *network) {
 }

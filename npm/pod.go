@@ -29,7 +29,11 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		return nil
 	}
 
-	podNs, podName, podNodeName, podLabels, podIP := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels, podObj.Status.PodIP
+	podNs := podObj.ObjectMeta.Namespace
+	podName := podObj.ObjectMeta.Name
+	podNodeName := podObj.Spec.NodeName
+	podLabels := podObj.ObjectMeta.Labels
+	podIP := podObj.Status.PodIP
 	log.Printf("POD CREATED: %s/%s/%s%+v%s\n", podNs, podName, podNodeName, podLabels, podIP)
 
 	// Add the pod to ipset
@@ -72,7 +76,14 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPodObj, newPodObj *corev1.Pod) e
 		return nil
 	}
 
-	oldPodObjNs, oldPodObjName, oldPodObjPhase, oldPodObjIP, newPodObjNs, newPodObjName, newPodObjPhase, newPodObjIP := oldPodObj.ObjectMeta.Namespace, oldPodObj.ObjectMeta.Name, oldPodObj.Status.Phase, oldPodObj.Status.PodIP, newPodObj.ObjectMeta.Namespace, newPodObj.ObjectMeta.Name, newPodObj.Status.Phase, newPodObj.Status.PodIP
+	oldPodObjNs := oldPodObj.ObjectMeta.Namespace
+	oldPodObjName := oldPodObj.ObjectMeta.Name
+	oldPodObjPhase := oldPodObj.Status.Phase
+	oldPodObjIP := oldPodObj.Status.PodIP
+	newPodObjNs := newPodObj.ObjectMeta.Namespace
+	newPodObjName := newPodObj.ObjectMeta.Name
+	newPodObjPhase := newPodObj.Status.Phase
+	newPodObjIP := newPodObj.Status.PodIP
 
 	log.Printf(
 		"POD UPDATED. %s %s %s %s %s %s %s %s\n",
@@ -97,11 +108,14 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 		return nil
 	}
 
-	podNs, podName, podNodeName, podLabels := podObj.ObjectMeta.Namespace, podObj.ObjectMeta.Name, podObj.Spec.NodeName, podObj.ObjectMeta.Labels
+	podNs := podObj.ObjectMeta.Namespace
+	podName := podObj.ObjectMeta.Name
+	podNodeName := podObj.Spec.NodeName
+	podLabels := podObj.ObjectMeta.Labels
+	podIP := podObj.Status.PodIP
 	log.Printf("POD DELETED: %s/%s/%s\n", podNs, podName, podNodeName)
 
 	// Delete pod from ipset
-	podIP := podObj.Status.PodIP
 	ipsMgr := npMgr.nsMap[util.KubeAllNamespacesFlag].ipsMgr
 	// Delete the pod from its namespace's ipset.
 	if err := ipsMgr.DeleteFromSet(podNs, podIP); err != nil {

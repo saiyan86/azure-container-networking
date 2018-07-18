@@ -55,8 +55,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 	iptMgr := allNs.iptMgr
 	for _, iptEntry := range iptEntries {
 		if err := iptMgr.Add(iptEntry); err != nil {
-			log.Printf("Error applying iptables rule\n")
-			log.Printf("%+v\n", iptEntry)
+			log.Printf("Error applying iptables rule\n. Rule: %+v", iptEntry)
 			return err
 		}
 	}
@@ -101,8 +100,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 	iptMgr := allNs.iptMgr
 	for _, iptEntry := range iptEntries {
 		if err := iptMgr.Delete(iptEntry); err != nil {
-			log.Printf("Error applying iptables rule\n")
-			log.Printf("%+v\n", iptEntry)
+			log.Printf("Error applying iptables rule.\n Rule: %+v", iptEntry)
 			return err
 		}
 	}
