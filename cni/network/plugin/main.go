@@ -54,10 +54,12 @@ func main() {
 	var err error
 	config.Version = version
 	reportManager := &telemetry.CNIReportManager{
-		HostNetAgentURL: hostNetAgentURL,
-		IpamQueryURL:    ipamQueryURL,
-		ReportType:      reportType,
-		Report:          &telemetry.CNIReport{},
+		ReportMangager: &telemetry.ReportManager{
+			HostNetAgentURL: hostNetAgentURL,
+			ReportType:      reportType,
+		},
+		IpamQueryURL: ipamQueryURL,
+		Report:       &telemetry.CNIReport{},
 	}
 
 	reportManager.GetReport(pluginName, config.Version)
