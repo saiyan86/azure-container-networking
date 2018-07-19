@@ -67,9 +67,10 @@ func TestMain(m *testing.M) {
 	}
 
 	reportManager = &CNIReportManager{}
-	reportManager.HostNetAgentURL = "http://" + hostAgentUrl
+	reportManager.ReportManager = &ReportManager{}
+	reportManager.ReportManager.HostNetAgentURL = "http://" + hostAgentUrl
+	reportManager.ReportManager.ReportType = "application/json"
 	reportManager.IpamQueryURL = "http://" + ipamQueryUrl
-	reportManager.ReportType = "application/json"
 	reportManager.Report = &CNIReport{}
 	report = reportManager.Report
 	exitCode := m.Run()
