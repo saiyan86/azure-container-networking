@@ -146,6 +146,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 		log.Printf("Error retrieving server version")
 		panic(err.Error)
 	}
+	log.Printf("API server version: %+v", serverVersion)
 
 	clusterID := util.GetClusterID(npMgr.nodeName)
 	clusterState := npMgr.GetClusterState()
