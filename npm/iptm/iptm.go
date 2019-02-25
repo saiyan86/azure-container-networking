@@ -66,7 +66,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	entry.Specs = []string{
 		util.IptablesMatchFlag,
 		util.IptablesStateFlag,
-		util.IPtablesMatchStateFlag,
+		util.IptablesMatchStateFlag,
 		util.IptablesRelatedState + "," + util.IptablesEstablishedState,
 		util.IptablesJumpFlag,
 		util.IptablesAccept,

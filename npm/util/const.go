@@ -42,7 +42,7 @@ const (
 	IptablesSetFlag                  string = "set"
 	IptablesMatchSetFlag             string = "--match-set"
 	IptablesStateFlag                string = "state"
-	IPtablesMatchStateFlag           string = "--state"
+	IptablesMatchStateFlag           string = "--state"
 	IptablesRelatedState             string = "RELATED"
 	IptablesEstablishedState         string = "ESTABLISHED"
 	IptablesAzureChain               string = "AZURE-NPM"
