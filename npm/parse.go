@@ -9,8 +9,6 @@ import (
 	"github.com/Azure/azure-container-networking/npm/iptm"
 	"github.com/Azure/azure-container-networking/npm/util"
 	networkingv1 "k8s.io/api/networking/v1"
-
-	"k8s.io/apimachinery/pkg/version"
 )
 
 type portsInfo struct {
@@ -18,7 +16,7 @@ type portsInfo struct {
 	port     string
 }
 
-func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule, serverVersion *version.Info) ([]string, []string, []*iptm.IptEntry) {
+func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []string, []*iptm.IptEntry) {
 	var (
 		portRuleExists    = false
 		fromRuleExists    = false
@@ -47,31 +45,39 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 
 		for _, fromRule := range rule.From {
-			if fromRule.PodSelector != nil {
-				if len(fromRule.PodSelector.MatchLabels) == 0 {
-					PodNsRuleSets = append(PodNsRuleSets, ns)
+			fromRuleExists = true
+
+			// reference: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+			if util.IsNewNwPolicyVerFlag {
+				if fromRule.PodSelector != nil && fromRule.NamespaceSelector != nil {
+					PodNsRuleSets = append(PodNsRuleSets)
+				}
+			} else {
+				if fromRule.PodSelector != nil {
+					// allow traffic from the same namespace
+					if len(fromRule.PodSelector.MatchLabels) == 0 {
+						PodNsRuleSets = append(PodNsRuleSets, ns)
+					}
+
+					for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
+						PodNsRuleSets = append(PodNsRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
+					}
 				}
 
-				for podLabelKey, podLabelVal := range fromRule.PodSelector.MatchLabels {
-					PodNsRuleSets = append(PodNsRuleSets, util.KubeAllNamespacesFlag+"-"+podLabelKey+":"+podLabelVal)
+				if fromRule.NamespaceSelector != nil {
+					// allow traffic from all namespaces
+					if len(fromRule.NamespaceSelector.MatchLabels) == 0 {
+						nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
+					}
+
+					for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
+						nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
+					}
 				}
 			}
-
-			if fromRule.NamespaceSelector != nil {
-				if len(fromRule.NamespaceSelector.MatchLabels) == 0 {
-					nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
-				}
-
-				for nsLabelKey, nsLabelVal := range fromRule.NamespaceSelector.MatchLabels {
-					nsRuleLists = append(nsRuleLists, "ns-"+nsLabelKey+":"+nsLabelVal)
-				}
-			}
-
 			if fromRule.IPBlock != nil {
 				ipblock = fromRule.IPBlock
 			}
-
-			fromRuleExists = true
 		}
 	}
 
@@ -293,7 +299,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 	return PodNsRuleSets, nsRuleLists, entries
 }
 
-func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule, serverVersion *version.Info) ([]string, []string, []*iptm.IptEntry) {
+func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyEgressRule) ([]string, []string, []*iptm.IptEntry) {
 	var (
 		portRuleExists    = false
 		toRuleExists      = false
@@ -609,7 +615,7 @@ func getDefaultDropEntries(targetSets []string) []*iptm.IptEntry {
 }
 
 // ParsePolicy parses network policy.
-func parsePolicy(npObj *networkingv1.NetworkPolicy, serverVersion *version.Info) ([]string, []string, []*iptm.IptEntry) {
+func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm.IptEntry) {
 	var (
 		resultPodSets []string
 		resultNsLists []string
@@ -625,12 +631,12 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy, serverVersion *version.Info)
 	}
 
 	if len(npObj.Spec.PolicyTypes) == 0 {
-		ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress, serverVersion)
+		ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
 		resultPodSets = append(resultPodSets, ingressPodSets...)
 		resultNsLists = append(resultNsLists, ingressNsSets...)
 		entries = append(entries, ingressEntries...)
 
-		egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress, serverVersion)
+		egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
 		resultPodSets = append(resultPodSets, egressPodSets...)
 		resultNsLists = append(resultNsLists, egressNsSets...)
 		entries = append(entries, egressEntries...)
@@ -644,14 +650,14 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy, serverVersion *version.Info)
 
 	for _, ptype := range npObj.Spec.PolicyTypes {
 		if ptype == networkingv1.PolicyTypeIngress {
-			ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress, serverVersion)
+			ingressPodSets, ingressNsSets, ingressEntries := parseIngress(npNs, affectedSets, npObj.Spec.Ingress)
 			resultPodSets = append(resultPodSets, ingressPodSets...)
 			resultNsLists = append(resultNsLists, ingressNsSets...)
 			entries = append(entries, ingressEntries...)
 		}
 
 		if ptype == networkingv1.PolicyTypeEgress {
-			egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress, serverVersion)
+			egressPodSets, egressNsSets, egressEntries := parseEgress(npNs, affectedSets, npObj.Spec.Egress)
 			resultPodSets = append(resultPodSets, egressPodSets...)
 			resultNsLists = append(resultNsLists, egressNsSets...)
 			entries = append(entries, egressEntries...)

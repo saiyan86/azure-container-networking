@@ -11,6 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 )
 
+// IsNewNwPolicyVerFlag indicates if the current kubernetes version is newer than 1.11 or not
+var IsNewNwPolicyVerFlag = false
+
 // GetClusterID retrieves cluster ID through node name. (Azure-specific)
 func GetClusterID(nodeName string) string {
 	s := strings.Split(nodeName, "-")
@@ -121,4 +124,14 @@ func IsNewNwPolicyVer(ver *version.Info) (bool, error) {
 	default:
 		return false, nil
 	}
+}
+
+// SetIsNewNwPolicyVerFlag sets IsNewNwPolicyVerFlag variable depending on version.
+func SetIsNewNwPolicyVerFlag(ver *version.Info) error {
+	var err error
+	if IsNewNwPolicyVerFlag, err = IsNewNwPolicyVer(ver); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -130,6 +130,11 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 	}
 	log.Printf("API server version: %+v", serverVersion)
 
+	if err = util.SetIsNewNwPolicyVerFlag(serverVersion); err != nil {
+		log.Printf("Error setting IsNewNwPolicyVerFlag")
+		panic(err.Error)
+	}
+
 	npMgr := &NetworkPolicyManager{
 		clientset:              clientset,
 		informerFactory:        informerFactory,
