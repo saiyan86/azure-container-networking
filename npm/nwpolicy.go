@@ -40,7 +40,7 @@ func (npMgr *NetworkPolicyManager) AddNetworkPolicy(npObj *networkingv1.NetworkP
 		npMgr.isAzureNpmChainCreated = true
 	}
 
-	podSets, nsLists, iptEntries := parsePolicy(npObj)
+	podSets, nsLists, iptEntries := parsePolicy(npObj, npMgr.serverVersion)
 
 	ipsMgr := allNs.ipsMgr
 	for _, set := range podSets {
@@ -129,7 +129,7 @@ func (npMgr *NetworkPolicyManager) DeleteNetworkPolicy(npObj *networkingv1.Netwo
 
 	allNs := npMgr.nsMap[util.KubeAllNamespacesFlag]
 
-	_, _, iptEntries := parsePolicy(npObj)
+	_, _, iptEntries := parsePolicy(npObj, npMgr.serverVersion)
 
 	iptMgr := allNs.iptMgr
 	for _, iptEntry := range iptEntries {
