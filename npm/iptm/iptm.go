@@ -154,22 +154,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-PORT chain.
-	entry.Chain = util.IptablesAzureIngressPortChain
-	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressFromNsChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		iptMgr.OperationFlag = util.IptablesAppendFlag
-		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-PORT chain\n")
-			return err
-		}
-	}
-
 	// Create AZURE-NPM-INGRESS-FROM-POD chain.
 	if err = iptMgr.AddChain(util.IptablesAzureIngressFromPodChain); err != nil {
 		return err
@@ -201,41 +185,9 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-PORT chain.
-	entry.Chain = util.IptablesAzureEgressPortChain
-	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressToNsChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		iptMgr.OperationFlag = util.IptablesAppendFlag
-		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-PORT chain\n")
-			return err
-		}
-	}
-
 	// Create AZURE-NPM-EGRESS-TO-POD chain.
 	if err = iptMgr.AddChain(util.IptablesAzureEgressToPodChain); err != nil {
 		return err
-	}
-
-	// Insert AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO-NS chain.
-	entry.Chain = util.IptablesAzureEgressToNsChain
-	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressToPodChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		iptMgr.OperationFlag = util.IptablesAppendFlag
-		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO-NS chain\n")
-			return err
-		}
 	}
 
 	// Create AZURE-NPM-TARGET-SETS chain.
