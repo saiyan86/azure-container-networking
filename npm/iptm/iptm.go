@@ -149,18 +149,13 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		}
 	}
 
-	// Create AZURE-NPM-INGRESS-FROM chain.
-	if err = iptMgr.AddChain(util.IptablesAzureIngressFromChain); err != nil {
-		return err
-	}
-
 	// Create AZURE-NPM-INGRESS-FROM-NS chain.
 	if err = iptMgr.AddChain(util.IptablesAzureIngressFromNsChain); err != nil {
 		return err
 	}
 
 	// Insert AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-FROM chain.
-	entry.Chain = util.IptablesAzureIngressFromChain
+	entry.Chain = util.IptablesAzureIngressPortChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressFromNsChain}
 	exists, err = iptMgr.Exists(entry)
 	if err != nil {
@@ -178,22 +173,6 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	// Create AZURE-NPM-INGRESS-FROM-POD chain.
 	if err = iptMgr.AddChain(util.IptablesAzureIngressFromPodChain); err != nil {
 		return err
-	}
-
-	// Insert AZURE-NPM-INGRESS-FROM-POD chain to AZURE-NPM-INGRESS-FROM-NS chain.
-	entry.Chain = util.IptablesAzureIngressFromNsChain
-	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressFromPodChain}
-	exists, err = iptMgr.Exists(entry)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		iptMgr.OperationFlag = util.IptablesAppendFlag
-		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-INGRESS-FROM-POD chain to AZURE-NPM-INGRESS-FROM chain\n")
-			return err
-		}
 	}
 
 	// Create AZURE-NPM-EGRESS-PORT chain.
@@ -217,18 +196,13 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		}
 	}
 
-	// Create AZURE-NPM-EGRESS-TO chain.
-	if err := iptMgr.AddChain(util.IptablesAzureEgressToChain); err != nil {
-		return err
-	}
-
 	// Create AZURE-NPM-EGRESS-TO-NS chain.
 	if err = iptMgr.AddChain(util.IptablesAzureEgressToNsChain); err != nil {
 		return err
 	}
 
 	// Insert AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-TO chain.
-	entry.Chain = util.IptablesAzureEgressToChain
+	entry.Chain = util.IptablesAzureEgressPortChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressToNsChain}
 	exists, err = iptMgr.Exists(entry)
 	if err != nil {
