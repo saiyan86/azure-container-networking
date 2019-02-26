@@ -180,8 +180,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-INGRESS-FROM-POD chain to AZURE-NPM-INGRESS-FROM chain.
-	entry.Chain = util.IptablesAzureIngressFromChain
+	// Insert AZURE-NPM-INGRESS-FROM-POD chain to AZURE-NPM-INGRESS-FROM-NS chain.
+	entry.Chain = util.IptablesAzureIngressFromNsChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressFromPodChain}
 	exists, err = iptMgr.Exists(entry)
 	if err != nil {
