@@ -154,7 +154,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-FROM chain.
+	// Insert AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-PORT chain.
 	entry.Chain = util.IptablesAzureIngressPortChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureIngressFromNsChain}
 	exists, err = iptMgr.Exists(entry)
@@ -165,7 +165,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	if !exists {
 		iptMgr.OperationFlag = util.IptablesAppendFlag
 		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-FROM chain\n")
+			log.Printf("Error adding AZURE-NPM-INGRESS-FROM-NS chain to AZURE-NPM-INGRESS-PORT chain\n")
 			return err
 		}
 	}
@@ -201,7 +201,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-TO chain.
+	// Insert AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-PORT chain.
 	entry.Chain = util.IptablesAzureEgressPortChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressToNsChain}
 	exists, err = iptMgr.Exists(entry)
@@ -212,7 +212,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	if !exists {
 		iptMgr.OperationFlag = util.IptablesAppendFlag
 		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-TO chain\n")
+			log.Printf("Error adding AZURE-NPM-EGRESS-TO-NS chain to AZURE-NPM-EGRESS-PORT chain\n")
 			return err
 		}
 	}
@@ -222,8 +222,8 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 		return err
 	}
 
-	// Insert AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO chain.
-	entry.Chain = util.IptablesAzureEgressToChain
+	// Insert AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO-NS chain.
+	entry.Chain = util.IptablesAzureEgressToNsChain
 	entry.Specs = []string{util.IptablesJumpFlag, util.IptablesAzureEgressToPodChain}
 	exists, err = iptMgr.Exists(entry)
 	if err != nil {
@@ -233,7 +233,7 @@ func (iptMgr *IptablesManager) InitNpmChains() error {
 	if !exists {
 		iptMgr.OperationFlag = util.IptablesAppendFlag
 		if _, err := iptMgr.Run(entry); err != nil {
-			log.Printf("Error adding AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO chain\n")
+			log.Printf("Error adding AZURE-NPM-EGRESS-TO-POD chain to AZURE-NPM-EGRESS-TO-NS chain\n")
 			return err
 		}
 	}
@@ -267,11 +267,9 @@ func (iptMgr *IptablesManager) UninitNpmChains() error {
 	IptablesAzureChainList := []string{
 		util.IptablesAzureChain,
 		util.IptablesAzureIngressPortChain,
-		util.IptablesAzureIngressFromChain,
 		util.IptablesAzureIngressFromNsChain,
 		util.IptablesAzureIngressFromPodChain,
 		util.IptablesAzureEgressPortChain,
-		util.IptablesAzureEgressToChain,
 		util.IptablesAzureEgressToNsChain,
 		util.IptablesAzureEgressToPodChain,
 		util.IptablesAzureTargetSetsChain,
