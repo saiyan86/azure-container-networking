@@ -271,7 +271,23 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					// Handle PodSelector field of NetworkPolicyPeer.
 					for _, podRuleSet := range podNsRuleSets {
 						hashedPodRuleSetName := util.GetHashedName(podRuleSet)
-						entry := &iptm.IptEntry{
+						nsEntry := &iptm.IptEntry{
+							Name:       podRuleSet,
+							HashedName: hashedPodRuleSetName,
+							Chain:      util.IptablesAzureIngressFromNsChain,
+							Specs: []string{
+								util.IptablesMatchFlag,
+								util.IptablesSetFlag,
+								util.IptablesMatchSetFlag,
+								hashedTargetSetName,
+								util.IptablesDstFlag,
+								util.IptablesJumpFlag,
+								util.IptablesAzureIngressFromPodChain,
+							},
+						}
+						entries = append(entries, nsEntry)
+
+						podEntry := &iptm.IptEntry{
 							Name:       podRuleSet,
 							HashedName: hashedPodRuleSetName,
 							Chain:      util.IptablesAzureIngressFromPodChain,
@@ -290,7 +306,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 								util.IptablesAccept,
 							},
 						}
-						entries = append(entries, entry)
+						entries = append(entries, podEntry)
 					}
 					continue
 				}
