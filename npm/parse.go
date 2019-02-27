@@ -463,9 +463,23 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				portRuleExists = true
 			}
 
-			if len(rule.To) > 0 {
-				toRuleExists = true
+			if rule.To != nil {
 				log.Printf("????????????????????????????????????????????????????????????????????????????")
+				for _, toRule := range rule.To {
+					if toRule.PodSelector != nil {
+						log.Printf("PodSelector != nil")
+						log.Printf("%+v", toRule.PodSelector)
+					}
+					if toRule.NamespaceSelector != nil {
+						log.Printf("NamespaceSelector != nil")
+						log.Printf("%+v", toRule.NamespaceSelector)
+					}
+					if toRule.IPBlock != nil {
+						log.Printf("IPBlock != nil")
+						log.Printf("%+v", toRule.IPBlock)
+					}
+					toRuleExists = true
+				}
 			}
 
 			if !portRuleExists && !toRuleExists {
