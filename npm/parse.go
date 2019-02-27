@@ -90,8 +90,18 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				portRuleExists = true
 			}
 
-			if len(rule.From) > 0 {
-				fromRuleExists = true
+			if rule.From != nil {
+				for _, fromRule := range rule.From {
+					if fromRule.PodSelector != nil {
+						fromRuleExists = true
+					}
+					if fromRule.NamespaceSelector != nil {
+						fromRuleExists = true
+					}
+					if fromRule.IPBlock != nil {
+						fromRuleExists = true
+					}
+				}
 			}
 
 			if !portRuleExists && !fromRuleExists {
@@ -464,21 +474,16 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			if rule.To != nil {
-				log.Printf("????????????????????????????????????????????????????????????????????????????")
 				for _, toRule := range rule.To {
 					if toRule.PodSelector != nil {
-						log.Printf("PodSelector != nil")
-						log.Printf("%+v", toRule.PodSelector)
+						toRuleExists = true
 					}
 					if toRule.NamespaceSelector != nil {
-						log.Printf("NamespaceSelector != nil")
-						log.Printf("%+v", toRule.NamespaceSelector)
+						toRuleExists = true
 					}
 					if toRule.IPBlock != nil {
-						log.Printf("IPBlock != nil")
-						log.Printf("%+v", toRule.IPBlock)
+						toRuleExists = true
 					}
-					toRuleExists = true
 				}
 			}
 
