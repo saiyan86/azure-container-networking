@@ -173,6 +173,8 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			}
 
 			for _, fromRule := range rule.From {
+				policyRuleSets = append(policyRuleSets, podNsRuleSets...)
+				policyRuleLists = append(policyRuleLists, nsRuleLists...)
 				podNsRuleSets, nsRuleLists = nil, nil
 
 				// Handle ipblock field of NetworkPolicyPeer
@@ -383,31 +385,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					entries = append(entries, entry)
 				}
 			}
-			policyRuleSets = append(policyRuleSets, podNsRuleSets...)
-			policyRuleLists = append(policyRuleLists, nsRuleLists...)
-			/*
-					for _, protPortPair := range protPortPairSlice {
-				entry := &iptm.IptEntry{
-					Name:       targetSet,
-					HashedName: hashedTargetSetName,
-					Chain:      util.IptablesAzureIngressPortChain,
-					Specs: []string{
-						util.IptablesProtFlag,
-						protPortPair.protocol,
-						util.IptablesDstPortFlag,
-						protPortPair.port,
-						util.IptablesMatchFlag,
-						util.IptablesSetFlag,
-						util.IptablesMatchSetFlag,
-						hashedTargetSetName,
-						util.IptablesDstFlag,
-						util.IptablesJumpFlag,
-						util.IptablesAzureIngressFromNsChain,
-					},
-				}
-				entries = append(entries, entry)
-			*/
-
 		}
 	}
 	return policyRuleSets, policyRuleLists, entries
