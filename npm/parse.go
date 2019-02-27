@@ -528,7 +528,8 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 			if !toRuleExists {
 				log.Printf("-----------------------!toRuleExists-------------------")
-				log.Printf("%+v", rule.To)
+				log.Printf("rule:\n +%v", rule)
+				log.Printf("rule.To:\n +%v", rule.To)
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
 					HashedName: hashedTargetSetName,
