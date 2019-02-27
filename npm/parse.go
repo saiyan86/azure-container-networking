@@ -90,7 +90,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				portRuleExists = true
 			}
 
-			if rule.From != nil {
+			if len(rule.From) > 0 {
 				fromRuleExists = true
 			}
 
@@ -463,7 +463,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				portRuleExists = true
 			}
 
-			if rule.To != nil {
+			if len(rule.To) > 0 {
 				toRuleExists = true
 			}
 
@@ -527,9 +527,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			if !toRuleExists {
-				log.Printf("-----------------------!toRuleExists-------------------")
-				log.Printf("rule:\n +%v", rule)
-				log.Printf("rule.To:\n +%v", rule.To)
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
 					HashedName: hashedTargetSetName,
@@ -630,9 +627,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 								util.IptablesAccept,
 							},
 						}
-
-						log.Printf("--------------------entry------------------")
-						log.Printf("%+v", entry)
 						entries = append(entries, entry)
 					}
 					continue
