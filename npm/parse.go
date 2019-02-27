@@ -527,7 +527,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			if !toRuleExists {
-				log.Printf("-----------------------toRuleExists-------------------")
+				log.Printf("-----------------------!toRuleExists-------------------")
 				log.Printf("%+v", rule.To)
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
@@ -592,6 +592,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 						entries = append(entries, cidrEntry)
 					}
 				}
+
 				if toRule.PodSelector == nil && toRule.NamespaceSelector == nil {
 					continue
 				}
@@ -628,6 +629,9 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 								util.IptablesAccept,
 							},
 						}
+
+						log.Printf("--------------------entry------------------")
+						log.Printf("%+v", entry)
 						entries = append(entries, entry)
 					}
 					continue
