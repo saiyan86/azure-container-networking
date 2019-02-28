@@ -105,7 +105,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			}
 		}
 
-		for _rule := range rules {
+		for _, rule := range rules {
 			if !portRuleExists && !fromRuleExists {
 				allow := &iptm.IptEntry{
 					Name:       targetSet,
