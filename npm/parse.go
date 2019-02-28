@@ -883,6 +883,63 @@ func getDefaultDropEntries(targetSets []string) []*iptm.IptEntry {
 	return entries
 }
 
+// Allow traffic from/to kube-system pods
+func getAllowKubeSystemEntries(ns string, targetSets []string) []*iptm.IptEntry {
+	var entries []*iptm.IptEntry
+
+	if len(targetSets) == 0 {
+		targetSets = append(targetSets, ns)
+	}
+
+	for _, targetSet := range targetSets {
+		hashedTargetSetName := util.GetHashedName(targetSet)
+		hashedKubeSystemSet := util.GetHashedName(util.KubeSystemFlag)
+		allowKubeSystemIngress := &iptm.IptEntry{
+			Name:       util.KubeSystemFlag,
+			HashedName: hashedKubeSystemSet,
+			Chain:      util.IptablesAzureIngressPortChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedKubeSystemSet,
+				util.IptablesSrcFlag,
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesAccept,
+			},
+		}
+		entries = append(entries, allowKubeSystemIngress)
+
+		allowKubeSystemEgress := &iptm.IptEntry{
+			Name:       util.KubeSystemFlag,
+			HashedName: hashedKubeSystemSet,
+			Chain:      util.IptablesAzureEgressPortChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesSrcFlag,
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedKubeSystemSet,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesAccept,
+			},
+		}
+		entries = append(entries, allowKubeSystemEgress)
+	}
+
+	return entries
+}
+
 // ParsePolicy parses network policy.
 func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm.IptEntry) {
 	var (
@@ -897,6 +954,10 @@ func parsePolicy(npObj *networkingv1.NetworkPolicy) ([]string, []string, []*iptm
 	for podLabelKey, podLabelVal := range selector {
 		affectedSet := util.KubeAllNamespacesFlag + "-" + podLabelKey + ":" + podLabelVal
 		affectedSets = append(affectedSets, affectedSet)
+	}
+
+	if len(npObj.Spec.Ingress) > 0 || len(npObj.Spec.Egress) > 0 {
+		entries = append(entries, getAllowKubeSystemEntries(npNs, affectedSets)...)
 	}
 
 	if len(npObj.Spec.PolicyTypes) == 0 {
