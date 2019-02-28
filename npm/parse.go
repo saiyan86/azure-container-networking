@@ -16,6 +16,12 @@ type portsInfo struct {
 	port     string
 }
 
+func appendAndClearSets(podNsRuleSets *[]string, nsRuleLists *[]string, policyRuleSets *[]string, policyRuleLists *[]string) {
+	*policyRuleSets = append(*policyRuleSets, *podNsRuleSets...)
+	*policyRuleLists = append(*policyRuleLists, *nsRuleLists...)
+	podNsRuleSets, nsRuleLists = nil, nil
+}
+
 func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPolicyIngressRule) ([]string, []string, []*iptm.IptEntry) {
 	var (
 		portRuleExists    = false
@@ -185,10 +191,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			}
 
 			for _, fromRule := range rule.From {
-				policyRuleSets = append(policyRuleSets, podNsRuleSets...)
-				policyRuleLists = append(policyRuleLists, nsRuleLists...)
-				podNsRuleSets, nsRuleLists = nil, nil
-
 				// Handle IPBlock field of NetworkPolicyPeer
 				if fromRule.IPBlock != nil {
 					if len(fromRule.IPBlock.CIDR) > 0 {
@@ -268,6 +270,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 						}
 						entries = append(entries, entry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 					continue
 				}
 
@@ -322,6 +325,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 						}
 						entries = append(entries, podEntry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 					continue
 				}
 
@@ -394,15 +398,13 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 						}
 						entries = append(entries, entry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 				}
 			}
 		}
 	}
-	log.Printf("finished parsing ingress rule")
-	log.Printf("policyRuleSets: %+v", policyRuleSets)
-	log.Printf("policyRuleLists: %+v", policyRuleLists)
-	log.Printf("Ingress entries: %+v", entries)
 
+	log.Printf("finished parsing ingress rule")
 	return policyRuleSets, policyRuleLists, entries
 }
 
@@ -575,10 +577,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			for _, toRule := range rule.To {
-				policyRuleSets = append(policyRuleSets, podNsRuleSets...)
-				policyRuleLists = append(policyRuleLists, nsRuleLists...)
-				podNsRuleSets, nsRuleLists = nil, nil
-
 				// Handle IPBlock field of NetworkPolicyPeer
 				if toRule.IPBlock != nil {
 					if len(toRule.IPBlock.CIDR) > 0 {
@@ -658,6 +656,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 						}
 						entries = append(entries, entry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 					continue
 				}
 
@@ -712,6 +711,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 						}
 						entries = append(entries, podEntry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 					continue
 				}
 
@@ -785,15 +785,13 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 						}
 						entries = append(entries, entry)
 					}
+					appendAndClearSets(&podNsRuleSets, &nsRuleLists, &policyRuleSets, &policyRuleLists)
 				}
 			}
 		}
 	}
-	log.Printf("finished parsing ingress rule")
-	log.Printf("policyRuleSets: %+v", policyRuleSets)
-	log.Printf("policyRuleLists: %+v", policyRuleLists)
-	log.Printf("Egress entries: %+v", entries)
 
+	log.Printf("finished parsing ingress rule")
 	return policyRuleSets, policyRuleLists, entries
 }
 
