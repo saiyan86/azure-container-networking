@@ -398,6 +398,11 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			}
 		}
 	}
+	log.Printf("finished parsing ingress rule")
+	log.Printf("policyRuleSets: %+v", policyRuleSets)
+	log.Printf("policyRuleLists: %+v", policyRuleLists)
+	log.Printf("Ingress entries: %+v", entries)
+
 	return policyRuleSets, policyRuleLists, entries
 }
 
@@ -713,6 +718,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				// Allow traffic from podSelector intersects namespaceSelector
 				// This is only supported in kubernetes version >= 1.11
 				if util.IsNewNwPolicyVerFlag {
+					log.Printf("Kubernetes version > 1.11, parsing podSelector AND namespaceSelector")
 					// allow traffic from all namespaces
 					if len(toRule.NamespaceSelector.MatchLabels) == 0 {
 						nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
@@ -783,6 +789,11 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 		}
 	}
+	log.Printf("finished parsing ingress rule")
+	log.Printf("policyRuleSets: %+v", policyRuleSets)
+	log.Printf("policyRuleLists: %+v", policyRuleLists)
+	log.Printf("Egress entries: %+v", entries)
+
 	return policyRuleSets, policyRuleLists, entries
 }
 
