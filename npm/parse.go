@@ -103,7 +103,9 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 					}
 				}
 			}
+		}
 
+		for _rule := range rules {
 			if !portRuleExists && !fromRuleExists {
 				allow := &iptm.IptEntry{
 					Name:       targetSet,
@@ -480,14 +482,15 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					}
 					if toRule.NamespaceSelector != nil {
 						toRuleExists = true
-						log.Printf("-------------------------Set here-------------------------")
 					}
 					if toRule.IPBlock != nil {
 						toRuleExists = true
 					}
 				}
 			}
+		}
 
+		for _, rule := range rules {
 			if !portRuleExists && !toRuleExists {
 				allow := &iptm.IptEntry{
 					Name:       targetSet,
