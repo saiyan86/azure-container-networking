@@ -85,6 +85,30 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			continue
 		}
 
+		// allow agent node IP/kube-proxy IP. Since Azure-NPM shares the same IP as its node/kube-proxy on the node, we just allow Azure-NPM IP.
+		AzureNpmSet := util.KubeAllNamespacesFlag + "-" + util.KubeAppFlag + ":" + util.AzureNpmFlag
+		hashedAzureNpmSet := util.GetHashedName(AzureNpmSet)
+		allowAgentIngress := &iptm.IptEntry{
+			Name:       AzureNpmSet,
+			HashedName: hashedAzureNpmSet,
+			Chain:      util.IptablesAzureIngressPortChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedAzureNpmSet,
+				util.IptablesSrcFlag,
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesAccept,
+			},
+		}
+		entries = append(entries, allowAgentIngress)
+
 		for _, rule := range rules {
 			for _, portRule := range rule.Ports {
 				protPortPairSlice = append(protPortPairSlice,
@@ -470,6 +494,30 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			entries = append(entries, drop)
 			continue
 		}
+
+		// allow agent node IP/kube-proxy IP. Since Azure-NPM shares the same IP as its node/kube-proxy on the node, we just allow Azure-NPM IP.
+		AzureNpmSet := util.KubeAllNamespacesFlag + "-" + util.KubeAppFlag + ":" + util.AzureNpmFlag
+		hashedAzureNpmSet := util.GetHashedName(AzureNpmSet)
+		allowAgentEgress := &iptm.IptEntry{
+			Name:       AzureNpmSet,
+			HashedName: hashedAzureNpmSet,
+			Chain:      util.IptablesAzureEgressPortChain,
+			Specs: []string{
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedTargetSetName,
+				util.IptablesSrcFlag,
+				util.IptablesMatchFlag,
+				util.IptablesSetFlag,
+				util.IptablesMatchSetFlag,
+				hashedAzureNpmSet,
+				util.IptablesDstFlag,
+				util.IptablesJumpFlag,
+				util.IptablesAccept,
+			},
+		}
+		entries = append(entries, allowAgentEgress)
 
 		for _, rule := range rules {
 			for _, portRule := range rule.Ports {

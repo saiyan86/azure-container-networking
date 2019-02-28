@@ -8,6 +8,8 @@ const (
 	KubePodTemplateHashFlag string = "pod-template-hash"
 	KubeAllPodsFlag         string = "all-pod"
 	KubeAllNamespacesFlag   string = "all-namespace"
+	KubeAppFlag             string = "k8s-app"
+	KubeProxyFlag           string = "kube-proxy"
 
 	// The version of k8s that accept "AND" between namespaceSelector and podSelector is "1.11"
 	k8sMajorVerForNewPolicyDef string = "1"
@@ -76,7 +78,9 @@ const (
 
 	IpsetSetListFlag string = "setlist"
 	IpsetNetHashFlag string = "nethash"
-	AzureNpmPrefix   string = "azure-npm-"
+
+	AzureNpmFlag   string = "azure-npm"
+	AzureNpmPrefix string = "azure-npm-"
 )
 
 //NPM telemetry constants.
