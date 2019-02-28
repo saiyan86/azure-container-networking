@@ -191,6 +191,24 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 				// Handle IPBlock field of NetworkPolicyPeer
 				if fromRule.IPBlock != nil {
+					if len(fromRule.IPBlock.CIDR) > 0 {
+						cidrEntry := &iptm.IptEntry{
+							Chain: util.IptablesAzureIngressFromNsChain,
+							Specs: []string{
+								util.IptablesMatchFlag,
+								util.IptablesSetFlag,
+								util.IptablesMatchSetFlag,
+								hashedTargetSetName,
+								util.IptablesDstFlag,
+								util.IptablesSFlag,
+								fromRule.IPBlock.CIDR,
+								util.IptablesJumpFlag,
+								util.IptablesAccept,
+							},
+						}
+						entries = append(entries, cidrEntry)
+					}
+
 					if len(fromRule.IPBlock.Except) > 0 {
 						for _, except := range fromRule.IPBlock.Except {
 							entry := &iptm.IptEntry{
@@ -209,24 +227,6 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 							}
 							entries = append(entries, entry)
 						}
-					}
-
-					if len(fromRule.IPBlock.CIDR) > 0 {
-						cidrEntry := &iptm.IptEntry{
-							Chain: util.IptablesAzureIngressFromNsChain,
-							Specs: []string{
-								util.IptablesMatchFlag,
-								util.IptablesSetFlag,
-								util.IptablesMatchSetFlag,
-								hashedTargetSetName,
-								util.IptablesDstFlag,
-								util.IptablesSFlag,
-								fromRule.IPBlock.CIDR,
-								util.IptablesJumpFlag,
-								util.IptablesAccept,
-							},
-						}
-						entries = append(entries, cidrEntry)
 					}
 				}
 
@@ -551,7 +551,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			if !toRuleExists {
-				log.Printf("-------------???????????????????????????------------------")
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
 					HashedName: hashedTargetSetName,
@@ -577,6 +576,24 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 				// Handle IPBlock field of NetworkPolicyPeer
 				if toRule.IPBlock != nil {
+					if len(toRule.IPBlock.CIDR) > 0 {
+						cidrEntry := &iptm.IptEntry{
+							Chain: util.IptablesAzureEgressToNsChain,
+							Specs: []string{
+								util.IptablesMatchFlag,
+								util.IptablesSetFlag,
+								util.IptablesMatchSetFlag,
+								hashedTargetSetName,
+								util.IptablesSrcFlag,
+								util.IptablesDFlag,
+								toRule.IPBlock.CIDR,
+								util.IptablesJumpFlag,
+								util.IptablesAccept,
+							},
+						}
+						entries = append(entries, cidrEntry)
+					}
+
 					if len(toRule.IPBlock.Except) > 0 {
 						for _, except := range toRule.IPBlock.Except {
 							entry := &iptm.IptEntry{
@@ -595,24 +612,6 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 							}
 							entries = append(entries, entry)
 						}
-					}
-
-					if len(toRule.IPBlock.CIDR) > 0 {
-						cidrEntry := &iptm.IptEntry{
-							Chain: util.IptablesAzureEgressToNsChain,
-							Specs: []string{
-								util.IptablesMatchFlag,
-								util.IptablesSetFlag,
-								util.IptablesMatchSetFlag,
-								hashedTargetSetName,
-								util.IptablesSrcFlag,
-								util.IptablesDFlag,
-								toRule.IPBlock.CIDR,
-								util.IptablesJumpFlag,
-								util.IptablesAccept,
-							},
-						}
-						entries = append(entries, cidrEntry)
 					}
 				}
 
