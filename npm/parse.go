@@ -85,18 +85,17 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 			continue
 		}
 
-		// allow agent node IP/kube-proxy IP. Since Azure-NPM shares the same IP as its node/kube-proxy on the node, we just allow Azure-NPM IP.
-		AzureNpmSet := util.KubeAllNamespacesFlag + "-" + util.KubeAppFlag + ":" + util.AzureNpmFlag
-		hashedAzureNpmSet := util.GetHashedName(AzureNpmSet)
-		allowAgentIngress := &iptm.IptEntry{
-			Name:       AzureNpmSet,
-			HashedName: hashedAzureNpmSet,
+		// allow kube-system
+		hashedKubeSystemSet := util.GetHashedName(util.KubeSystemFlag)
+		allowKubeSystemIngress := &iptm.IptEntry{
+			Name:       util.KubeSystemFlag,
+			HashedName: hashedKubeSystemSet,
 			Chain:      util.IptablesAzureIngressPortChain,
 			Specs: []string{
 				util.IptablesMatchFlag,
 				util.IptablesSetFlag,
 				util.IptablesMatchSetFlag,
-				hashedAzureNpmSet,
+				hashedKubeSystemSet,
 				util.IptablesSrcFlag,
 				util.IptablesMatchFlag,
 				util.IptablesSetFlag,
@@ -107,7 +106,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 				util.IptablesAccept,
 			},
 		}
-		entries = append(entries, allowAgentIngress)
+		entries = append(entries, allowKubeSystemIngress)
 
 		for _, rule := range rules {
 			for _, portRule := range rule.Ports {
@@ -495,12 +494,11 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			continue
 		}
 
-		// allow agent node IP/kube-proxy IP. Since Azure-NPM shares the same IP as its node/kube-proxy on the node, we just allow Azure-NPM IP.
-		AzureNpmSet := util.KubeAllNamespacesFlag + "-" + util.KubeAppFlag + ":" + util.AzureNpmFlag
-		hashedAzureNpmSet := util.GetHashedName(AzureNpmSet)
-		allowAgentEgress := &iptm.IptEntry{
-			Name:       AzureNpmSet,
-			HashedName: hashedAzureNpmSet,
+		// allow kube-system
+		hashedKubeSystemSet := util.GetHashedName(util.KubeSystemFlag)
+		allowKubeSystemEgress := &iptm.IptEntry{
+			Name:       util.KubeSystemFlag,
+			HashedName: hashedKubeSystemSet,
 			Chain:      util.IptablesAzureEgressPortChain,
 			Specs: []string{
 				util.IptablesMatchFlag,
@@ -511,13 +509,13 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				util.IptablesMatchFlag,
 				util.IptablesSetFlag,
 				util.IptablesMatchSetFlag,
-				hashedAzureNpmSet,
+				hashedKubeSystemSet,
 				util.IptablesDstFlag,
 				util.IptablesJumpFlag,
 				util.IptablesAccept,
 			},
 		}
-		entries = append(entries, allowAgentEgress)
+		entries = append(entries, allowKubeSystemEgress)
 
 		for _, rule := range rules {
 			for _, portRule := range rule.Ports {
