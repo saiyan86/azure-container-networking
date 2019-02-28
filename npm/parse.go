@@ -480,6 +480,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 					}
 					if toRule.NamespaceSelector != nil {
 						toRuleExists = true
+						log.Printf("-------------------------Set here-------------------------")
 					}
 					if toRule.IPBlock != nil {
 						toRuleExists = true
@@ -547,6 +548,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 			}
 
 			if !toRuleExists {
+				log.Printf("-------------???????????????????????????------------------")
 				entry := &iptm.IptEntry{
 					Name:       targetSet,
 					HashedName: hashedTargetSetName,
