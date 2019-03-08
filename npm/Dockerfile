@@ -1,5 +1,5 @@
 # Use a minimal image as a parent image
-FROM ubuntu:16.04
+FROM ubuntu:18.10
 ARG NPM_BUILD_DIR
 
 # Install dependencies.
