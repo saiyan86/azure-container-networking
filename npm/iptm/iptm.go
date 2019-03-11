@@ -320,7 +320,7 @@ func (iptMgr *IptablesManager) Delete(entry *IptEntry) error {
 // Run execute an iptables command to update iptables.
 func (iptMgr *IptablesManager) Run(entry *IptEntry) (int, error) {
 	cmdName := util.Iptables
-	cmdArgs := append([]string{iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
+	cmdArgs := append([]string{util.IptablesWaitFlag, iptMgr.OperationFlag, entry.Chain}, entry.Specs...)
 
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
 	log.Printf("%s\n", string(cmdOut))
@@ -369,7 +369,7 @@ func (iptMgr *IptablesManager) Restore(configFile string) error {
 	}
 
 	// open the config file for reading
-	f, err := os.Open(configFile)
+	f, err := os.OpenFile(configFile, 0755, os.ModeExclusive)
 	if err != nil {
 		log.Printf("Error opening file: %s.", configFile)
 		return err

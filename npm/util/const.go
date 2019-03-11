@@ -31,6 +31,7 @@ const (
 	IptablesCheckFlag                string = "-C"
 	IptablesDestroyFlag              string = "-X"
 	IptablesJumpFlag                 string = "-j"
+	IptablesWaitFlag                 string = "-w"
 	IptablesAccept                   string = "ACCEPT"
 	IptablesReject                   string = "REJECT"
 	IptablesDrop                     string = "DROP"
