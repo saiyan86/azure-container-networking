@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-container-networking/telemetry"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/informers"
 	coreinformers "k8s.io/client-go/informers/core/v1"
@@ -49,6 +50,25 @@ type NetworkPolicyManager struct {
 
 // GetClusterState returns current cluster state.
 func (npMgr *NetworkPolicyManager) GetClusterState() telemetry.ClusterState {
+	pods, err := npMgr.clientset.CoreV1().Pods("").List(metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Error Listing pods in GetClusterState")
+	}
+
+	namespaces, err := npMgr.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Error Listing namespaces in GetClusterState")
+	}
+
+	networkpolicies, err := npMgr.clientset.NetworkingV1().NetworkPolicies("").List(metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Error Listing networkpolicies in GetClusterState")
+	}
+
+	npMgr.clusterState.PodCount = len(pods.Items)
+	npMgr.clusterState.NsCount = len(namespaces.Items)
+	npMgr.clusterState.NwPolicyCount = len(networkpolicies.Items)
+
 	return npMgr.clusterState
 }
 
@@ -108,7 +128,7 @@ func (npMgr *NetworkPolicyManager) RunReportManager() {
 			log.Printf("Error sending NPM telemetry report")
 		}
 
-		time.Sleep(1 * time.Minute)
+		time.Sleep(5 * time.Minute)
 	}
 }
 
