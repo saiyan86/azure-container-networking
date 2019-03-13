@@ -376,7 +376,7 @@ func (iptMgr *IptablesManager) Restore(configFile string) error {
 	}
 	defer f.Close()
 
-	cmd := exec.Command(util.IptablesRestore)
+	cmd := exec.Command(util.IptablesRestore, util.IptablesWaitFlag)
 	cmd.Stdin = f
 	if err := cmd.Start(); err != nil {
 		log.Printf("Error running iptables-restore.\n")
