@@ -369,7 +369,7 @@ func (iptMgr *IptablesManager) Restore(configFile string) error {
 	}
 
 	// open the config file for reading
-	f, err := os.OpenFile(configFile, 0755, os.ModeExclusive)
+	f, err := os.Open(configFile)
 	if err != nil {
 		log.Printf("Error opening file: %s.", configFile)
 		return err

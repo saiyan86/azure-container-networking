@@ -77,9 +77,6 @@ func (npMgr *NetworkPolicyManager) GetClusterState() telemetry.ClusterState {
 // UpdateAndSendReport updates the npm report then send it.
 // This function should only be called when npMgr is locked.
 func (npMgr *NetworkPolicyManager) UpdateAndSendReport(err error, eventMsg string) error {
-	npMgr.Lock()
-	defer npMgr.Unlock()
-
 	if !npMgr.TelemetryEnabled {
 		return nil
 	}
@@ -143,7 +140,7 @@ func connectToTelemetryServer(telemetryBuffer *telemetry.TelemetryBuffer) {
 
 // RunReportManager starts NPMReportManager and send telemetry periodically.
 func (npMgr *NetworkPolicyManager) RunReportManager() {
-	if npMgr.TelemetryEnabled {
+	if !npMgr.TelemetryEnabled {
 		return
 	}
 
