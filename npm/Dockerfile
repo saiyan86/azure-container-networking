@@ -6,7 +6,7 @@ ARG SCRIPTS_DIR
 # Install dependencies.
 COPY $SCRIPTS_DIR/install-npm-dependencies.sh .
 RUN chmod +x ./install-npm-dependencies.sh
-RUN ./install-npm-dependencies.sh > /dev/null
+RUN ./install-npm-dependencies.sh 
 
 # Install plugin.
 COPY $NPM_BUILD_DIR/azure-npm /usr/bin
