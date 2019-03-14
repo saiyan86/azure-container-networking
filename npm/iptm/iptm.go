@@ -1,12 +1,23 @@
+/*
+
+Part of this file is modified from iptables package from Kuberenetes.
+https://github.com/kubernetes/kubernetes/blob/master/pkg/util/iptables
+
+*/
 package iptm
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/Azure/azure-container-networking/log"
 	"github.com/Azure/azure-container-networking/npm/util"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // IptEntry represents an iptables rule.
@@ -354,7 +365,7 @@ func (iptMgr *IptablesManager) Save(configFile string) error {
 	cmd := exec.Command(util.IptablesSave)
 	cmd.Stdout = f
 	if err := cmd.Start(); err != nil {
-		log.Printf("Error running iptables-save.\n")
+		log.Printf("Error running iptables-save.")
 		return err
 	}
 	cmd.Wait()
@@ -363,6 +374,7 @@ func (iptMgr *IptablesManager) Save(configFile string) error {
 }
 
 // Restore restores iptables configuration from /var/log/iptables.conf
+/*
 func (iptMgr *IptablesManager) Restore(configFile string) error {
 	if len(configFile) == 0 {
 		configFile = util.IptablesConfigFile
@@ -379,10 +391,85 @@ func (iptMgr *IptablesManager) Restore(configFile string) error {
 	cmd := exec.Command(util.IptablesRestore, util.IptablesWaitFlag)
 	cmd.Stdin = f
 	if err := cmd.Start(); err != nil {
+		log.Printf("Error running iptables-restore.")
+		return err
+	}
+	cmd.Wait()
+
+	return nil
+}
+*/
+
+// Restore restores iptables configuration from /var/log/iptables.conf
+func (iptMgr *IptablesManager) Restore(configFile string) error {
+	if len(configFile) == 0 {
+		configFile = util.IptablesConfigFile
+	}
+
+	l, err := grabIptablesLocks()
+	if err != nil {
+		return err
+	}
+
+	defer func(l *os.File) {
+		if err = l.Close(); err != nil {
+			fmt.Printf("Failed to close iptables locks")
+		}
+	}(l)
+
+	// open the config file for reading
+	f, err := os.Open(configFile)
+	if err != nil {
+		log.Printf("Error opening file: %s.", configFile)
+		return err
+	}
+	defer f.Close()
+
+	cmd := exec.Command(util.IptablesRestore)
+	cmd.Stdin = f
+	if err := cmd.Start(); err != nil {
 		log.Printf("Error running iptables-restore.\n")
 		return err
 	}
 	cmd.Wait()
 
 	return nil
+}
+
+// grabs iptables v1.6 xtable lock
+func grabIptablesLocks() (*os.File, error) {
+	var success bool
+
+	l := &os.File{}
+	defer func(l *os.File) {
+		// Clean up immediately on failure
+		if !success {
+			l.Close()
+		}
+	}(l)
+
+	// Grab 1.6.x style lock.
+	l, err := os.OpenFile(util.IptablesLockFile, os.O_CREATE, 0600)
+	if err != nil {
+		log.Printf("failed to open iptables lock")
+		return nil, err
+	}
+
+	if err := wait.PollImmediate(200*time.Millisecond, 2*time.Second, func() (bool, error) {
+		if err := grabIptablesFileLock(l); err != nil {
+			return false, nil
+		}
+
+		return true, nil
+	}); err != nil {
+		log.Printf("failed to acquire new iptables lock: %v", err)
+		return nil, err
+	}
+
+	success = true
+	return l, nil
+}
+
+func grabIptablesFileLock(f *os.File) error {
+	return unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB)
 }

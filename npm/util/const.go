@@ -23,6 +23,7 @@ const (
 	IptablesRestore                  string = "iptables-restore"
 	IptablesConfigFile               string = "/var/log/iptables.conf"
 	IptablesTestConfigFile           string = "/var/log/iptables-test.conf"
+	IptablesLockFile                 string = "/run/xtables.lock"
 	IptablesChainCreationFlag        string = "-N"
 	IptablesInsertionFlag            string = "-I"
 	IptablesAppendFlag               string = "-A"
