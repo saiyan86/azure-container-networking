@@ -16,13 +16,14 @@ import (
 var IsNewNwPolicyVerFlag = false
 
 // Exists reports whether the named file or directory exists.
-func Exists(name string) bool {
-	if _, err := os.Stat(name); err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
+func Exists(filePath string) bool {
+	if _, err := os.Stat(filePath); err == nil {
+		return true
+	} else if !os.IsNotExist(err) {
+		return true
 	}
-	return true
+
+	return false
 }
 
 // GetClusterID retrieves cluster ID through node name. (Azure-specific)
