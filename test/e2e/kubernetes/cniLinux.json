@@ -7,7 +7,7 @@
         "kubernetesConfig":{
            "networkPlugin":"azure",
            "networkPolicy":"azure",
-           "azureCNIVersion":"v1.0.18",
+           "azureCNIVersion":"",
            "azureCNIURLLinux":""
         }
       },

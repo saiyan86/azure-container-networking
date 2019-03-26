@@ -4,10 +4,10 @@
       "orchestratorProfile":{
          "orchestratorType":"Kubernetes",
          "orchestratorRelease": "1.11",
-		     "kubernetesConfig":{
+		   "kubernetesConfig":{
            "networkPlugin":"azure",
            "networkPolicy":"azure",
-           "azureCNIVersion":"v1.0.18",
+           "azureCNIVersion":"",
            "azureCNIURLWindows":""
          }
       },
