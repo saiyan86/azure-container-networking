@@ -3,12 +3,12 @@
    "properties":{
       "orchestratorProfile":{
          "orchestratorType":"Kubernetes",
-         "orchestratorRelease": "1.11",
-		   "kubernetesConfig":{
-           "networkPlugin":"azure",
-           "networkPolicy":"azure",
-           "azureCNIVersion":"",
-           "azureCNIURLWindows":""
+         "orchestratorRelease":"1.11",
+         "kubernetesConfig":{
+            "networkPlugin":"azure",
+            "networkPolicy":"azure",
+            "azureCNIVersion":"",
+            "azureCNIURLWindows":""
          }
       },
       "masterProfile":{
@@ -23,11 +23,11 @@
             "vmSize":"Standard_D2_v2",
             "availabilityProfile":"AvailabilitySet",
             "osType":"Windows",
-            "extensions": [
+            "extensions":[
                {
-                 "name": "windows-patches"
+                  "name":"windows-patches"
                }
-             ]         
+            ]
          }
       ],
       "windowsProfile":{
@@ -39,7 +39,7 @@
          "ssh":{
             "publicKeys":[
                {
-                "keyData":""
+                  "keyData":""
                }
             ]
          }
