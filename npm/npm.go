@@ -3,6 +3,7 @@
 package npm
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"sync"
@@ -145,15 +146,15 @@ func (npMgr *NetworkPolicyManager) Start(stopCh <-chan struct{}) error {
 
 	// Wait for the initial sync of local cache.
 	if !cache.WaitForCacheSync(stopCh, npMgr.podInformer.Informer().HasSynced) {
-		return log.Errorf("Pod informer failed to sync")
+		return fmt.Errorf("Pod informer failed to sync")
 	}
 
 	if !cache.WaitForCacheSync(stopCh, npMgr.nsInformer.Informer().HasSynced) {
-		return log.Errorf("Namespace informer failed to sync")
+		return fmt.Errorf("Namespace informer failed to sync")
 	}
 
 	if !cache.WaitForCacheSync(stopCh, npMgr.npInformer.Informer().HasSynced) {
-		return log.Errorf("Namespace informer failed to sync")
+		return fmt.Errorf("Namespace informer failed to sync")
 	}
 
 	go npMgr.backup()
