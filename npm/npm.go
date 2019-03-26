@@ -3,13 +3,13 @@
 package npm
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/Azure/azure-container-networking/log"
+	"github.com/Azure/azure-container-networking/npm/iptm"
 	"github.com/Azure/azure-container-networking/npm/util"
 	"github.com/Azure/azure-container-networking/telemetry"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +27,9 @@ const (
 	hostNetAgentURLForNpm           = "http://168.63.129.16/machine/plugins?comp=netagent&type=npmreport"
 	contentType                     = "application/json"
 	telemetryRetryWaitTimeInSeconds = 60
+	restoreRetryWaitTimeInSeconds   = 5
+	restoreMaxRetries               = 10
+	backupWaitTimeInSeconds         = 60
 )
 
 // NetworkPolicyManager contains informers for pod, namespace and networkpolicy.
@@ -101,23 +104,59 @@ func (npMgr *NetworkPolicyManager) UpdateAndSendReport(err error, eventMsg strin
 	return npMgr.reportManager.SendReport(telemetryBuffer)
 }
 
-// Run starts shared informers and waits for the shared informer cache to sync.
-func (npMgr *NetworkPolicyManager) Run(stopCh <-chan struct{}) error {
+// restore restores iptables from backup file
+func (npMgr *NetworkPolicyManager) restore() {
+	iptMgr := iptm.NewIptablesManager()
+	var err error
+	for i := 0; i < restoreMaxRetries; i++ {
+		if err = iptMgr.Restore(util.IptablesConfigFile); err == nil {
+			return
+		}
+
+		time.Sleep(restoreRetryWaitTimeInSeconds * time.Second)
+	}
+
+	log.Printf("Timeout restoring Azure-NPM states")
+	panic(err.Error)
+}
+
+// backup takes snapshots of iptables filter table and saves it periodically.
+func (npMgr *NetworkPolicyManager) backup() {
+	iptMgr := iptm.NewIptablesManager()
+	var err error
+	for {
+		time.Sleep(backupWaitTimeInSeconds * time.Second)
+
+		if err = iptMgr.Save(util.IptablesConfigFile); err != nil {
+			log.Printf("Error backing up Azure-NPM states")
+		}
+	}
+}
+
+// Start starts shared informers and waits for the shared informer cache to sync.
+func (npMgr *NetworkPolicyManager) Start(stopCh <-chan struct{}) error {
 	// Starts all informers manufactured by npMgr's informerFactory.
 	npMgr.informerFactory.Start(stopCh)
 
+	// Failure detected. Needs to restore Azure-NPM related iptables entries.
+	if util.Exists(util.IptablesConfigFile) {
+		npMgr.restore()
+	}
+
 	// Wait for the initial sync of local cache.
 	if !cache.WaitForCacheSync(stopCh, npMgr.podInformer.Informer().HasSynced) {
-		return fmt.Errorf("Pod informer failed to sync")
+		return log.Errorf("Pod informer failed to sync")
 	}
 
 	if !cache.WaitForCacheSync(stopCh, npMgr.nsInformer.Informer().HasSynced) {
-		return fmt.Errorf("Namespace informer failed to sync")
+		return log.Errorf("Namespace informer failed to sync")
 	}
 
 	if !cache.WaitForCacheSync(stopCh, npMgr.npInformer.Informer().HasSynced) {
-		return fmt.Errorf("Namespace informer failed to sync")
+		return log.Errorf("Namespace informer failed to sync")
 	}
+
+	go npMgr.backup()
 
 	return nil
 }
