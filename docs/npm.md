@@ -10,11 +10,10 @@ Azure-NPM serves as a distributed firewall for the Kubernetes cluster, and it ca
 
 ## Install
 
-Simply run
+Running the command below will bring up one azure-npm instance on each Kubernetes node.
 ```
 kubectl apply -f https://raw.githubusercontent.com/Azure/azure-container-networking/master/npm/azure-npm.yaml
 ```
-will bring up one azure-npm instance on each Kubernetes node.
 Now you can secure your Kubernetes cluster with Azure-NPM by applying Kubernetes network policies.
 
 ## Build
