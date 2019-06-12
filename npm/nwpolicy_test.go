@@ -22,7 +22,7 @@ func TestAddNetworkPolicy(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}
@@ -102,7 +102,7 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}
@@ -210,7 +210,7 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}

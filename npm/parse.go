@@ -62,7 +62,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		log.Printf("Parsing iptables for label %s", targetSet)
+		log.Printf("[Azure-NPM] Parsing iptables for label %s", targetSet)
 
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
@@ -427,7 +427,7 @@ func parseIngress(ns string, targetSets []string, rules []networkingv1.NetworkPo
 		}
 	}
 
-	log.Printf("finished parsing ingress rule")
+	log.Printf("[Azure-NPM] finished parsing ingress rule")
 	return policyRuleSets, policyRuleLists, entries
 }
 
@@ -471,7 +471,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 
 	// Use hashed string for ipset name to avoid string length limit of ipset.
 	for _, targetSet := range targetSets {
-		log.Printf("Parsing iptables for label %s", targetSet)
+		log.Printf("[Azure-NPM] Parsing iptables for label %s", targetSet)
 
 		hashedTargetSetName := util.GetHashedName(targetSet)
 
@@ -764,7 +764,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 				// Allow traffic from podSelector intersects namespaceSelector
 				// This is only supported in kubernetes version >= 1.11
 				if util.IsNewNwPolicyVerFlag {
-					log.Printf("Kubernetes version > 1.11, parsing podSelector AND namespaceSelector")
+					log.Printf("[Azure-NPM] Kubernetes version > 1.11, parsing podSelector AND namespaceSelector")
 					// allow traffic from all namespaces
 					if len(toRule.NamespaceSelector.MatchLabels) == 0 {
 						nsRuleLists = append(nsRuleLists, util.KubeAllNamespacesFlag)
@@ -837,7 +837,7 @@ func parseEgress(ns string, targetSets []string, rules []networkingv1.NetworkPol
 		}
 	}
 
-	log.Printf("finished parsing ingress rule")
+	log.Printf("[Azure-NPM] finished parsing ingress rule")
 	return policyRuleSets, policyRuleLists, entries
 }
 

@@ -41,7 +41,7 @@ func TestAddPod(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}
@@ -86,7 +86,7 @@ func TestUpdatePod(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}
@@ -149,7 +149,7 @@ func TestDeletePod(t *testing.T) {
 		TelemetryEnabled: false,
 		reportManager: &telemetry.ReportManager{
 			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     contentType,
+			ContentType:     telemetry.ContentType,
 			Report:          &telemetry.NPMReport{},
 		},
 	}
