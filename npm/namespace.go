@@ -49,7 +49,7 @@ func (npMgr *NetworkPolicyManager) InitAllNsList() error {
 		}
 
 		if err := allNs.ipsMgr.AddToList(util.KubeAllNamespacesFlag, nsName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to add namespace set %s to list %s", nsName, util.KubeAllNamespacesFlag)
+			log.Errorf("Error: failed to add namespace set %s to list %s", nsName, util.KubeAllNamespacesFlag)
 			return err
 		}
 	}
@@ -66,7 +66,7 @@ func (npMgr *NetworkPolicyManager) UninitAllNsList() error {
 		}
 
 		if err := allNs.ipsMgr.DeleteFromList(util.KubeAllNamespacesFlag, nsName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to delete namespace set %s from list %s", nsName, util.KubeAllNamespacesFlag)
+			log.Errorf("Error: failed to delete namespace set %s from list %s", nsName, util.KubeAllNamespacesFlag)
 			return err
 		}
 	}
@@ -82,17 +82,17 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	var err error
 
 	nsName, nsNs, nsLabel := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace, nsObj.ObjectMeta.Labels
-	log.Printf("[Azure-NPM] NAMESPACE CREATING: [%s/%s/%+v]", nsName, nsNs, nsLabel)
+	log.Printf("NAMESPACE CREATING: [%s/%s/%+v]", nsName, nsNs, nsLabel)
 
 	ipsMgr := npMgr.nsMap[util.KubeAllNamespacesFlag].ipsMgr
 	// Create ipset for the namespace.
 	if err = ipsMgr.CreateSet(nsName); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create ipset for namespace %s.", nsName)
+		log.Errorf("Error: failed to create ipset for namespace %s.", nsName)
 		return err
 	}
 
 	if err = ipsMgr.AddToList(util.KubeAllNamespacesFlag, nsName); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to add %s to all-namespace ipset list.", nsName)
+		log.Errorf("Error: failed to add %s to all-namespace ipset list.", nsName)
 		return err
 	}
 
@@ -101,9 +101,9 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 	nsLabels := nsObj.ObjectMeta.Labels
 	for nsLabelKey, nsLabelVal := range nsLabels {
 		labelKey := util.GetNsIpsetName(nsLabelKey, nsLabelVal)
-		log.Printf("[Azure-NPM] Adding namespace %s to ipset list %s", nsName, labelKey)
+		log.Printf("Adding namespace %s to ipset list %s", nsName, labelKey)
 		if err = ipsMgr.AddToList(labelKey, nsName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to add namespace %s to ipset list %s", nsName, labelKey)
+			log.Errorf("Error: failed to add namespace %s to ipset list %s", nsName, labelKey)
 			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
@@ -111,7 +111,7 @@ func (npMgr *NetworkPolicyManager) AddNamespace(nsObj *corev1.Namespace) error {
 
 	ns, err := newNs(nsName)
 	if err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create namespace %s", nsName)
+		log.Errorf("Error: failed to create namespace %s", nsName)
 	}
 	npMgr.nsMap[nsName] = ns
 
@@ -125,7 +125,7 @@ func (npMgr *NetworkPolicyManager) UpdateNamespace(oldNsObj *corev1.Namespace, n
 	oldNsName, oldNsNs, oldNsLabel := oldNsObj.ObjectMeta.Name, oldNsObj.ObjectMeta.Namespace, oldNsObj.ObjectMeta.Labels
 	newNsName, newNsNs, newNsLabel := newNsObj.ObjectMeta.Name, newNsObj.ObjectMeta.Namespace, newNsObj.ObjectMeta.Labels
 	log.Printf(
-		"[Azure-NPM] NAMESPACE UPDATING:\n old namespace: [%s/%s/%+v]\n new namespace: [%s/%s/%+v]",
+		"NAMESPACE UPDATING:\n old namespace: [%s/%s/%+v]\n new namespace: [%s/%s/%+v]",
 		oldNsName, oldNsNs, oldNsLabel, newNsName, newNsNs, newNsLabel,
 	)
 
@@ -150,7 +150,7 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 	var err error
 
 	nsName, nsNs, nsLabel := nsObj.ObjectMeta.Name, nsObj.ObjectMeta.Namespace, nsObj.ObjectMeta.Labels
-	log.Printf("[Azure-NPM] NAMESPACE DELETING: [%s/%s/%+v]", nsName, nsNs, nsLabel)
+	log.Printf("NAMESPACE DELETING: [%s/%s/%+v]", nsName, nsNs, nsLabel)
 
 	_, exists := npMgr.nsMap[nsName]
 	if !exists {
@@ -163,9 +163,9 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 	nsLabels := nsObj.ObjectMeta.Labels
 	for nsLabelKey, nsLabelVal := range nsLabels {
 		labelKey := util.GetNsIpsetName(nsLabelKey, nsLabelVal)
-		log.Printf("[Azure-NPM] Deleting namespace %s from ipset list %s", nsName, labelKey)
+		log.Printf("Deleting namespace %s from ipset list %s", nsName, labelKey)
 		if err = ipsMgr.DeleteFromList(labelKey, nsName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to delete namespace %s from ipset list %s", nsName, labelKey)
+			log.Errorf("Error: failed to delete namespace %s from ipset list %s", nsName, labelKey)
 			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
@@ -173,13 +173,13 @@ func (npMgr *NetworkPolicyManager) DeleteNamespace(nsObj *corev1.Namespace) erro
 
 	// Delete the namespace from all-namespace ipset list.
 	if err = ipsMgr.DeleteFromList(util.KubeAllNamespacesFlag, nsName); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to delete namespace %s from ipset list %s", nsName, util.KubeAllNamespacesFlag)
+		log.Errorf("Error: failed to delete namespace %s from ipset list %s", nsName, util.KubeAllNamespacesFlag)
 		return err
 	}
 
 	// Delete ipset for the namespace.
 	if err = ipsMgr.DeleteSet(nsName); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to delete ipset for namespace %s.", nsName)
+		log.Errorf("Error: failed to delete ipset for namespace %s.", nsName)
 		return err
 	}
 

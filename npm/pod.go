@@ -38,14 +38,14 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 	podNodeName := podObj.Spec.NodeName
 	podLabels := podObj.ObjectMeta.Labels
 	podIP := podObj.Status.PodIP
-	log.Printf("[Azure-NPM] POD CREATING: [%s/%s/%s%+v%s]", podNs, podName, podNodeName, podLabels, podIP)
+	log.Printf("POD CREATING: [%s/%s/%s%+v%s]", podNs, podName, podNodeName, podLabels, podIP)
 
 	// Add the pod to ipset
 	ipsMgr := npMgr.nsMap[util.KubeAllNamespacesFlag].ipsMgr
 	// Add the pod to its namespace's ipset.
-	log.Printf("[Azure-NPM] Adding pod %s to ipset %s", podIP, podNs)
+	log.Printf("Adding pod %s to ipset %s", podIP, podNs)
 	if err = ipsMgr.AddToSet(podNs, podIP); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to add pod to namespace ipset.")
+		log.Errorf("Error: failed to add pod to namespace ipset.")
 		return err
 	}
 
@@ -58,9 +58,9 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 		}
 
 		labelKey := util.KubeAllNamespacesFlag + "-" + podLabelKey + ":" + podLabelVal
-		log.Printf("[Azure-NPM] Adding pod %s to ipset %s", podIP, labelKey)
+		log.Printf("Adding pod %s to ipset %s", podIP, labelKey)
 		if err = ipsMgr.AddToSet(labelKey, podIP); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to add pod to label ipset.")
+			log.Errorf("Error: failed to add pod to label ipset.")
 			return err
 		}
 		labelKeys = append(labelKeys, labelKey)
@@ -68,7 +68,7 @@ func (npMgr *NetworkPolicyManager) AddPod(podObj *corev1.Pod) error {
 
 	ns, err := newNs(podNs)
 	if err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create namespace %s", podNs)
+		log.Errorf("Error: failed to create namespace %s", podNs)
 		return err
 	}
 	npMgr.nsMap[podNs] = ns
@@ -96,7 +96,7 @@ func (npMgr *NetworkPolicyManager) UpdatePod(oldPodObj, newPodObj *corev1.Pod) e
 	newPodObjIP := newPodObj.Status.PodIP
 
 	log.Printf(
-		"[Azure-NPM] POD UPDATING:\n old pod: [%s/%s/%+v/%s/%s]\n new pod: [%s/%s/%+v/%s/%s]",
+		"POD UPDATING:\n old pod: [%s/%s/%+v/%s/%s]\n new pod: [%s/%s/%+v/%s/%s]",
 		oldPodObjNs, oldPodObjName, oldPodObjLabel, oldPodObjPhase, oldPodObjIP,
 		newPodObjNs, newPodObjName, newPodObjLabel, newPodObjPhase, newPodObjIP,
 	)
@@ -130,13 +130,13 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 	podNodeName := podObj.Spec.NodeName
 	podLabels := podObj.ObjectMeta.Labels
 	podIP := podObj.Status.PodIP
-	log.Printf("[Azure-NPM] POD DELETING: [%s/%s/%s%+v%s]", podNs, podName, podNodeName, podLabels, podIP)
+	log.Printf("POD DELETING: [%s/%s/%s%+v%s]", podNs, podName, podNodeName, podLabels, podIP)
 
 	// Delete pod from ipset
 	ipsMgr := npMgr.nsMap[util.KubeAllNamespacesFlag].ipsMgr
 	// Delete the pod from its namespace's ipset.
 	if err = ipsMgr.DeleteFromSet(podNs, podIP); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to delete pod from namespace ipset.")
+		log.Errorf("Error: failed to delete pod from namespace ipset.")
 		return err
 	}
 	// Delete the pod from its label's ipset.
@@ -148,7 +148,7 @@ func (npMgr *NetworkPolicyManager) DeletePod(podObj *corev1.Pod) error {
 
 		labelKey := util.KubeAllNamespacesFlag + "-" + podLabelKey + ":" + podLabelVal
 		if err = ipsMgr.DeleteFromSet(labelKey, podIP); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to delete pod from label ipset.")
+			log.Errorf("Error: failed to delete pod from label ipset.")
 			return err
 		}
 	}

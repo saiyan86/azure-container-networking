@@ -83,9 +83,9 @@ func (ipsMgr *IpsetManager) CreateList(listName string) error {
 		set:           util.GetHashedName(listName),
 		spec:          util.IpsetSetListFlag,
 	}
-	log.Printf("[Azure-NPM] Creating List: %+v", entry)
+	log.Printf("Creating List: %+v", entry)
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create ipset list %s.", listName)
+		log.Errorf("Error: failed to create ipset list %s.", listName)
 		return err
 	}
 
@@ -104,11 +104,11 @@ func (ipsMgr *IpsetManager) DeleteList(listName string) error {
 	errCode, err := ipsMgr.Run(entry)
 	if err != nil {
 		if errCode == 1 {
-			log.Printf("[Azure-NPM] Error: Cannot delete list %s as it's being referred or doesn't exist.", listName)
+			log.Printf("Error: Cannot delete list %s as it's being referred or doesn't exist.", listName)
 			return nil
 		}
 
-		log.Errorf("[Azure-NPM] Error: failed to delete ipset %s %+v", listName, entry)
+		log.Errorf("Error: failed to delete ipset %s %+v", listName, entry)
 		return err
 	}
 
@@ -134,7 +134,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 	}
 
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create ipset rules. rule: %+v", entry)
+		log.Errorf("Error: failed to create ipset rules. rule: %+v", entry)
 		return err
 	}
 
@@ -146,7 +146,7 @@ func (ipsMgr *IpsetManager) AddToList(listName string, setName string) error {
 // DeleteFromList removes an ipset to an ipset list.
 func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) error {
 	if _, exists := ipsMgr.listMap[listName]; !exists {
-		log.Printf("[Azure-NPM] ipset list with name %s not found", listName)
+		log.Printf("ipset list with name %s not found", listName)
 		return nil
 	}
 
@@ -164,13 +164,13 @@ func (ipsMgr *IpsetManager) DeleteFromList(listName string, setName string) erro
 	}
 	errCode, err := ipsMgr.Run(entry)
 	if errCode > 1 && err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to delete ipset entry. %+v", entry)
+		log.Errorf("Error: failed to delete ipset entry. %+v", entry)
 		return err
 	}
 
 	if len(ipsMgr.listMap[listName].elements) == 0 {
 		if err := ipsMgr.DeleteList(listName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to delete ipset list %s.", listName)
+			log.Errorf("Error: failed to delete ipset list %s.", listName)
 			return err
 		}
 	}
@@ -191,9 +191,9 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 		set:  util.GetHashedName(setName),
 		spec: util.IpsetNetHashFlag,
 	}
-	log.Printf("[Azure-NPM] Creating Set: %+v", entry)
+	log.Printf("Creating Set: %+v", entry)
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to create ipset.")
+		log.Errorf("Error: failed to create ipset.")
 		return err
 	}
 
@@ -205,7 +205,7 @@ func (ipsMgr *IpsetManager) CreateSet(setName string) error {
 // DeleteSet removes a set from ipset.
 func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	if _, exists := ipsMgr.setMap[setName]; !exists {
-		log.Printf("[Azure-NPM] ipset with name %s not found", setName)
+		log.Printf("ipset with name %s not found", setName)
 		return nil
 	}
 
@@ -220,11 +220,11 @@ func (ipsMgr *IpsetManager) DeleteSet(setName string) error {
 	errCode, err := ipsMgr.Run(entry)
 	if err != nil {
 		if errCode == 1 {
-			log.Printf("[Azure-NPM] Cannot delete set %s as it's being referred.", setName)
+			log.Printf("Cannot delete set %s as it's being referred.", setName)
 			return nil
 		}
 
-		log.Errorf("[Azure-NPM] Error: failed to delete ipset %s. Entry: %+v", setName, entry)
+		log.Errorf("Error: failed to delete ipset %s. Entry: %+v", setName, entry)
 		return err
 	}
 
@@ -250,7 +250,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 	}
 
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Printf("[Azure-NPM] Error: failed to create ipset rules. %+v", entry)
+		log.Printf("Error: failed to create ipset rules. %+v", entry)
 		return err
 	}
 
@@ -262,7 +262,7 @@ func (ipsMgr *IpsetManager) AddToSet(setName string, ip string) error {
 // DeleteFromSet removes an ip from an entry in setMap, and delete/update the corresponding ipset.
 func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 	if _, exists := ipsMgr.setMap[setName]; !exists {
-		log.Printf("[Azure-NPM] ipset with name %s not found", setName)
+		log.Printf("ipset with name %s not found", setName)
 		return nil
 	}
 
@@ -278,7 +278,7 @@ func (ipsMgr *IpsetManager) DeleteFromSet(setName string, ip string) error {
 		spec:          ip,
 	}
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to delete ipset entry. Entry: %+v", entry)
+		log.Errorf("Error: failed to delete ipset entry. Entry: %+v", entry)
 		return err
 	}
 
@@ -293,7 +293,7 @@ func (ipsMgr *IpsetManager) Clean() error {
 		}
 
 		if err := ipsMgr.DeleteSet(setName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to clean ipset")
+			log.Errorf("Error: failed to clean ipset")
 			return err
 		}
 	}
@@ -304,7 +304,7 @@ func (ipsMgr *IpsetManager) Clean() error {
 		}
 
 		if err := ipsMgr.DeleteList(listName); err != nil {
-			log.Errorf("[Azure-NPM] Error: failed to clean ipset list")
+			log.Errorf("Error: failed to clean ipset list")
 			return err
 		}
 	}
@@ -318,13 +318,13 @@ func (ipsMgr *IpsetManager) Destroy() error {
 		operationFlag: util.IpsetFlushFlag,
 	}
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to flush ipset")
+		log.Errorf("Error: failed to flush ipset")
 		return err
 	}
 
 	entry.operationFlag = util.IpsetDestroyFlag
 	if _, err := ipsMgr.Run(entry); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to destroy ipset")
+		log.Errorf("Error: failed to destroy ipset")
 		return err
 	}
 
@@ -342,12 +342,12 @@ func (ipsMgr *IpsetManager) Run(entry *ipsEntry) (int, error) {
 		cmdArgs = append(cmdArgs, entry.spec)
 	}
 
-	log.Printf("[Azure-NPM] Executing ipset command %s %v", cmdName, cmdArgs)
+	log.Printf("Executing ipset command %s %v", cmdName, cmdArgs)
 	_, err := exec.Command(cmdName, cmdArgs...).Output()
 	if msg, failed := err.(*exec.ExitError); failed {
 		errCode := msg.Sys().(syscall.WaitStatus).ExitStatus()
 		if errCode > 1 {
-			log.Errorf("[Azure-NPM] Error: There was an error running command: %s %s Arguments:%v", err, cmdName, cmdArgs)
+			log.Errorf("Error: There was an error running command: %s %s Arguments:%v", err, cmdName, cmdArgs)
 		}
 
 		return errCode, err
@@ -364,7 +364,7 @@ func (ipsMgr *IpsetManager) Save(configFile string) error {
 
 	cmd := exec.Command(util.Ipset, util.IpsetSaveFlag, util.IpsetFileFlag, configFile)
 	if err := cmd.Start(); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to save ipset to file.")
+		log.Errorf("Error: failed to save ipset to file.")
 		return err
 	}
 	cmd.Wait()
@@ -380,7 +380,7 @@ func (ipsMgr *IpsetManager) Restore(configFile string) error {
 
 	f, err := os.Stat(configFile)
 	if err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to get file %s stat from ipsm.Restore", configFile)
+		log.Errorf("Error: failed to get file %s stat from ipsm.Restore", configFile)
 		return err
 	}
 
@@ -392,7 +392,7 @@ func (ipsMgr *IpsetManager) Restore(configFile string) error {
 
 	cmd := exec.Command(util.Ipset, util.IpsetRestoreFlag, util.IpsetFileFlag, configFile)
 	if err := cmd.Start(); err != nil {
-		log.Errorf("[Azure-NPM] Error: failed to restore ipset from file.")
+		log.Errorf("Error: failed to restore ipset from file.")
 		return err
 	}
 	cmd.Wait()

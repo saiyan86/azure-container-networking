@@ -23,7 +23,7 @@ func initLogging() error {
 	log.SetName("azure-npm")
 	log.SetLevel(log.LevelInfo)
 	if err := log.SetTarget(log.TargetLogfile); err != nil {
-		log.Logf("[Azure-NPM] Failed to configure logging, err:%v.", err)
+		log.Logf("Failed to configure logging, err:%v.", err)
 		return err
 	}
 
@@ -35,7 +35,7 @@ func main() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Logf("[Azure-NPM] recovered from error: %v", err)
+			log.Logf("recovered from error: %v", err)
 		}
 	}()
 
@@ -52,7 +52,7 @@ func main() {
 	// Creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Logf("[Azure-NPM] clientset creation failed with error %v.", err)
+		log.Logf("clientset creation failed with error %v.", err)
 		panic(err.Error())
 	}
 
@@ -66,7 +66,7 @@ func main() {
 
 	err = npMgr.Start(wait.NeverStop)
 	if err != nil {
-		log.Logf("[Azure-NPM] npm failed with error %v.", err)
+		log.Logf("npm failed with error %v.", err)
 		panic(err.Error)
 	}
 

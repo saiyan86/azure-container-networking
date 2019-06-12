@@ -61,17 +61,17 @@ type NetworkPolicyManager struct {
 func (npMgr *NetworkPolicyManager) GetClusterState() telemetry.ClusterState {
 	pods, err := npMgr.clientset.CoreV1().Pods("").List(metav1.ListOptions{})
 	if err != nil {
-		log.Logf("[Azure-NPM] Error: Failed to list pods in GetClusterState")
+		log.Logf("Error: Failed to list pods in GetClusterState")
 	}
 
 	namespaces, err := npMgr.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
-		log.Logf("[Azure-NPM] Error: Failed to list namespaces in GetClusterState")
+		log.Logf("Error: Failed to list namespaces in GetClusterState")
 	}
 
 	networkpolicies, err := npMgr.clientset.NetworkingV1().NetworkPolicies("").List(metav1.ListOptions{})
 	if err != nil {
-		log.Logf("[Azure-NPM] Error: Failed to list networkpolicies in GetClusterState")
+		log.Logf("Error: Failed to list networkpolicies in GetClusterState")
 	}
 
 	npMgr.clusterState.PodCount = len(pods.Items)
@@ -122,13 +122,13 @@ CONNECT:
 
 		report, err := npMgr.reportManager.ReportToBytes()
 		if err != nil {
-			log.Logf("[Azure-NPM] ReportToBytes failed: %v", err)
+			log.Logf("ReportToBytes failed: %v", err)
 			continue
 		}
 
 		// If write fails, try to re-establish connections as server/client
 		if _, err = tb.Write(report); err != nil {
-			log.Logf("[Azure-NPM] Telemetry write failed: %v", err)
+			log.Logf("Telemetry write failed: %v", err)
 			tb.Close()
 			goto CONNECT
 		}
@@ -147,7 +147,7 @@ func (npMgr *NetworkPolicyManager) restore() {
 		time.Sleep(restoreRetryWaitTimeInSeconds * time.Second)
 	}
 
-	log.Logf("[Azure-NPM] Error: timeout restoring Azure-NPM states")
+	log.Logf("Error: timeout restoring Azure-NPM states")
 	panic(err.Error)
 }
 
@@ -159,7 +159,7 @@ func (npMgr *NetworkPolicyManager) backup() {
 		time.Sleep(backupWaitTimeInSeconds * time.Second)
 
 		if err = iptMgr.Save(util.IptablesConfigFile); err != nil {
-			log.Logf("[Azure-NPM] Error: failed to back up Azure-NPM states")
+			log.Logf("Error: failed to back up Azure-NPM states")
 		}
 	}
 }
@@ -201,13 +201,13 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 
 	serverVersion, err := clientset.ServerVersion()
 	if err != nil {
-		log.Logf("[Azure-NPM] Error: failed to retrieving kubernetes version")
+		log.Logf("Error: failed to retrieving kubernetes version")
 		panic(err.Error)
 	}
-	log.Logf("[Azure-NPM] API server version: %+v", serverVersion)
+	log.Logf("API server version: %+v", serverVersion)
 
 	if err = util.SetIsNewNwPolicyVerFlag(serverVersion); err != nil {
-		log.Logf("[Azure-NPM] Error: failed to set IsNewNwPolicyVerFlag")
+		log.Logf("Error: failed to set IsNewNwPolicyVerFlag")
 		panic(err.Error)
 	}
 
@@ -245,7 +245,7 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 
 	allNs, err := newNs(util.KubeAllNamespacesFlag)
 	if err != nil {
-		log.Logf("[Azure-NPM] Error: failed to create all-namespace.")
+		log.Logf("Error: failed to create all-namespace.")
 		panic(err.Error)
 	}
 	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
