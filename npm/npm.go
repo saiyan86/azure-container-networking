@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	hostNetAgentURLForNpm         = "http://168.63.129.16/machine/plugins?comp=netagent&type=npmreport"
 	restoreRetryWaitTimeInSeconds = 5
 	restoreMaxRetries             = 10
 	backupWaitTimeInSeconds       = 60
@@ -226,9 +225,8 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 			NwPolicyCount: 0,
 		},
 		reportManager: &telemetry.ReportManager{
-			HostNetAgentURL: hostNetAgentURLForNpm,
-			ContentType:     telemetry.ContentType,
-			Report:          &telemetry.NPMReport{},
+			ContentType: telemetry.ContentType,
+			Report:      &telemetry.NPMReport{},
 		},
 		serverVersion:    serverVersion,
 		TelemetryEnabled: true,
