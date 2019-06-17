@@ -9,10 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -282,7 +284,9 @@ func (tb *TelemetryBuffer) sendToHost() error {
 		NPMReports: make([]NPMReport, 0),
 		CNSReports: make([]CNSReport, 0),
 	}
-	i, payloadSize, maxPayloadSizeReached := 0, 0, false
+
+	seed := rand.NewSource(time.Now().UnixNano())
+	i, payloadSize, maxPayloadSizeReached := rand.New(seed).Intn(reflect.ValueOf(&buf).Elem().NumField()), 0, false
 	isDNCReportsEmpty, isCNIReportsEmpty, isCNSReportsEmpty, isNPMReportsEmpty := false, false, false, false
 	for {
 		// craft payload in a round-robin manner.
