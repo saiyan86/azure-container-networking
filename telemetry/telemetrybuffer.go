@@ -42,7 +42,7 @@ const (
 	minInterval        = 10 * time.Second
 	logName            = "azure-vnet-telemetry"
 	MaxPayloadSize     = 4096
-	MaxBufferSize      = 1048576
+	MaxNumReports      = 1000
 	dnc                = "DNC"
 	cns                = "CNS"
 	npm                = "NPM"
@@ -81,13 +81,13 @@ func NewTelemetryBuffer(hostReportURL string) *TelemetryBuffer {
 		tb.azureHostReportURL = azureHostReportURL
 	}
 
-	tb.data = make(chan interface{}, 1000)
+	tb.data = make(chan interface{}, MaxNumReports)
 	tb.cancel = make(chan bool, 1)
 	tb.connections = make([]net.Conn, 0)
-	tb.buffer.DNCReports = make([]DNCReport, 1000)
-	tb.buffer.CNIReports = make([]CNIReport, 1000)
-	tb.buffer.NPMReports = make([]NPMReport, 1000)
-	tb.buffer.CNSReports = make([]CNSReport, 1000)
+	tb.buffer.DNCReports = make([]DNCReport, 0, MaxNumReports)
+	tb.buffer.CNIReports = make([]CNIReport, 0, MaxNumReports)
+	tb.buffer.NPMReports = make([]NPMReport, 0, MaxNumReports)
+	tb.buffer.CNSReports = make([]CNSReport, 0, MaxNumReports)
 
 	return &tb
 }
@@ -423,18 +423,30 @@ func (buf *Buffer) push(x interface{}) {
 
 	switch x.(type) {
 	case DNCReport:
+		if len(buf.DNCReports) >= MaxNumReports {
+			return
+		}
 		dncReport := x.(DNCReport)
 		dncReport.Metadata = metadata
 		buf.DNCReports = append(buf.DNCReports, dncReport)
 	case CNIReport:
+		if len(buf.CNIReports) >= MaxNumReports {
+			return
+		}
 		cniReport := x.(CNIReport)
 		cniReport.Metadata = metadata
 		buf.CNIReports = append(buf.CNIReports, cniReport)
 	case NPMReport:
+		if len(buf.NPMReports) >= MaxNumReports {
+			return
+		}
 		npmReport := x.(NPMReport)
 		npmReport.Metadata = metadata
 		buf.NPMReports = append(buf.NPMReports, npmReport)
 	case CNSReport:
+		if len(buf.CNSReports) >= MaxNumReports {
+			return
+		}
 		cnsReport := x.(CNSReport)
 		cnsReport.Metadata = metadata
 		buf.CNSReports = append(buf.CNSReports, cnsReport)
