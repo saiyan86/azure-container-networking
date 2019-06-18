@@ -84,10 +84,10 @@ func NewTelemetryBuffer(hostReportURL string) *TelemetryBuffer {
 	tb.data = make(chan interface{}, 1000)
 	tb.cancel = make(chan bool, 1)
 	tb.connections = make([]net.Conn, 0)
-	tb.buffer.DNCReports = make([]DNCReport, 0)
-	tb.buffer.CNIReports = make([]CNIReport, 0)
-	tb.buffer.NPMReports = make([]NPMReport, 0)
-	tb.buffer.CNSReports = make([]CNSReport, 0)
+	tb.buffer.DNCReports = make([]DNCReport, 1000)
+	tb.buffer.CNIReports = make([]CNIReport, 1000)
+	tb.buffer.NPMReports = make([]NPMReport, 1000)
+	tb.buffer.CNSReports = make([]CNSReport, 1000)
 
 	return &tb
 }
