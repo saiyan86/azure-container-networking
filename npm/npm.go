@@ -45,9 +45,9 @@ type NetworkPolicyManager struct {
 	nsInformer      coreinformers.NamespaceInformer
 	npInformer      networkinginformers.NetworkPolicyInformer
 
-	nodeName               string
-	nsMap                  map[string]*namespace
-	isAzureNpmChainCreated bool
+	nodeName                     string
+	nsMap                        map[string]*namespace
+	isAzureNpmChainCreated       bool
 	isSafeToCleanUpAzureNpmChain bool
 
 	clusterState  telemetry.ClusterState
@@ -169,10 +169,9 @@ func (npMgr *NetworkPolicyManager) Start(stopCh <-chan struct{}) error {
 	// Starts all informers manufactured by npMgr's informerFactory.
 	npMgr.informerFactory.Start(stopCh)
 
-	// Failure detected. Needs to restore Azure-NPM related iptables entries.
-	if util.Exists(util.IptablesConfigFile) {
-		npMgr.restore()
-	}
+	// Clear out left over iptables states
+	iptMgr := iptm.NewIptablesManager()
+	iptMgr.UninitNpmChains()
 
 	// Wait for the initial sync of local cache.
 	if !cache.WaitForCacheSync(stopCh, npMgr.podInformer.Informer().HasSynced) {
@@ -212,14 +211,14 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 	}
 
 	npMgr := &NetworkPolicyManager{
-		clientset:              clientset,
-		informerFactory:        informerFactory,
-		podInformer:            podInformer,
-		nsInformer:             nsInformer,
-		npInformer:             npInformer,
-		nodeName:               os.Getenv("HOSTNAME"),
-		nsMap:                  make(map[string]*namespace),
-		isAzureNpmChainCreated: false,
+		clientset:                    clientset,
+		informerFactory:              informerFactory,
+		podInformer:                  podInformer,
+		nsInformer:                   nsInformer,
+		npInformer:                   npInformer,
+		nodeName:                     os.Getenv("HOSTNAME"),
+		nsMap:                        make(map[string]*namespace),
+		isAzureNpmChainCreated:       false,
 		isSafeToCleanUpAzureNpmChain: false,
 		clusterState: telemetry.ClusterState{
 			PodCount:      0,
