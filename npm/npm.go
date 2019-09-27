@@ -169,10 +169,6 @@ func (npMgr *NetworkPolicyManager) Start(stopCh <-chan struct{}) error {
 	// Starts all informers manufactured by npMgr's informerFactory.
 	npMgr.informerFactory.Start(stopCh)
 
-	// Clear out left over iptables states
-	iptMgr := iptm.NewIptablesManager()
-	iptMgr.UninitNpmChains()
-
 	// Wait for the initial sync of local cache.
 	if !cache.WaitForCacheSync(stopCh, npMgr.podInformer.Informer().HasSynced) {
 		return fmt.Errorf("Pod informer failed to sync")
@@ -193,6 +189,10 @@ func (npMgr *NetworkPolicyManager) Start(stopCh <-chan struct{}) error {
 
 // NewNetworkPolicyManager creates a NetworkPolicyManager
 func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory informers.SharedInformerFactory, npmVersion string) *NetworkPolicyManager {
+	// Clear out left over iptables states
+	log.Logf("Azure-NPM creating, cleaning iptables")
+	iptMgr := iptm.NewIptablesManager()
+	iptMgr.UninitNpmChains()
 
 	podInformer := informerFactory.Core().V1().Pods()
 	nsInformer := informerFactory.Core().V1().Namespaces()
