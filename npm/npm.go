@@ -242,12 +242,14 @@ func NewNetworkPolicyManager(clientset *kubernetes.Clientset, informerFactory in
 	clusterState := npMgr.GetClusterState()
 	npMgr.reportManager.Report.(*telemetry.NPMReport).GetReport(clusterID, npMgr.nodeName, npmVersion, serverVersion.GitVersion, clusterState)
 
-	allNs, err := newNs(util.KubeAllNamespacesFlag)
-	if err != nil {
-		log.Logf("Error: failed to create all-namespace.")
-		panic(err.Error)
-	}
+	allNs, _ := newNs(util.KubeAllNamespacesFlag)
 	npMgr.nsMap[util.KubeAllNamespacesFlag] = allNs
+
+	// Create ipset for the namespace.
+	kubeSystemNs := "ns-" + util.KubeSystemFlag
+	if err := allNs.ipsMgr.CreateSet(kubeSystemNs); err != nil {
+		log.Logf("Error: failed to create ipset for namespace %s.", kubeSystemNs)
+	}
 
 	podInformer.Informer().AddEventHandler(
 		// Pod event handlers
